@@ -94,5 +94,13 @@
   "tag": "Guide planes onto runways, keep them apart and run a busy airport",
   "url": "https://jacob711-oss.github.io/simulators/contrail/",
   "color": "#9fa8ff"
+ },
+ {
+  "id": "quasar",
+  "icon": "🌌",
+  "name": "Quasar AI",
+  "tag": "Our AI: chat, make pictures and find videos",
+  "url": "https://jacob711-oss.github.io/simulators/quasar/",
+  "color": "#9b7bff"
  }
 ]
