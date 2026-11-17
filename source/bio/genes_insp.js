@@ -1,0 +1,12 @@
+    // DNA strip: one band per gene, brighter = higher than the species' normal
+    const dk=document.createElement('span');dk.className='k';dk.textContent='DNA';B.appendChild(dk);const dna=document.createElement('canvas');dna.className='dna';B.appendChild(dna);inspRefs.dna=dna;
+    // parents and inheritance
+    const fam=document.createElement('div');fam.className='fam';B.appendChild(fam);inspRefs.fam=fam;
+    const gk=document.createElement('span');gk.className='k';gk.textContent='Genes · parents’ average → this animal (drag to edit)';B.appendChild(gk);
+    const GL=[...GENES.map(([k,lab,lo,hi])=>[k,lab,lo,hi,.01]),['fur','Fur (cold °C)',-10,40,.5],['heat','Heat tolerance °C',-10,20,.5]];
+    for(const [g,lab,lo,hi,st] of GL){const row=document.createElement('label');row.className='gene';row.innerHTML='<span></span><input type="range"><span class="v"></span>';row.children[0].textContent=lab;const inp=row.children[1];inp.min=lo;inp.max=hi;inp.step=st;inp.value=o.genes[g]??(g==='fur'||g==='heat'?0:1);
+      inp.oninput=()=>{o.genes[g]=+inp.value;if(g==='fur')o.col=colorOf(o.sp,o.genes);if(g==='life')o.life=SP[o.sp].life*o.genes.life;GENEDIT++};inspRefs['g_'+g]=row.children[2];B.appendChild(row)}
+    // coat colour: two alleles
+    const cr=document.createElement('label');cr.className='gene';cr.innerHTML='<span>Coat genes</span><select class="coatsel"></select><span class="v"></span>';const sel=cr.children[1];for(const c of ['NN','ND','Nw','DD','Dw','ww']){const op=document.createElement('option');op.value=c;op.textContent=c;sel.appendChild(op)}
+    sel.value=[...(o.genes.coat||'NN')].sort((x,y)=>'NDw'.indexOf(x)-'NDw'.indexOf(y)).join('');sel.onchange=()=>{o.genes.coat=sel.value;o.col=colorOf(o.sp,o.genes);GENEDIT++};inspRefs.coat=cr.children[2];B.appendChild(cr);
+    const n=document.createElement('p');n.className='note';n.textContent=`Every gene helps and costs something. Speed catches food or escapes, size resists cold, senses spot danger, fur survives cold, heat tolerance survives heat, lifespan lives longer, fertility has bigger litters, immunity resists disease, but each one uses more energy. Babies get the average of their parents plus small random mutations. Coat colour follows Mendel's rules: N (normal) beats D (dark), which beats w (white), so two normal-looking parents can have a white baby if both carry w. White coats hide in snow and dark coats in forest.`;B.appendChild(n)}

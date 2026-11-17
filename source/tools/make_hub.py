@@ -1,0 +1,93 @@
+# Builds the "Our Simulations!" page from sims.json: one card per simulator (preview, name, short description), plus a review form.
+import json,html,os
+SITE='/home/user/barycenter-site';SIMS=json.load(open(os.path.join(SITE,'sims.json')))
+cards=[]
+for s in sorted(SIMS,key=lambda x:x['id']!='quasar'):
+    img=f"img/{s['id']}.jpg"
+    has=os.path.exists(os.path.join(SITE,'simulations',img))
+    pic=f'<img src="{img}" alt="" loading="lazy" width="800" height="500">' if has else f'<div class="ph">{html.escape(s["icon"])}</div>'
+    feat=' feat' if s['id']=='quasar' else ''
+    cards.append(f'''<a class="card{feat}" href="{html.escape(s['url'])}" style="--c:{html.escape(s.get('color','#9fa8ff'))}">
+  <div class="pv">{pic}<span class="play">{'Chat ▸' if feat else 'Play ▸'}</span></div>
+  <div class="txt"><h2><span class="ic">{html.escape(s['icon'])}</span>{html.escape(s['name'])}</h2><p>{html.escape(s['tag'])}</p></div>
+</a>''')
+OPTS=''.join(f'<option>{html.escape(x["name"])}</option>' for x in SIMS)
+STARS=''.join(f'<button type="button" role="radio" aria-label="{k} star{"s" if k>1 else ""}">★</button>' for k in range(1,6))
+
+PAGE='''<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Our Simulations!</title>
+<meta name="description" content="Every simulator we have made, in one place.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#06080f;--panel:#0d1220;--ink:#eef2fb;--dim:#93a0bb;--line:rgba(255,255,255,.1)}
+*{box-sizing:border-box}html,body{margin:0}html{scroll-behavior:smooth}body{background:radial-gradient(1200px 600px at 20% -10%,#1a1f3a 0%,transparent 60%),radial-gradient(900px 500px at 100% 0%,#1d1530 0%,transparent 55%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh}
+header{max-width:1240px;margin:0 auto;padding:56px 20px 18px}
+.brand{display:flex;align-items:center;gap:18px}.hlogo{width:clamp(56px,9vw,84px);height:auto;border-radius:18px;box-shadow:0 0 30px -6px #b388ff}
+h1{font-family:'Oxanium',system-ui,sans-serif;font-weight:700;font-size:clamp(40px,7vw,76px);letter-spacing:.04em;margin:0;line-height:1;background:linear-gradient(90deg,#ffd23a,#ff5ab4 35%,#5ae0ff 70%,#7fe0a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:17px;margin:14px 0 0;max-width:640px;line-height:1.5}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.count{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);border:1px solid var(--line);border-radius:99px;padding:6px 12px;background:rgba(255,255,255,.03);text-decoration:none}a.count:hover{border-color:#ffd23a}
+main{max-width:1240px;margin:0 auto;padding:12px 20px 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.card:hover,.card:focus-visible{transform:translateY(-4px);border-color:var(--c);box-shadow:0 14px 40px -12px var(--c);outline:none}
+.pv{position:relative;aspect-ratio:16/10;background:#000;overflow:hidden}.pv img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s ease}.card:hover .pv img{transform:scale(1.04)}
+.ph{width:100%;height:100%;display:grid;place-items:center;font-size:64px;background:linear-gradient(135deg,#111833,#1b1030)}
+.play{position:absolute;right:12px;bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;padding:6px 12px;border-radius:99px;background:rgba(6,8,15,.82);border:1px solid var(--c);color:var(--ink);opacity:0;transform:translateY(6px);transition:all .18s ease}.card:hover .play,.card:focus-visible .play{opacity:1;transform:none}
+.txt{padding:14px 16px 18px;border-top:3px solid var(--c)}
+.card.feat{grid-column:1/-1;flex-direction:row;align-items:stretch;border:3px solid var(--c);border-radius:22px;box-shadow:0 0 0 1px rgba(155,123,255,.35),0 0 38px -6px var(--c);animation:qglow 3s ease-in-out infinite}
+@keyframes qglow{50%{box-shadow:0 0 0 1px rgba(63,216,255,.4),0 0 56px -4px #3fd8ff}}
+.card.feat .pv{flex:0 0 58%;aspect-ratio:16/9}.card.feat .txt{padding:28px 30px;border-top:0;border-left:4px solid var(--c);display:flex;flex-direction:column;justify-content:center}.card.feat h2{font-size:32px}.card.feat .ic{font-size:32px}.card.feat .txt p{font-size:17px}
+.card.feat .play{opacity:1;transform:none;font-size:15px;padding:8px 16px}
+@media (max-width:700px){.card.feat{flex-direction:column}.card.feat .pv{flex:none}.card.feat .txt{border-left:0;border-top:4px solid var(--c);padding:18px}.card.feat h2{font-size:26px}}
+.txt h2{font-family:'Oxanium',system-ui,sans-serif;font-weight:700;font-size:22px;margin:0 0 6px;display:flex;align-items:center;gap:10px;letter-spacing:.02em}.ic{font-size:22px}
+.txt p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.45}
+.rv{max-width:760px;margin:0 auto 56px;padding:0 20px}.rvcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+.rv h2{font-family:'Oxanium',system-ui,sans-serif;font-size:30px;margin:0 0 6px}.rv .lead{color:var(--dim);margin:0 0 18px;font-size:15px}
+.rv form{display:grid;gap:14px}.rv label{display:grid;gap:6px;font-size:13px;color:var(--dim);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.rv input,.rv select,.rv textarea{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink);background:#080b15;border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.rv textarea{min-height:120px;resize:vertical}.rv input:focus,.rv select:focus,.rv textarea:focus{outline:2px solid #9fa8ff;outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:560px){.row2{grid-template-columns:1fr}}
+.stars{display:flex;gap:4px}.stars button{font-size:32px;line-height:1;background:none;border:0;cursor:pointer;color:#3a4260;padding:2px}.stars button.on{color:#ffd23a}
+.send{justify-self:start;font:600 16px 'IBM Plex Sans',system-ui,sans-serif;color:#06080f;background:linear-gradient(90deg,#ffd23a,#ff9a3d);border:0;border-radius:99px;padding:12px 26px;cursor:pointer}.send:disabled{opacity:.6;cursor:default}
+.msg{font-size:15px;margin:0}.msg.ok{color:#7fe0a8}.msg.err{color:#ff8a8a}.hp{position:absolute;left:-9999px}
+footer{text-align:center;color:var(--dim);font-size:13px;padding:0 20px 40px}
+@media (max-width:520px){header{padding:36px 16px 12px}main{padding:8px 16px 40px;grid-template-columns:1fr;gap:16px}.play{opacity:1;transform:none}.rv{padding:0 16px}.rvcard{padding:18px}}
+</style></head>
+<body>
+<header><div class="brand"><img class="hlogo" src="https://jacob711-oss.github.io/Simulators/simulations/og/logo-anim.svg" alt="" width="84" height="84"><h1>Our Simulations!</h1></div><p class="sub">Every simulator we have made, all in one place. Click a preview to jump in. Each one has challenges, a tutorial and a free-play sandbox.</p>
+<div class="chips"><span class="count">%COUNT% simulators</span><a class="count" href="https://jacob711-oss.github.io/Simulators/quasar/">🌌 Ask Quasar AI</a><a class="count" href="#review">✍️ Leave a review</a></div></header>
+<main>
+%CARDS%
+</main>
+<section class="rv" id="review"><div class="rvcard">
+<h2>✍️ Leave a review</h2><p class="lead">Tell us what you think: what you love, what is broken, and what we should build next.</p>
+<form id="rvForm">
+<div class="row2"><label>Your name<input name="name" maxlength="60" placeholder="Optional"></label>
+<label>Which simulator?<select name="simulator"><option>All of them</option>%OPTS%</select></label></div>
+<label>Rating<div class="stars" id="stars" role="radiogroup" aria-label="Rating">%STARS%</div></label>
+<label>Your review<textarea name="review" required maxlength="3000" placeholder="Write your review here…"></textarea></label>
+<label>Your email (so we can reply)<input name="email" type="email" maxlength="120" placeholder="Optional"></label>
+<input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+<button class="send" type="submit">Send review</button><p class="msg" id="rvMsg" role="status"></p>
+</form></div></section>
+<footer>New simulators appear here as soon as they are made.</footer>
+<script>
+(()=>{const to=['nicholas4yan','gmail.com'].join('@'),cc=['lwpiano50002016','gmail.com'].join('@'),f=document.getElementById('rvForm'),msg=document.getElementById('rvMsg');let rating=5;
+const st=[...document.querySelectorAll('#stars button')];const paint=()=>st.forEach((b,i)=>{b.classList.toggle('on',i<rating);b.setAttribute('aria-checked',i+1===rating)});st.forEach((b,i)=>b.onclick=e=>{e.preventDefault();rating=i+1;paint()});paint();
+const sel=f.simulator,q=new URLSearchParams(location.search).get('sim');if(q)for(const o of sel.options)if(o.text.toLowerCase()===q.toLowerCase())sel.value=o.text;
+f.onsubmit=async e=>{e.preventDefault();if(f._honey.value)return;const stars='★'.repeat(rating)+'☆'.repeat(5-rating);
+  const d={name:f.name.value.trim()||'Anonymous',simulator:sel.value,rating:stars+' ('+rating+'/5)',review:f.review.value.trim(),email:f.email.value.trim(),_subject:'New review: '+sel.value+' '+'★'.repeat(rating),_cc:cc,_template:'table',_captcha:'false'};
+  if(!d.review){msg.className='msg err';msg.textContent='Please write a review first.';return}const btn=f.querySelector('.send');btn.disabled=true;msg.className='msg';msg.textContent='Sending…';
+  try{const r=await fetch('https://formsubmit.co/ajax/'+to,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(d)});const j=await r.json().catch(()=>({}));if(!r.ok||j.success==='false'||j.success===false){const m=String(j.message||('Error '+r.status));if(/activat/i.test(m)){btn.disabled=false;msg.className='msg err';msg.textContent='Thanks! Reviews are being switched on right now, so please try again a little later.';return}throw new Error(m)}
+    msg.className='msg ok';msg.textContent='Thank you! Your review has been sent. 🎉';f.reset();rating=5;paint()}
+  catch(err){msg.className='msg err';msg.textContent='Could not send it ('+(err&&err.message||'no connection')+'). You can ';const a=document.createElement('a');a.href='mailto:'+to+'?cc='+cc+'&subject='+encodeURIComponent(d._subject)+'&body='+encodeURIComponent(d.review+'\\n\\nRating: '+d.rating+'\\nSimulator: '+d.simulator+'\\nFrom: '+d.name+(d.email?' ('+d.email+')':''));a.textContent='send it by email instead';a.style.color='#ffd23a';msg.append(a,'.')}
+  btn.disabled=false}})();
+</script>
+</body></html>
+'''
+PAGE=PAGE.replace('</body></html>','<script>'+open('/tmp/claude-0/-home-user/89fb5cec-fa03-5d89-9ad5-7295f7c6bb89/scratchpad/sims/kit/noemoji.js').read()+'</script>\n</body></html>')
+page=PAGE.replace('%COUNT%',str(len([x for x in SIMS if x['id']!='quasar']))).replace('%CARDS%','\n'.join(cards)).replace('%OPTS%',OPTS).replace('%STARS%',STARS)
+os.makedirs(os.path.join(SITE,'simulations'),exist_ok=True);open(os.path.join(SITE,'simulations','index.html'),'w').write(page);
+# the main address shows the same page (pictures live in simulations/img)
+open(os.path.join(SITE,'index.html'),'w').write(page.replace('src="img/','src="simulations/img/'));

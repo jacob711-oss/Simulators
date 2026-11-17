@@ -1,0 +1,2 @@
+.qlog{display:flex;flex-direction:column;gap:2px;font-size:12px}.qlog div{display:flex;justify-content:space-between;padding:2px 4px;border-radius:4px}.qlog b{font-family:var(--f-mono);font-weight:500}
+.pdir{display:grid;grid-template-columns:1fr 1fr;gap:6px}

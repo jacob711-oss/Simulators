@@ -1,0 +1,44 @@
+/* ================= Seaway: auto-built fleets for the home screen and demo, challenges, tutorial ================= */
+function autoNet(nSt){while(ST.length<nSt)if(!addStation())break;G.trains+=6;
+  const left=new Set(ST.map(s=>s.id));let k=0;while(left.size>1&&k<G.lines){const L=LINES[k];let cur=ST[[...left][0]];const seq=[cur.id];left.delete(cur.id);
+    while(seq.length<6){let best=null,bd=1e9;for(const id of left){const s=ST[id],d=Math.hypot(s.x-cur.x,s.y-cur.y);if(d<bd){bd=d;best=s}}if(!best)break;seq.push(best.id);left.delete(best.id);cur=best}
+    if(k>0){const prev=LINES[k-1].st;seq.unshift(prev[Math.floor(prev.length/2)])}L.mode=['train','tram','bus'][k%3];L.st=seq;geom(L);addTrain(L);addTrain(L);k++}routes()}
+{const l0=SIM.load;SIM.load=function(id){const show=!$('home').hidden||document.body.classList.contains('mDemo');if(show)MODE='classic';l0.call(this,id);if(show){for(let q=0;q<9;q++)addStation();autoNet(12);G.relaxed=true}}}
+const wk=()=>G.week,del=()=>G.delivered,activeLines=()=>LINES.filter(lineActive).length,byMode=m=>CH.events.filter(e=>e.k==='deliver'&&e.mode===m).length,sname=id=>SCENLIST.find(s=>s.id===id).name;
+const deliverCh=(t,d,n,sc,hint)=>CC(d,{t,g:`Deliver ${fmtN(n)} crates in ${sname(sc)}.`,hint:hint||'Link every kind of port. Add ships to busy lines and cargo holds when ships fill up.',scen:sc,setup:()=>{G.relaxed=false},check:()=>[del()>=n,del()/n,`${fmtN(del())} of ${fmtN(n)} delivered`],fail:()=>G.over?'A port overflowed':'',stars:byTime(n*0.7+40,n*1.6+100)});
+CC(1,{t:'First voyage',g:'Draw a shipping line that links all three ports.',hint:'With ✏️ Draw route, drag from one port to another, and on to the third. The ship finds its own way round the islands.',scen:'coast',check:()=>{const ok=LINES.some(L=>L.st.length>=3);return[ok,Math.max(...LINES.map(L=>L.st.length))/3,'']},stars:byTime(15,40)});
+CC(1.1,{t:'Cargo run',g:'Deliver 10 crates.',hint:'Draw a line through your ports: the ship sets sail at once.',scen:'coast',setup:()=>{G.relaxed=false},check:()=>[del()>=10,del()/10,`${del()} of 10`],stars:byTime(35,80)});
+CC(1.2,{t:'Island hopper',g:'Link 5 ports on different islands with one line.',hint:'Ports along one line can be on any island.',scen:'archipelago',setup:()=>{while(ST.length<8)addStation()},check:()=>{const n=Math.max(0,...LINES.map(L=>L.st.length));return[n>=5,n/5,`${n} of 5 ports`]},stars:byTime(25,60)});
+CC(1.3,{t:'Round trip',g:'Make a loop line.',hint:'Draw through 3 or more ports, then drag from the last back to the first.',scen:'archipelago',setup:()=>{while(ST.length<5)addStation()},check:()=>{const ok=LINES.some(L=>L.loop);return[ok,ok?1:0,'']},stars:byTime(25,60)});
+CC(1.4,{t:'Need for speed',g:'Deliver 20 crates by speedboat.',hint:'Pick 🚤 in the boat bar, then draw a line.',scen:'twins',setup:()=>{G.relaxed=false;while(ST.length<5)addStation()},check:()=>{const n=byMode('bus');return[n>=20,n/20,`${n} of 20 by speedboat`]},stars:byTime(40,100)});
+CC(1.5,{t:'Shortcut',g:'Use a hovercraft to cross an island and deliver 15 crates with it.',hint:'Hovercraft are a weekly upgrade; here you have one. Pick 🛥️ and draw a line straight across land.',scen:'lagoon',setup:()=>{G.unlocked.push('metro');while(ST.length<6)addStation()},check:()=>{const n=byMode('metro');return[n>=15,n/15,`${n} of 15 by hovercraft`]},stars:byTime(50,120)});
+CC(1.6,{t:'Mixed fleet',g:'Run cargo ships, speedboats and freighters at the same time.',hint:'Pick each boat in the boat bar and draw a line with it.',scen:'archipelago',setup:()=>{G.unlocked=[...MK];while(ST.length<9)addStation()},check:()=>{const n=new Set(LINES.filter(lineActive).map(L=>L.mode).filter(m=>m!=='metro')).size;return[n>=3,n/3,`${n} of 3 kinds`]},stars:byTime(50,120)});
+deliverCh('Coastal trader',2,200,'coast');deliverCh('Island economy',2.2,250,'archipelago');deliverCh('Through the strait',2.6,300,'strait','Every ship squeezes through the narrow strait: speedboats help.');deliverCh('Lagoon life',3,400,'lagoon','The only way in and out of the lagoon is round the ring. Hovercraft cut straight across.');deliverCh('Twin isles',3.4,500,'twins');
+deliverCh('Shipping magnate',4.3,1200,'archipelago');
+CC(2.0,{t:'Storm warning',g:'Hear a port alarm, then calm it down so no port is overflowing.',hint:'Let a port fill up, then add ships or a line there.',scen:'archipelago',setup:()=>{G.relaxed=false;G.rush=true;while(ST.length<7)addStation()},check:()=>{const a=evN('alarm')>0,calm=ST.every(s=>s.over<0.05);return[a&&calm,a?(calm?1:0.5):0,a?(calm?'All calm':'Now fix the crowded port'):'Waiting for an alarm']},fail:()=>G.over?'A port overflowed':'',stars:byTime(90,200)});
+CC(2.4,{t:'Survive 5 weeks',g:'Keep the Archipelago running until week 6.',hint:'Each week brings a new ship and an upgrade. Watch for red rings.',scen:'archipelago',setup:()=>{G.relaxed=false},check:()=>[wk()>=6,(wk()-1)/5,`Week ${wk()}`],fail:()=>G.over?'A port overflowed':'',stars:byTime(330,480)});
+CC(3.6,{t:'Survive 10 weeks',g:'Keep the Strait running until week 11.',hint:'Big harbours hold three times as much cargo. Put them where lines meet.',scen:'strait',setup:()=>{G.relaxed=false},check:()=>[wk()>=11,(wk()-1)/10,`Week ${wk()}`],fail:()=>G.over?'A port overflowed':'',stars:byTime(640,900)});
+CC(2.8,{t:'Holiday season',g:'Bring 60 tourists to the resort.',hint:'Give the resort its own line with fast speedboats.',scen:'archipelago',setup:()=>{G.relaxed=false;addStation('resort');G.match=true},check:()=>{const n=CH.events.filter(e=>e.k==='deliver'&&e.to==='resort').length;return[n>=60,n/60,`${n} of 60`]},fail:()=>G.over?'A port overflowed':'',stars:byTime(90,200)});
+CC(3.0,{t:'Minimalist',g:'Deliver 300 crates using only 2 lines.',hint:'Long lines that call at every kind of port.',scen:'coast',setup:()=>{G.relaxed=false},check:()=>{const ok=activeLines()<=2;return[del()>=300&&ok,ok?del()/300:0,ok?`${del()} of 300`:'Use no more than 2 lines']},fail:()=>G.over?'A port overflowed':'',stars:byTime(220,450)});
+CC(3.2,{t:'Big harbour',g:'Build a big harbour where three lines meet.',hint:'Draw three lines through one port, then use 🔄 Big harbour on it.',scen:'archipelago',setup:()=>{G.hubs=1;while(ST.length<8)addStation()},check:()=>{const ok=ST.some(s=>s.hub&&LINES.filter(L=>L.st.includes(s.id)).length>=3);return[ok,ok?1:0,'']},stars:byTime(60,150)});
+CC(3.8,{t:'Heavy haul',g:'Fill a freighter with 3 cargo holds.',hint:'Pick freighters and cargo holds as weekly upgrades, then add the holds to the same line.',scen:'twins',setup:()=>{G.relaxed=false;G.unlocked.push('tram')},check:()=>{const m=Math.max(0,...LINES.filter(L=>L.mode==='tram').flatMap(L=>L.trains.map(t=>t.cars)));return[m>=3,m/3,`Most holds on one freighter: ${m}`]},fail:()=>G.over?'A port overflowed':'',stars:byTime(300,600)});
+TSTEPS.push(
+ ['Look around','Right-drag (or two fingers) to move around the sea. Scroll to zoom.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
+ ['Draw a line','With ✏️ Draw route, drag from one port to another. The ship finds its own way round the islands.',r=>DRAWN>r.n,r=>{r.n=DRAWN}],
+ ['Extend it','Drag from the end of your line to another port.',r=>EXT>r.n,r=>{r.n=EXT}],
+ ['Cargo','The little icons are crates. Each shows the kind of port it needs (🏘️ town, 🐟 fishery, 🌾 farm…). Deliver 5.',r=>G.delivered>=r.d+5,r=>{r.d=G.delivered}],
+ ['Add a stop in the middle','Drag the middle of a line onto another port to add it as a stop.',r=>evN('insert')>r.n||EXT>r.e+2,r=>{r.n=evN('insert');r.e=EXT}],
+ ['Boats','Lines can run 🚢 cargo ships, 🚤 speedboats (fast, small), 🛳️ freighters (slow, huge) or 🛥️ hovercraft (straight over land). Pick 🚤 in the boat bar to switch your line.',r=>MODEADD>r.n||LINES.some(L=>lineActive(L)&&L.mode!=='train'),r=>{r.n=MODEADD;G.unlocked=[...MK]}],
+ ['Another line','Pick another colour in the bar and draw a new line.',()=>activeLines()>=2],
+ ['More ships','Pick 🚢 Add ship and click a line.',r=>TRADD>r.n,r=>{r.n=TRADD}],
+ ['A new week','Wait for the week to end and pick an upgrade.',r=>UPG>r.n,r=>{r.n=UPG}],
+ ['Alarms','When a port is too full an alarm sounds and it glows red. Add ships or lines there.',r=>ALARMS>r.n||S.view==='crowd',r=>{r.n=ALARMS}],
+ ['Crowding','Switch to the Crowding view in the Fleet tab.',()=>S.view==='crowd'],
+ ['Other seas','Press Seas in the top bar and pick another sea.',r=>CNT.scen>r.n,r=>{r.n=CNT.scen}],
+);
+DEMO.push(
+ ['archipelago','The archipelago','Ships weave between six islands, carrying cargo from port to port.',()=>{setSpeed(2)}],
+ ['strait','The strait','Every ship squeezes through the narrow strait.',()=>{setSpeed(2);setView('crowd')}],
+ ['lagoon','The lagoon','Lines run round the ring of land and into the lagoon.',()=>{setSpeed(2)}],
+ ['twins','The twin isles by day','Switch to Day chart in the Fleet tab for a paper-map look.',()=>{setSpeed(2);setView('day')}],
+);

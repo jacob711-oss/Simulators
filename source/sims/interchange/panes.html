@@ -1,0 +1,27 @@
+<div class="pane" id="pane-world">
+    <span class="k">Your stock</span>
+    <div class="inv" id="inv"></div>
+    <span class="k">Lines · pick a colour, then drag between stations</span>
+    <div id="lineList" class="hview" style="gap:6px"></div>
+    <div class="row"><span class="k">Relaxed mode (no game over)</span><button class="btn" id="relaxBtn" aria-pressed="false">Off</button></div>
+    <span class="k">Events · press again to stop</span>
+    <div class="evs">
+      <button class="btn" data-ev="rush">🚶 Rush hour</button><button class="btn" data-ev="match">🏟 Big match</button>
+      <button class="btn" data-ev="boom">🏗 Building boom</button><button class="btn" data-ev="storm">🌧 Storm</button>
+      <button class="btn" data-ev="normal">↺ Stop all events</button>
+    </div>
+    <span class="k">Views</span>
+    <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Neon</button><button class="btn" data-view="crowd" aria-pressed="false">Crowding</button><button class="btn" data-view="day" aria-pressed="false">Daytime</button></div>
+    <p class="note">Passengers show the kind of place they want: 🏠 home, 🏢 office, 🛍 shops and so on. They ride and change lines to reach the nearest one. If a station gets too crowded for too long, the city gives up on your network.</p>
+  </div>
+  <div class="pane" id="pane-stats" hidden>
+    <div class="kv" id="cStats"></div>
+    <span class="k">Passengers delivered</span>
+    <canvas id="graph"></canvas>
+    <span class="k">Busiest stations</span>
+    <div class="splist" id="sList"></div>
+  </div>
+  <div class="pane" id="pane-insp" hidden>
+    <div id="inspEmpty"><p class="note">Click a station or a line to inspect it.</p></div>
+    <div id="inspBody" class="hview" hidden></div>
+  </div>

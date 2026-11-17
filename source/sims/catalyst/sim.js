@@ -1,0 +1,253 @@
+/* ================= Catalyst: atoms, bonds and reactions ================= */
+// Distances are in ångström-like units (u). Energies are in electron-volts (eV). Time is in picoseconds (ps).
+// Kinetic energy = 0.5 m C v^2 with C chosen so a hydrogen atom moves about 6 u/ps at 300 K.
+const KB=8.617e-5,CK=0.001436,DT=0.004,MAXA=2200,BW0=120,BH=75;
+const EL={H:{n:'Hydrogen',r:.55,m:1,val:1,col:'#f1f1f1',eps:.012,mx:1},C:{n:'Carbon',r:.85,m:12,val:4,col:'#4a4f57',eps:.03,mx:3},N:{n:'Nitrogen',r:.8,m:14,val:3,col:'#4a7cff',eps:.03,mx:3},O:{n:'Oxygen',r:.78,m:16,val:2,col:'#ff4545',eps:.075,mx:2},
+  S:{n:'Sulfur',r:1,m:32,val:2,col:'#f2d24a',eps:.06,mx:2},Na:{n:'Sodium',r:1.15,m:23,val:1,col:'#a86cf7',eps:.2,mx:1},Cl:{n:'Chlorine',r:1,m:35,val:1,col:'#43d36e',eps:.12,mx:1},He:{n:'Helium',r:.6,m:4,val:0,col:'#86e8ff',eps:.003,mx:0},
+  Ar:{n:'Argon',r:.9,m:40,val:0,col:'#a6c8ff',eps:.012,mx:0},Fe:{n:'Iron',r:1.2,m:56,val:2,col:'#c8783c',eps:.45,mx:1}};
+// every other element of the periodic table, with bonding behaviour from its group
+{const T='H Hydrogen|He Helium|Li Lithium|Be Beryllium|B Boron|C Carbon|N Nitrogen|O Oxygen|F Fluorine|Ne Neon|Na Sodium|Mg Magnesium|Al Aluminium|Si Silicon|P Phosphorus|S Sulfur|Cl Chlorine|Ar Argon|K Potassium|Ca Calcium|Sc Scandium|Ti Titanium|V Vanadium|Cr Chromium|Mn Manganese|Fe Iron|Co Cobalt|Ni Nickel|Cu Copper|Zn Zinc|Ga Gallium|Ge Germanium|As Arsenic|Se Selenium|Br Bromine|Kr Krypton|Rb Rubidium|Sr Strontium|Y Yttrium|Zr Zirconium|Nb Niobium|Mo Molybdenum|Tc Technetium|Ru Ruthenium|Rh Rhodium|Pd Palladium|Ag Silver|Cd Cadmium|In Indium|Sn Tin|Sb Antimony|Te Tellurium|I Iodine|Xe Xenon|Cs Caesium|Ba Barium|La Lanthanum|Ce Cerium|Pr Praseodymium|Nd Neodymium|Pm Promethium|Sm Samarium|Eu Europium|Gd Gadolinium|Tb Terbium|Dy Dysprosium|Ho Holmium|Er Erbium|Tm Thulium|Yb Ytterbium|Lu Lutetium|Hf Hafnium|Ta Tantalum|W Tungsten|Re Rhenium|Os Osmium|Ir Iridium|Pt Platinum|Au Gold|Hg Mercury|Tl Thallium|Pb Lead|Bi Bismuth|Po Polonium|At Astatine|Rn Radon|Fr Francium|Ra Radium|Ac Actinium|Th Thorium|Pa Protactinium|U Uranium|Np Neptunium|Pu Plutonium|Am Americium|Cm Curium|Bk Berkelium|Cf Californium|Es Einsteinium|Fm Fermium|Md Mendelevium|No Nobelium|Lr Lawrencium|Rf Rutherfordium|Db Dubnium|Sg Seaborgium|Bh Bohrium|Hs Hassium|Mt Meitnerium|Ds Darmstadtium|Rg Roentgenium|Cn Copernicium|Nh Nihonium|Fl Flerovium|Mc Moscovium|Lv Livermorium|Ts Tennessine|Og Oganesson'.split('|');
+  const grp=z=>{if(z===1)return 1;if(z===2)return 18;const P=[[3,10],[11,18],[19,36],[37,54],[55,86],[87,118]];for(const [a,b] of P)if(z>=a&&z<=b){const n=z-a,len=b-a+1;if(len===8)return n<2?n+1:n+11;if(len===18)return n+1;if(n<2)return n+1;if(n<17)return 0;return n-14+3}return 0};
+  const per=z=>z<=2?1:z<=10?2:z<=18?3:z<=36?4:z<=54?5:z<=86?6:7;
+  T.forEach((t,k)=>{const z=k+1,[sym,...nm]=t.split(' ');if(EL[sym]){EL[sym].z=z;return}const g=grp(z),p=per(z);
+    const val=g===18?0:g===1?1:g===2?2:g===13?3:g===14?4:g===15?3:g===16?2:g===17?1:g===0?3:2;
+    const col=g===1?'#b07cf5':g===2?'#7fd0a0':g===17?'#7fe07a':g===18?'#8fd8ff':g===16?'#ff8a6a':g===15?'#ff9a4a':g===14?'#9aa0a8':g===13?'#e0a0a0':g===0?'#c8a0e8':'#c0a080';
+    const metal=g<=12&&g!==1||g===0||(g===1&&z>1);EL[sym]={n:nm.join(' '),r:+(0.55+0.13*p+(g<=2?0.3:0)-(g>=15?0.1:0)).toFixed(2),m:Math.round(z<=20?z*2:z*2.5),val,col,eps:g===18?0.003*p:metal?0.25+0.04*p:0.04+0.01*p,mx:metal?1:Math.min(3,val),z}})}
+const ELK=Object.keys(EL);
+const D1={'H-H':4.5,'C-H':4.3,'H-N':4.0,'H-O':4.8,'H-S':3.8,'Cl-H':4.4,'C-C':3.6,'C-N':3.0,'C-O':3.6,'N-N':1.7,'N-O':2.0,'O-O':1.5,'Cl-Na':4.3,'Fe-O':4.0,'C-Cl':3.4,'O-S':5.4,'C-S':2.8,'Cl-Cl':2.5,'Na-O':2.6,'Fe-S':3.2,'Cl-Fe':3.6,'H-Na':2.0,'N-Na':1.5,'Cl-N':2.0,'Cl-O':2.1,'N-S':2.5,'S-S':2.6};
+const DM={'N-N':[1.7,4.2,9.8],'O-O':[1.5,5.1],'C-O':[3.6,7.5,11],'C-C':[3.6,6.3,8.4],'C-N':[3.0,6.2,9.2],'N-O':[2.0,6.3],'O-S':[5.4,5.9],'C-S':[2.8,5.7]};
+const pk=(a,b)=>a<b?a+'-'+b:b+'-'+a;
+function bondE(ea,eb,o){const k=pk(ea,eb),m=DM[k];if(m)return m[Math.min(o,m.length)-1]+(o>m.length?2*(o-m.length):0);return(D1[k]||2.2)*[1,1.75,2.5][Math.min(3,o)-1]}
+const unitE=(ea,eb,o)=>bondE(ea,eb,o)-(o>1?bondE(ea,eb,o-1):0);
+let A=[],BONDS=[],MOLS=[],RLOG=[],HIST=[],PARTS=[],FX=[];
+const ENV={tw:300,therm:true,vol:1,grav:0,el:'H',uv:false,lightning:false,shake:false,boil:false,freeze:false};
+let BW=BW0,STAT={T:300,P:0,n:0,mols:0,react:0,solid:0,liquid:0,gas:0},LBL=true,imp=0,impT=0,REACT=0,FORMED=0,BROKEN=0,GRABBED=null,GRABBREAK=0,SPARKS=0,ZAPS=0,LIGHTS=0,HEATS=0,ADDED=0,ERASED=0,EVN=0,EVSTOP=0,SLIDED=0,ELPICK=0;
+const rnd=()=>Math.random();
+const vth=(e,T)=>Math.sqrt(KB*Math.max(1,T)/(EL[e].m*CK))*Math.sqrt(-2*Math.log(Math.random()+1e-9));
+function addAtom(e,x,y,T,vx,vy){if(A.length>=MAXA)return null;const a=EL[e];let ux=vx,uy=vy;if(ux==null){const s=vth(e,T??ENV.tw),t=Math.random()*Math.PI*2;ux=Math.cos(t)*s;uy=Math.sin(t)*s}
+  const o={e,x:clamp(x,a.r,BW-a.r),y:clamp(y,a.r,BH-a.r),vx:ux,vy:uy,fx:0,fy:0,used:0,bonds:[],kav:KB*(T??ENV.tw),nbc:0,mol:-1,id:Math.random()};A.push(o);return o}
+function bonded(a,b){for(const bd of a.bonds)if(bd.a===b||bd.b===b)return bd;return null}
+function addBond(a,b,o){const bd={a,b,o:o||1};a.bonds.push(bd);b.bonds.push(bd);a.used+=bd.o;b.used+=bd.o;BONDS.push(bd);return bd}
+function removeBond(bd){bd.a.bonds.splice(bd.a.bonds.indexOf(bd),1);bd.b.bonds.splice(bd.b.bonds.indexOf(bd),1);bd.a.used-=bd.o;bd.b.used-=bd.o;const k=BONDS.indexOf(bd);if(k>=0)BONDS.splice(k,1)}
+function springU(a,b,o){const ea=EL[a.e],eb=EL[b.e],d=Math.hypot(b.x-a.x,b.y-a.y),L=(ea.r+eb.r)*0.78*(1-0.06*(o-1)),k=5+2*o;return 0.5*k*(d-L)**2}
+function lowerBond(bd){if(bd.o>1){bd.o--;bd.a.used--;bd.b.used--}else removeBond(bd)}
+const free=a=>EL[a.e].val-a.used;
+function removeAtoms(set){for(const a of set)for(const bd of [...a.bonds])removeBond(bd);A=A.filter(a=>!set.has(a));if(GRABBED&&set.has(GRABBED))GRABBED=null;if(S.sel&&set.has(S.sel.a))S.sel=null}
+function kick(a,E){// give an atom E more kinetic energy (or take it away if E is negative)
+  const m=EL[a.e].m,ke=0.5*m*CK*(a.vx*a.vx+a.vy*a.vy),nk=Math.max(0,ke+E);if(ke<1e-9){const t=Math.random()*Math.PI*2,s=Math.sqrt(2*nk/(m*CK));a.vx=Math.cos(t)*s;a.vy=Math.sin(t)*s}else{const f=Math.sqrt(nk/ke);a.vx*=f;a.vy*=f}}
+function logR(txt){RLOG.unshift({txt,t:S.t});if(RLOG.length>14)RLOG.pop()}
+
+/* ---------- molecule templates ---------- */
+const TPL={H2:[['H',-.45,0],['H',.45,0],[[0,1,1]]],O2:[['O',-.6,0],['O',.6,0],[[0,1,2]]],N2:[['N',-.55,0],['N',.55,0],[[0,1,3]]],Cl2:[['Cl',-.8,0],['Cl',.8,0],[[0,1,1]]],
+  H2O:[['O',0,0],['H',-.75,.55],['H',.75,.55],[[0,1,1],[0,2,1]]],CO2:[['C',0,0],['O',-1.15,0],['O',1.15,0],[[0,1,2],[0,2,2]]],CO:[['C',-.6,0],['O',.6,0],[[0,1,3]]],
+  CH4:[['C',0,0],['H',-.9,0],['H',.9,0],['H',0,-.9],['H',0,.9],[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]],NH3:[['N',0,0],['H',-.85,.4],['H',.85,.4],['H',0,-.85],[[0,1,1],[0,2,1],[0,3,1]]],
+  HCl:[['H',-.6,0],['Cl',.6,0],[[0,1,1]]],NaCl:[['Na',-.9,0],['Cl',.9,0],[[0,1,1]]],H2S:[['S',0,0],['H',-.9,.6],['H',.9,.6],[[0,1,1],[0,2,1]]],O3:[['O',-1,.3],['O',0,0],['O',1,.3],[[0,1,2],[1,2,1]]],
+  C2H6:[['C',-.7,0],['C',.7,0],['H',-1.4,-.7],['H',-1.4,.7],['H',-.7,-1],['H',1.4,-.7],['H',1.4,.7],['H',.7,1],[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[1,5,1],[1,6,1],[1,7,1]]],
+  C2H6O:[['C',-1.3,0],['C',0,0],['O',1.3,0],['H',-2,-.7],['H',-2,.7],['H',-1.3,-1],['H',0,-1],['H',0,1],['H',2,.6],[[0,1,1],[1,2,1],[0,3,1],[0,4,1],[0,5,1],[1,6,1],[1,7,1],[2,8,1]]],
+  He:[['He',0,0],[]],Ar:[['Ar',0,0],[]],Fe:[['Fe',0,0],[]],H2O2:[['O',-.7,0],['O',.7,0],['H',-1.3,.6],['H',1.3,.6],[[0,1,1],[0,2,1],[1,3,1]]],SO2:[['S',0,0],['O',-1.2,.3],['O',1.2,.3],[[0,1,2],[0,2,2]]]};
+function addMol(k,x,y,T){const t=TPL[k];if(!t||A.length+t.length>MAXA)return null;const rot=Math.random()*Math.PI*2,c=Math.cos(rot),s=Math.sin(rot),ats=[];
+  const sp=vth('O',T??ENV.tw)*Math.sqrt(16/Math.max(2,t.slice(0,-1).reduce((m,q)=>m+EL[q[0]].m,0))),dir=Math.random()*Math.PI*2,vx=Math.cos(dir)*sp,vy=Math.sin(dir)*sp;
+  for(const [e,dx,dy] of t.slice(0,-1))ats.push(addAtom(e,x+dx*c-dy*s,y+dx*s+dy*c,T,vx,vy));for(const [i,j,o] of t[t.length-1])addBond(ats[i],ats[j],o);return ats}
+function scatter(k,n,box,T){for(let q=0;q<n;q++){const [x0,y0,x1,y1]=box||[2,2,BW-2,BH-2];addMol(k,rr(x0,x1),rr(y0,y1),T)}}
+function lattice(e1,e2,cx,cy,nx,ny,sp,T){const out=[];for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const e=(i+j)%2?e2:e1;out.push(addAtom(e,cx+(i-nx/2)*sp,cy+(j-ny/2)*sp,T,0,0))}return out}
+
+/* ---------- experiments ---------- */
+function clearBox(){A=[];BONDS=[];MOLS=[];RLOG=[];HIST=[];PARTS=[];FX=[];GRABBED=null;Object.assign(ENV,{tw:300,therm:true,vol:1,grav:0,uv:false,lightning:false,shake:false,boil:false,freeze:false});BW=BW0;REACT=0}
+const SCENS={
+  air:()=>{scatter('N2',150);scatter('O2',40);scatter('Ar',4);scatter('CO2',2);scatter('H2O',6)},
+  water:()=>{ENV.grav=0.5;for(let j=0;j<11;j++)for(let i=0;i<28;i++)addMol('H2O',8+i*3.7+(j%2)*1.8,BH-3-j*2.9,300);scatter('N2',30,[2,2,BW-2,30]);scatter('O2',8,[2,2,BW-2,30])},
+  combust:()=>{ENV.tw=300;scatter('H2',160);scatter('O2',80)},
+  methane:()=>{scatter('CH4',45);scatter('O2',95)},
+  salt:()=>{ENV.grav=0.4;{const L=lattice('Na','Cl',BW/2,BH-12,10,8,2.3,300);for(let j=0;j<8;j++)for(let i=0;i<10;i+=2)addBond(L[j*10+i],L[j*10+i+1],1)}for(let j=0;j<8;j++)for(let i=0;i<26;i++){const x=6+i*4.3,y=BH-3-j*3;if(Math.abs(x-BW/2)>12||y<BH-20)addMol('H2O',x,y,300)}},
+  haber:()=>{ENV.tw=750;scatter('N2',70,null,750);scatter('H2',210,null,750);for(let k=0;k<3;k++){const cx=25+k*35;lattice('Fe','Fe',cx,BH/2,4,4,2.1,750)}},
+  ice:()=>{ENV.tw=200;for(let j=0;j<12;j++)for(let i=0;i<14;i++)addMol('H2O',BW/2-24+i*3.5+(j%2)*1.7,BH/2-18+j*3,150)},
+  soup:()=>{ENV.tw=330;ENV.grav=0.15;scatter('CH4',40);scatter('NH3',35);scatter('H2',40);scatter('H2O',60);ENV.lightning=true},
+  empty:()=>{},
+};
+const SCENLIST=[{id:'air',name:'Room air',desc:'Nitrogen, oxygen, a little argon, carbon dioxide and water vapour at room temperature.'},{id:'water',name:'Glass of water',desc:'Liquid water under gravity, with air above it. Freeze it or boil it.'},
+  {id:'combust',name:'Hydrogen and oxygen',desc:'A cold mixture that waits for a spark… then explodes into water.'},{id:'methane',name:'Burning methane',desc:'Natural gas and oxygen. Light it to make carbon dioxide and water.'},
+  {id:'salt',name:'Salt crystal',desc:'A crystal of sodium chloride sitting in water.'},{id:'haber',name:'Haber process',desc:'Hot nitrogen and hydrogen over an iron catalyst: the way we make ammonia.'},
+  {id:'ice',name:'Ice cube',desc:'A block of frozen water at −73 °C.'},{id:'soup',name:'Primordial soup',desc:'Methane, ammonia, hydrogen and water zapped by lightning, like the early Earth.'},{id:'empty',name:'Empty box',desc:'Nothing at all. Build your own experiment.'}];
+
+/* ---------- physics ---------- */
+const GC=3.6;let GX=Math.ceil(BW0/GC)+1,GY=Math.ceil(BH/GC)+1,HEAD=new Int32Array(GX*GY),NEXT=new Int32Array(MAXA);
+function nearFe(a){for(const b of A)if(b.e==='Fe'&&Math.abs(b.x-a.x)<4&&Math.abs(b.y-a.y)<4)return true;return false}
+let FEON=false;
+function substep(){const n=A.length;if(!n){S.t+=0;return}
+  HEAD.fill(-1);for(let i=0;i<n;i++){const a=A[i];a.fx=0;a.fy=ENV.grav*EL[a.e].m*CK*-(-1);a.nbc=0;const cx=clamp((a.x/GC)|0,0,GX-1),cy=clamp((a.y/GC)|0,0,GY-1),c=cy*GX+cx;NEXT[i]=HEAD[c];HEAD[c]=i}
+  for(let i=0;i<n;i++){const a=A[i],ea=EL[a.e],cx=clamp((a.x/GC)|0,0,GX-1),cy=clamp((a.y/GC)|0,0,GY-1);
+    for(let gy=Math.max(0,cy-1);gy<=Math.min(GY-1,cy+1);gy++)for(let gx=Math.max(0,cx-1);gx<=Math.min(GX-1,cx+1);gx++){for(let j=HEAD[gy*GX+gx];j>=0;j=NEXT[j]){if(j<=i)continue;const b=A[j],eb=EL[b.e];
+      const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy,sg=ea.r+eb.r;if(d2>4*sg*sg)continue;const d=Math.sqrt(d2)||1e-6,nx=dx/d,ny=dy/d;
+      const bd=bonded(a,b);if(bd)continue;let F=0;
+      if(d<sg){F=-Math.min(4,9*(sg-d));
+        if(d<sg*1.02){// collision: bonding or swap reactions
+          const vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(vn<0){const mu=ea.m*eb.m/(ea.m+eb.m),ken=0.5*mu*CK*vn*vn;react(a,b,ken)}}}
+      else{const ep=Math.sqrt(ea.eps*eb.eps);if(ep>0){const s=(d-sg)/sg;F=4*ep*s*(1-s*s)/sg*3}}
+      if(d<sg*1.3){a.nbc++;b.nbc++}
+      a.fx+=F*nx;a.fy+=F*ny;b.fx-=F*nx;b.fy-=F*ny}}}
+  // bonds: springs that snap when stretched too far
+  for(let k=BONDS.length-1;k>=0;k--){const bd=BONDS[k],a=bd.a,b=bd.b,ea=EL[a.e],eb=EL[b.e],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-6,L=(ea.r+eb.r)*0.78*(1-0.06*(bd.o-1)),kk=5+2*bd.o,x=d-L;
+    if(0.5*kk*x*x>unitE(a.e,b.e,bd.o)*0.28){const E=unitE(a.e,b.e,bd.o);lowerBond(bd);kick(a,-E*0.2);kick(b,-E*0.2);BROKEN++;if(GRABBED===a||GRABBED===b)GRABBREAK++;continue}
+    const F=clamp(kk*x,-5,5);a.fx+=F*dx/d;a.fy+=F*dy/d;b.fx-=F*dx/d;b.fy-=F*dy/d;
+    // radicals next to each other tighten into double or triple bonds
+    if(free(a)>0&&free(b)>0&&bd.o<Math.min(ea.mx,eb.mx)&&Math.random()<0.02){const u0=springU(a,b,bd.o);bd.o++;a.used++;b.used++;const E=unitE(a.e,b.e,bd.o)*0.4-(springU(a,b,bd.o)-u0);kick(a,E/2);kick(b,E/2);FORMED++}}
+  if(GRABBED&&GRAB){const a=GRABBED,m=EL[a.e].m;a.fx+=(GRAB[0]-a.x)*1.5*m*CK*40;a.fy+=(GRAB[1]-a.y)*1.5*m*CK*40;a.vx*=0.98;a.vy*=0.98}
+  // move, bounce off the walls (the walls also heat or cool the atoms that hit them)
+  let ke=0;for(let i=0;i<n;i++){const a=A[i],e=EL[a.e],im=1/(e.m*CK);a.vx+=a.fx*im*DT;a.vy+=a.fy*im*DT;const sp=Math.hypot(a.vx,a.vy),cap=40;if(sp>cap){a.vx*=cap/sp;a.vy*=cap/sp}
+    a.x+=a.vx*DT;a.y+=a.vy*DT;let hit=0;
+    if(a.x<e.r){a.x=e.r;hit=Math.abs(a.vx);a.vx=Math.abs(a.vx)}else if(a.x>BW-e.r){a.x=BW-e.r;hit=Math.abs(a.vx);a.vx=-Math.abs(a.vx)-(SQUEEZE>0?SQUEEZE:0)}
+    if(a.y<e.r){a.y=e.r;hit+=Math.abs(a.vy);a.vy=Math.abs(a.vy)}else if(a.y>BH-e.r){a.y=BH-e.r;hit+=Math.abs(a.vy);a.vy=-Math.abs(a.vy)}
+    if(hit){imp+=2*e.m*CK*hit;if(ENV.therm){const s=Math.hypot(a.vx,a.vy),t=vth(a.e,ENV.tw),f=(s+(t-s)*0.5)/(s||1);a.vx*=f;a.vy*=f}}
+    const k=0.5*e.m*CK*(a.vx*a.vx+a.vy*a.vy);a.kav+=(k-a.kav)*0.01;ke+=k}
+  // a gentle thermostat inside too, so liquids and solids feel the wall temperature
+  if(ENV.therm){const T=ke/n/KB,f=Math.sqrt(Math.max(0.5,1+(ENV.tw/Math.max(1,T)-1)*DT/(T>ENV.tw*1.1?0.35:1.2)));for(const a of A){a.vx*=f;a.vy*=f}}
+  S.tK=ke/n/KB;impT+=DT}
+function react(a,b,ken){const fa=free(a),fb=free(b),ea=a.e,eb=b.e;if(EL[ea].val===0||EL[eb].val===0)return;if(ea==='Fe'&&eb==='Fe')return;
+  if((ea==='Fe')!==(eb==='Fe')){const o=ea==='Fe'?b:a;if(free(o)===0&&o.bonds.length===1&&Math.random()<0.25&&ken>0.01){const bd=o.bonds[0],p2=bd.a===o?bd.b:bd.a;if(p2.e!=='Fe'){lowerBond(bd);BROKEN++;chEv('catalysed',{})}}}
+  if(fa>0&&fb>0){const Ea=(ea==='Na'||eb==='Na')?0:0.03;if(ken>=Ea){addBond(a,b,1);const E=bondE(ea,eb,1)*0.4-springU(a,b,1);kick(a,E/2);kick(b,E/2);FORMED++;REACT++;chEv('bond',{p:pk(ea,eb)})}return}
+  // swap: a radical steals an atom from a molecule if the new bond is strong enough
+  const cat=FEON&&(nearFe(a)||nearFe(b))?0.25:1;
+  for(const [x,y] of [[a,b],[b,a]]){if(free(x)<=0||free(y)>0)continue;let best=null,bu=1e9;for(const bd of y.bonds){const z=bd.a===y?bd.b:bd.a;if(z===x)continue;const u0=unitE(y.e,z.e,bd.o);if(u0<bu){bu=u0;best=bd}}if(!best)continue;
+    const gain=bondE(x.e,y.e,1)-bu,Ea=0.12*cat;if(ken<Ea||gain+ken<0.05)continue;lowerBond(best);addBond(x,y,1);const Eg=gain*0.5-springU(x,y,1);kick(x,Eg/2);kick(y,Eg/2);REACT++;FORMED++;chEv('swap',{});return}}
+
+/* ---------- molecules ---------- */
+const SUB='₀₁₂₃₄₅₆₇₈₉';const DISP={ClNa:'NaCl',ClH:'HCl',H3N:'NH3',HNaO:'NaOH',O2S:'SO2',HO:'OH',H2N:'NH2',HN:'NH',H2S:'H2S',ClFe:'FeCl',CHN:'HCN',ClNaO:'NaClO'};const subs=s=>(DISP[s]||s).replace(/\d/g,d=>SUB[d]);
+const NAME={H2:'Hydrogen',O2:'Oxygen',N2:'Nitrogen',H2O:'Water',CO2:'Carbon dioxide',CO:'Carbon monoxide',CH4:'Methane',H3N:'Ammonia',Cl2:'Chlorine',ClH:'Hydrogen chloride',ClNa:'Salt',H2O2:'Hydrogen peroxide',O3:'Ozone',C2H6:'Ethane',C2H4:'Ethylene',C2H2:'Acetylene',CH4O:'Methanol',C2H6O:'Ethanol',CH2O:'Formaldehyde',CHN:'Hydrogen cyanide',NO:'Nitric oxide',NO2:'Nitrogen dioxide',N2O:'Laughing gas',H2S:'Hydrogen sulfide',O2S:'Sulfur dioxide',FeO:'Rust (iron oxide)',Fe2O3:'Rust (iron oxide)',He:'Helium',Ar:'Argon',H:'Hydrogen atom',O:'Oxygen atom',N:'Nitrogen atom',C:'Carbon atom',HO:'Hydroxyl radical',CH3:'Methyl radical',H2N:'Amino radical',C3H8:'Propane',C6H6:'Benzene',CH5N:'Methylamine',C2H5NO2:'Glycine (an amino acid)',CH4N2O:'Urea',Fe:'Iron',Na:'Sodium',Cl:'Chlorine atom',HNO3:'Nitric acid',H2N2:'Diazene',H4N2:'Hydrazine',CH3Cl:'Chloromethane',NaOH:'Lye',HNaO:'Lye (sodium hydroxide)'};
+function formulaOf(ats){const c={};for(const a of ats)c[a.e]=(c[a.e]||0)+1;const ks=Object.keys(c).sort((x,y)=>c.C?(x==='C'?-1:y==='C'?1:x==='H'?-1:y==='H'?1:x<y?-1:1):(x<y?-1:1));return ks.map(k=>k+(c[k]>1?c[k]:'')).join('')}
+function molName(f,n){return NAME[f]||(n>=12?'Big molecule':n>=6?'Organic molecule':'Molecule')}
+function findMols(){for(const a of A)a.mol=-1;MOLS=[];for(const a of A){if(a.mol>=0)continue;const id=MOLS.length,st=[a],ats=[];a.mol=id;while(st.length){const x=st.pop();ats.push(x);for(const bd of x.bonds){const y=bd.a===x?bd.b:bd.a;if(y.mol<0){y.mol=id;st.push(y)}}}
+    let cx=0,cy=0,ke=0;for(const x of ats){cx+=x.x;cy+=x.y;ke+=x.kav}const f=formulaOf(ats);MOLS.push({id,ats,f,name:molName(f,ats.length),cx:cx/ats.length,cy:cy/ats.length,T:ke/ats.length/KB})}}
+const molCount=f=>MOLS.filter(m=>m.f===f).length;
+function molPhase(m){let ep=0,nb=0,ke=0;for(const a of m.ats){const e=EL[a.e].eps;if(e>ep)ep=e;if(a.nbc>nb)nb=a.nbc;ke+=a.kav}const T=0.4*ke/m.ats.length/KB+0.6*(S.tK||300),Tm=ep*3700,Tb=ep*5400;
+  if(nb<2)return nb>=1&&T<Tb*0.8?'liquid':'gas';return T<Tm?'solid':T<Tb?'liquid':'gas'}
+function phaseOf(a){const m=MOLS[a.mol];return m?(m.ph||(m.ph=molPhase(m))):'gas'}
+function computeStats(){findMols();let s=0,l=0,g=0;for(const a of A){const p=phaseOf(a);if(p==='solid')s++;else if(p==='liquid')l++;else g++}const n=A.length||1;
+  const P=impT>0?imp/impT/(2*(BW+BH))*1160:0;imp=0;impT=0;STAT.P=STAT.P*0.6+P*0.4;Object.assign(STAT,{T:S.tK||0,n:A.length,mols:MOLS.length,solid:s/n,liquid:l/n,gas:g/n,react:REACT})}
+function sampleHist(force){const last=HIST[HIST.length-1];if(!force&&last&&S.t-last.t<Math.max(0.2,S.speed*0.5))return;HIST.push({t:S.t,T:STAT.T,P:STAT.P,m:STAT.mols});if(HIST.length>240)HIST.shift()}
+
+/* ---------- player actions ---------- */
+const inR=(wx,wy,r)=>A.filter(a=>(a.x-wx)**2+(a.y-wy)**2<=r*r);
+function spark(wx,wy,r,E){for(const a of inR(wx,wy,r)){kick(a,E*0.4*(0.5+Math.random()));if(Math.random()<0.4&&a.bonds.length){const bd=a.bonds[0];lowerBond(bd);BROKEN++}}
+  for(let k=0;k<40;k++){const t=Math.random()*Math.PI*2,s=rr(4,22);PARTS.push({x:wx,y:wy,vx:Math.cos(t)*s,vy:Math.sin(t)*s,life:rr(.3,.8),c:pick(['#fff3c0','#ffd27a','#ff9a4a'])})}FX.push({x:wx,y:wy,r:r,age:0,c:'255,220,140'});SPARKS++;chEv('spark',{})}
+function photolysis(wx,wy,r,p){let n=0;for(const a of (r?inR(wx,wy,r):A)){if(!a.bonds.length||Math.random()>p)continue;const bd=a.bonds[Math.floor(Math.random()*a.bonds.length)];const E=unitE(bd.a.e,bd.b.e,bd.o);lowerBond(bd);kick(bd.a,0.2);kick(bd.b,0.2);n++;BROKEN++}return n}
+function doEvent(ev){EVN++;chEv('event',{ev});
+  if(ev==='normal'){if(ENV.uv||ENV.lightning||ENV.shake||ENV.boil||ENV.freeze)EVSTOP++;ENV.uv=ENV.lightning=ENV.shake=false;if(ENV.boil||ENV.freeze){ENV.tw=300;ENV.boil=ENV.freeze=false}toast('All events stopped');syncUI();return}
+  const tog=['uv','lightning','shake','boil','freeze'];
+  if(tog.includes(ev)&&ENV[ev]){ENV[ev]=false;EVSTOP++;chEv('stop',{ev});if(ev==='boil'||ev==='freeze')ENV.tw=300;toast('Stopped');syncUI();return}
+  if(ev==='spark'){const a=A.length?pick(A):null;spark(a?a.x:BW/2,a?a.y:BH/2,6,3);toast('💥 Spark!')}
+  else if(ev==='vacuum'){const g=new Set(A.filter(a=>phaseOf(a)==='gas'&&Math.random()<0.5));const ids=new Set();for(const a of g)ids.add(a.mol);const rm=new Set(A.filter(a=>ids.has(a.mol)));removeAtoms(rm);toast(`🕳 Pumped out ${rm.size} atoms of gas`)}
+  else{ENV[ev]=true;if(ev==='boil'){ENV.freeze=false;ENV.tw=520;ENV.therm=true}if(ev==='freeze'){ENV.boil=false;ENV.tw=20;ENV.therm=true}
+    toast({uv:'☀ Ultraviolet light: photons split molecules apart',lightning:'⚡ Lightning crackles through the box',shake:'〰 The box is shaking',boil:'🔥 Heating to 520 K',freeze:'❄ Chilling to 20 K'}[ev])}
+  syncUI()}
+function syncUI(){$('tempS').value=ENV.tw;$('tempV').textContent=Math.round(ENV.tw)+' K';$('volS').value=Math.round(ENV.vol*100);$('volV').textContent=Math.round(ENV.vol*100)+'%';$('gravS').value=Math.round(ENV.grav*100/1.2);$('gravV').textContent=Math.round(ENV.grav*100/1.2)+'%';
+  $('thermBtn').setAttribute('aria-pressed',ENV.therm);$('thermBtn').textContent=ENV.therm?'On':'Off';
+  const lab={uv:'☀ UV light',lightning:'⚡ Lightning',shake:'〰 Shake',boil:'🔥 Boil',freeze:'❄ Deep freeze'};document.querySelectorAll('[data-ev]').forEach(b=>{const ev=b.dataset.ev;if(!(ev in lab))return;b.setAttribute('aria-pressed',!!ENV[ev]);b.textContent=ENV[ev]?'■ Stop '+lab[ev].slice(2).toLowerCase():lab[ev]});
+  document.querySelectorAll('#ptab button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.el===ENV.el));const pn=$('ptabNote');if(pn)pn.textContent=`Atoms tool: ${EL[ENV.el].n} (${ENV.el}). Type any of the 118 elements in the search bar.`}
+$('tempS').oninput=e=>{ENV.tw=+e.target.value;ENV.boil=ENV.freeze=false;$('tempV').textContent=ENV.tw+' K';SLIDED++;chEv('slider',{k:'t'})};
+$('volS').oninput=e=>{ENV.vol=+e.target.value/100;$('volV').textContent=e.target.value+'%';SLIDED++;chEv('slider',{k:'v'})};
+$('gravS').oninput=e=>{ENV.grav=+e.target.value/100*1.2;$('gravV').textContent=e.target.value+'%';SLIDED++;chEv('slider',{k:'g'})};
+$('thermBtn').onclick=()=>{ENV.therm=!ENV.therm;syncUI()};
+$('lblBtn').onclick=()=>{LBL=!LBL;$('lblBtn').setAttribute('aria-pressed',LBL);$('lblBtn').textContent=LBL?'On':'Off'};
+document.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>doEvent(b.dataset.ev));
+{const P=$('ptab');for(const k of ['H','C','N','O','S','Na','Cl','He','Ar','Fe']){const b=document.createElement('button');b.dataset.el=k;b.textContent=k;b.title=EL[k].n;b.style.color=EL[k].col;b.onclick=()=>{ENV.el=k;ELPICK++;setTool('atom');syncUI()};P.appendChild(b)}}
+let SQUEEZE=0;
+
+/* ---------- rendering ---------- */
+const SPR={};function sprite(e,px){const k=e+'|'+Math.round(px*2)+'|'+DPR;if(SPR[k])return SPR[k];const s=Math.max(4,Math.round(px*2+4)),c=document.createElement('canvas');c.width=c.height=Math.ceil(s*DPR);c.css=s;const g=c.getContext('2d');g.scale(DPR,DPR);const R0=px,o=s/2;
+  const gr=g.createRadialGradient(o-R0*.35,o-R0*.35,R0*.1,o,o,R0);gr.addColorStop(0,'#ffffff');gr.addColorStop(0.25,EL[e].col);gr.addColorStop(1,shade(EL[e].col,0.45));g.fillStyle=gr;g.beginPath();g.arc(o,o,R0,0,7);g.fill();SPR[k]=c;return c}
+function shade(hex,f){const r=parseInt(hex.slice(1,3),16)*f,g=parseInt(hex.slice(3,5),16)*f,b=parseInt(hex.slice(5,7),16)*f;return`rgb(${r|0},${g|0},${b|0})`}
+const hashCol=s=>{let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return`hsl(${h%360},70%,62%)`};
+const tempCol=T=>{const t=clamp(Math.log10(Math.max(5,T))/Math.log10(6000),0,1);const stops=[[0,[90,120,255]],[0.6,[120,220,255]],[0.78,[240,230,120]],[0.9,[255,130,60]],[1,[255,60,90]]];let c=stops[0][1];for(let k=1;k<stops.length;k++)if(t<=stops[k][0]){const [a,ca]=stops[k-1],[b,cb]=stops[k],u=(t-a)/(b-a);c=[ca[0]+(cb[0]-ca[0])*u,ca[1]+(cb[1]-ca[1])*u,ca[2]+(cb[2]-ca[2])*u];break}return`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`};
+function legendFor(v){if(v==='temp')setLegend('Atom temperature','linear-gradient(90deg,#5a78ff,#78dcff,#f0e678,#ff823c,#ff3c5a)',['5 K','300 K','6000 K']);else if(v==='phase')setLegend('State','linear-gradient(90deg,#8fd0ff 0 33%,#4a7cff 33% 66%,#ffb27a 66%)',['solid','liquid','gas']);else setLegend(null)}
+function render(c,now){c.fillStyle='rgb(9,6,14)';c.fillRect(0,0,W,H);const z=cam.z;
+  // the box
+  const X0=sx(0),Y0=sy(0),X1=sx(BW),Y1=sy(BH);const hot=clamp((ENV.tw-300)/2000,0,1),cold=clamp((300-ENV.tw)/280,0,1);
+  c.fillStyle=`rgba(${20+hot*40},${14+cold*10},${30+cold*30},1)`;c.fillRect(X0,Y0,X1-X0,Y1-Y0);
+  c.strokeStyle=ENV.therm?`rgba(${200+hot*55},${170-hot*60+cold*50},${240-hot*120},.9)`:'rgba(160,150,180,.6)';c.lineWidth=3;c.strokeRect(X0,Y0,X1-X0,Y1-Y0);
+  if(ENV.vol<1){c.fillStyle='rgba(200,170,240,.18)';c.fillRect(X1,Y0,sx(BW0)-X1,Y1-Y0);c.fillStyle='rgba(220,200,255,.8)';c.fillRect(X1,Y0,4,Y1-Y0)}
+  if(ENV.uv){c.fillStyle='rgba(170,120,255,.07)';c.fillRect(X0,Y0,X1-X0,Y1-Y0)}
+  const view=S.view,big=z>=7;
+  // bonds
+  c.lineCap='round';for(const bd of BONDS){const a=bd.a,b=bd.b,ax=sx(a.x),ay=sy(a.y),bx=sx(b.x),by=sy(b.y);if((ax<-20&&bx<-20)||(ax>W+20&&bx>W+20))continue;
+    c.strokeStyle=view==='mol'?'rgba(255,255,255,.5)':'rgba(220,214,235,.75)';const w=Math.max(1.2,z*0.18);c.lineWidth=w;
+    if(bd.o===1||!big){c.beginPath();c.moveTo(ax,ay);c.lineTo(bx,by);c.stroke()}else{const dx=by-ay,dy=ax-bx,L=Math.hypot(dx,dy)||1,o=w*1.4;for(let k=0;k<bd.o;k++){const f=(k-(bd.o-1)/2)*o;c.beginPath();c.moveTo(ax+dx/L*f,ay+dy/L*f);c.lineTo(bx+dx/L*f,by+dy/L*f);c.stroke()}}}
+  // atoms
+  for(const a of A){const X=sx(a.x),Y=sy(a.y),R0=EL[a.e].r*z*0.92;if(X<-R0||X>W+R0||Y<-R0||Y>H+R0)continue;
+    if(view==='normal'){const sp=sprite(a.e,R0);c.drawImage(sp,X-sp.css/2,Y-sp.css/2,sp.css,sp.css)}
+    else{c.fillStyle=view==='temp'?tempCol(a.kav/KB):view==='mol'?(a.mol>=0&&MOLS[a.mol]?hashCol(MOLS[a.mol].f):'#888'):({solid:'#8fd0ff',liquid:'#4a7cff',gas:'#ffb27a'})[phaseOf(a)];c.beginPath();c.arc(X,Y,Math.max(1.2,R0),0,7);c.fill()}
+    if(free(a)>0&&EL[a.e].val>0&&big&&view==='normal'){c.strokeStyle='rgba(255,240,150,.55)';c.lineWidth=1;c.beginPath();c.arc(X,Y,R0+2,0,7);c.stroke()}
+    if(big&&z>=14&&view==='normal'){c.fillStyle='rgba(0,0,0,.55)';c.font=`600 ${Math.round(R0*0.8)}px "IBM Plex Sans",sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(a.e,X,Y+1);c.textBaseline='alphabetic'}}
+  // labels for molecules
+  if(LBL&&z>=5){c.font='600 11px "IBM Plex Mono",monospace';c.textAlign='center';for(const m of MOLS){if(m.ats.length<2)continue;const X=sx(m.cx),Y=sy(m.cy)-EL[m.ats[0].e].r*z-6;if(X<0||X>W||Y<0||Y>H)continue;c.fillStyle='rgba(255,255,255,.75)';c.fillText(subs(m.f),X,Y)}}
+  // selection
+  if(S.sel&&S.sel.a){const m=MOLS[S.sel.a.mol];const ats=m?m.ats:[S.sel.a];c.strokeStyle='#ffc35a';c.lineWidth=2;for(const a of ats){c.beginPath();c.arc(sx(a.x),sy(a.y),EL[a.e].r*z+4,0,7);c.stroke()}}
+  if(GRABBED&&GRAB){c.strokeStyle='rgba(255,255,255,.7)';c.setLineDash([4,4]);c.beginPath();c.moveTo(sx(GRABBED.x),sy(GRABBED.y));c.lineTo(sx(GRAB[0]),sy(GRAB[1]));c.stroke();c.setLineDash([])}
+  for(const f of FX){const al=Math.max(0,1-f.age*2);c.fillStyle=`rgba(${f.c},${al*0.35})`;c.beginPath();c.arc(sx(f.x),sy(f.y),f.r*z*(0.5+f.age*2),0,7);c.fill()}
+  for(const p of PARTS){c.globalAlpha=Math.min(1,p.life*2);c.fillStyle=p.c;c.fillRect(sx(p.x)-1.5,sy(p.y)-1.5,3,3)}c.globalAlpha=1;
+  if(HOVER&&TB[S.tool]){c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1;c.beginPath();c.arc(sx(HOVER[0]),sy(HOVER[1]),brushR()*z,0,7);c.stroke()}}
+
+/* ---------- tools ---------- */
+const TB={atom:1,heat:1,cool:1,erase:1,light:1,zap:1};let HOVER=null,GRAB=null,lastAdd=0;const brushR=()=>S.brush*0.8+0.5;
+const SIM={id:'catalyst',name:'Catalyst',world:{w:BW0,h:BH,wrapX:false,maxZ:60,followZ:16},home:'combust',freeScen:'air',tutScen:'air',defSpeed:1,homeSpeed:1,inspectTab:'insp',canFollow:true,
+  speeds:[['slow',0.5],['normal',2],['fast',5],['faster',12]],
+  fmtRate:v=>`${v} picosecond${v===1?'':'s'} / s`,
+  dateTxt:()=>`${fmtN(S.t,S.t<100?1:0)} ps`,
+  dateSub:()=>`${Math.round(STAT.T)} K · ${STAT.P<10?STAT.P.toFixed(1):Math.round(STAT.P)} atm`,
+  stepSize:()=>DT*4,
+  tools:[['',[['select','👆','Inspect'],['grab','✋','Grab','Drag an atom to pull it around. Pull hard enough and its bonds snap.']]],
+    ['Add',[['atom','⚛️','Atoms','Paint atoms of the chosen element (pick it in the Lab tab, or type it in the search bar).',1],['erase','🧽','Remove','Paint to remove atoms.',1]]],
+    ['Energy',[['heat','🔥','Heat','Paint to make atoms move faster.',1],['cool','🧊','Cool','Paint to slow atoms down.',1],['spark','💥','Spark','Click to set off a spark that breaks bonds and starts reactions.'],['light','☀️','Light','Paint ultraviolet light: photons split molecules apart.',1],['zap','⚡','Electrolysis','Paint an electric current that splits water into hydrogen and oxygen.',1]]]],
+  scens:SCENLIST,
+  load(id){clearBox();(SCENS[id]||SCENS.air)();FEON=A.some(a=>a.e==='Fe');const th=ENV.therm,lt=ENV.lightning;ENV.therm=false;ENV.lightning=false;for(let k=0;k<160;k++){substep();for(const a of A){a.vx*=0.6;a.vy*=0.6}}ENV.therm=th;ENV.lightning=lt;for(const a of A){const m=a.mol;}{const seen=new Set();for(const a of A){if(seen.has(a))continue;const st=[a],g=[];seen.add(a);while(st.length){const x=st.pop();g.push(x);for(const bd of x.bonds){const y=bd.a===x?bd.b:bd.a;if(!seen.has(y)){seen.add(y);st.push(y)}}}const M=g.reduce((s,x)=>s+EL[x.e].m,0),sp=Math.sqrt(KB*ENV.tw/(M*CK))*Math.sqrt(-2*Math.log(Math.random()+1e-9)),t=Math.random()*Math.PI*2;for(const x of g){x.vx=Math.cos(t)*sp+rr(-.3,.3);x.vy=Math.sin(t)*sp+rr(-.3,.3)}}}{const th=ENV.therm,lt=ENV.lightning;ENV.therm=true;ENV.lightning=false;for(let k=0;k<200;k++)substep();ENV.therm=th;ENV.lightning=lt}REACT=0;FORMED=0;BROKEN=0;for(const a of A)a.kav=KB*ENV.tw;S.tK=ENV.tw;computeStats();HIST=[];sampleHist(true);syncUI();legendFor(S.view)},
+  step(d){const n=Math.max(1,Math.round(d/DT));for(let k=0;k<n;k++){const tw=BW0*ENV.vol;if(Math.abs(BW-tw)>1e-3){const nb=BW+clamp(tw-BW,-0.02,0.02);SQUEEZE=BW>nb?(BW-nb)/DT*0.5:0;BW=nb}else SQUEEZE=0;
+      if(ENV.shake&&Math.random()<0.15){for(const a of A){a.vx+=rr(-1,1)*3;a.vy+=rr(-1,1)*3}}substep()}
+    if(ENV.uv)photolysis(0,0,0,0.0008*n);if(ENV.lightning&&Math.random()<0.012*n){const a=A.length?pick(A):null;if(a){spark(a.x,a.y,4,2.5);FX.push({x:a.x,y:0,r:3,age:0,c:'200,200,255'})}}},
+  frame(dt){for(const p of PARTS){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt}PARTS=PARTS.filter(p=>p.life>0);for(const f of FX)f.age+=dt;FX=FX.filter(f=>f.age<0.5)},
+  render,
+  stats:()=>[['Atoms',STAT.n],['Molecules',STAT.mols],['Temperature',Math.round(STAT.T)+' K'],['Pressure',(STAT.P<10?STAT.P.toFixed(1):Math.round(STAT.P))+' atm']],
+  hud(){computeStats();sampleHist();renderMols();renderInspect()},
+  pick(wx,wy){let best=null,bd=1e9;for(const a of A){const d=(a.x-wx)**2+(a.y-wy)**2;if(d<bd){bd=d;best=a}}return best&&bd<4?{a:best}:null},
+  selPos:s=>s.a&&A.includes(s.a)?[s.a.x,s.a.y]:null,
+  pointer(type,wx,wy){const t=S.tool;HOVER=[wx,wy];
+    if(t==='grab'){if(type==='down'){const p=this.pick(wx,wy);GRABBED=p?p.a:null;GRAB=[wx,wy];if(GRABBED){S.sel={a:GRABBED};chEv('grab',{})}}else if(type==='drag')GRAB=[wx,wy];else{GRABBED=null;GRAB=null}return}
+    if(type==='up')return;
+    if(t==='spark'&&type==='down'){spark(wx,wy,3,3);return}
+    if(!TB[t])return;const now=performance.now();if(type==='drag'&&now-lastAdd<45)return;lastAdd=now;const r=brushR();
+    if(t==='atom'){const n=Math.max(1,Math.round(r*r*0.25));for(let k=0;k<n;k++){const a=Math.random()*Math.PI*2,d=Math.sqrt(Math.random())*r;if(addAtom(ENV.el,wx+Math.cos(a)*d,wy+Math.sin(a)*d))ADDED++}if(ENV.el==='Fe')FEON=true;chEv('add',{e:ENV.el});if(A.length>=MAXA)toast('The box is full')}
+    else if(t==='erase'){const s=new Set(inR(wx,wy,r));if(s.size){removeAtoms(s);ERASED+=s.size}}
+    else if(t==='heat'){for(const a of inR(wx,wy,r)){a.vx*=1.18;a.vy*=1.18;kick(a,0.02)}HEATS++}
+    else if(t==='cool'){for(const a of inR(wx,wy,r)){a.vx*=0.8;a.vy*=0.8}HEATS++}
+    else if(t==='light'){const n=photolysis(wx,wy,r,0.12);LIGHTS++;chEv('light',{n});FX.push({x:wx,y:wy,r,age:0,c:'190,140,255'})}
+    else if(t==='zap'){let n=0;for(const a of inR(wx,wy,r))if(a.e==='O'){for(const bd of [...a.bonds]){const o=bd.a===a?bd.b:bd.a;if(o.e==='H'&&Math.random()<0.5){lowerBond(bd);n++}}}ZAPS++;if(n)chEv('zap',{n});FX.push({x:wx,y:wy,r,age:0,c:'150,200,255'})}},
+  hover(wx,wy){HOVER=[wx,wy]},
+  viewChanged:v=>legendFor(v),
+  find(q){const out=[],add=(label,sub,go)=>out.push({label,sub,go}),cnt={};for(const m of MOLS)cnt[m.f]=(cnt[m.f]||0)+1;
+    for(const [f,n] of Object.entries(cnt)){const nm=molName(f,0);if(f.toLowerCase().includes(q)||nm.toLowerCase().includes(q))add(`${nm} (${subs(f)})`,`${n} in the box · find one`,()=>{const m=MOLS.find(x=>x.f===f);if(m){S.sel={a:m.ats[0]};flyToW(m.cx,m.cy,12);showTab('insp')}})}
+    for(const [k,t] of Object.entries(TPL)){const nm=NAME[k]||k;if(k.toLowerCase().includes(q)||nm.toLowerCase().includes(q))add(`Add ${nm} (${subs(k)})`,'drops 10 into the box',()=>{for(let i=0;i<10;i++)addMol(k,rr(3,BW-3),rr(3,BH-3));ADDED+=10;chEv('addmol',{k});toast(`Added 10 × ${nm}`)})}
+    for(const k of ELK)if(k.toLowerCase()===q||EL[k].n.toLowerCase().includes(q)||String(EL[k].z)===q)add(`${EL[k].n} (${k}) · element ${EL[k].z||''}`,`${EL[k].val} bond${EL[k].val===1?'':'s'} · pick for the Atoms tool, or drop 20 in`,()=>{ENV.el=k;ELPICK++;setTool('atom');for(let i=0;i<20;i++)if(addAtom(k,rr(3,BW-3),rr(3,BH-3)))ADDED++;if(k==='Fe')FEON=true;chEv('add',{e:k});syncUI();toast(`Added 20 ${EL[k].n} atoms · paint more with the Atoms tool`)});
+    for(const [ev,lab] of [['spark','💥 Spark'],['freeze','❄ Deep freeze'],['boil','🔥 Boil'],['uv','☀ UV light'],['lightning','⚡ Lightning'],['shake','〰 Shake'],['vacuum','🕳 Pump out gas']])if(lab.toLowerCase().includes(q)||ev.includes(q))add(lab,'event',()=>doEvent(ev));
+    for(const s of SCENLIST)if(s.name.toLowerCase().includes(q))add('Experiment: '+s.name,s.desc,()=>{loadScen(s.id);toast(s.name)});return out},
+  tabShown(id){if(id==='mols')renderMols(true)},
+  selChanged(){renderInspect()},
+};
+/* ---------- panels ---------- */
+function kv(rows){return rows.map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
+function renderMols(force){if($('pane-mols').hidden&&!force)return;
+  $('mStats').innerHTML=kv([['Atoms',STAT.n],['Molecules',STAT.mols],['Temperature',Math.round(STAT.T)+' K ('+Math.round(STAT.T-273)+' °C)'],['Pressure',(STAT.P<10?STAT.P.toFixed(2):Math.round(STAT.P))+' atm'],['Solid',Math.round(STAT.solid*100)+'%'],['Liquid',Math.round(STAT.liquid*100)+'%'],['Gas',Math.round(STAT.gas*100)+'%'],['Reactions',fmtN(REACT)]]);
+  const g=$('graph'),gc=g.getContext('2d'),w=g.width=g.clientWidth*DPR,hh=g.height=g.clientHeight*DPR;gc.clearRect(0,0,w,hh);
+  if(HIST.length>1){const t0=HIST[0].t,t1=HIST[HIST.length-1].t,X=t=>8+(w-16)*(t-t0)/Math.max(1e-6,t1-t0);const line=(f,lo,hi,col)=>{gc.strokeStyle=col;gc.lineWidth=2*DPR;gc.beginPath();HIST.forEach((p,k)=>{const y=hh-8-(hh-16)*clamp((f(p)-lo)/(hi-lo),0,1);k?gc.lineTo(X(p.t),y):gc.moveTo(X(p.t),y)});gc.stroke()};
+    const mx=Math.max(400,...HIST.map(p=>p.T)),mp=Math.max(2,...HIST.map(p=>p.P)),mm=Math.max(10,...HIST.map(p=>p.m));line(p=>p.T,0,mx,'#ff8a5c');line(p=>p.P,0,mp,'#60d6e6');line(p=>p.m,0,mm,'#c48bff')}
+  $('gKey').innerHTML='<span style="color:#ff8a5c">■ temperature</span> · <span style="color:#60d6e6">■ pressure</span> · <span style="color:#c48bff">■ molecules</span>';
+  const cnt={};for(const m of MOLS)cnt[m.f]=(cnt[m.f]||0)+1;const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,24);const L=$('mlist');L.textContent='';
+  for(const [f,n] of rows){const r=document.createElement('button');r.className='sprow';r.innerHTML='<i></i><span></span><b></b>';r.children[0].style.background=hashCol(f);r.children[1].textContent=`${molName(f,0)} · ${subs(f)}`;r.children[2].textContent=n;r.onclick=()=>{const m=MOLS.find(x=>x.f===f);if(m){S.sel={a:m.ats[0]};flyToW(m.cx,m.cy,12);showTab('insp')}};L.appendChild(r)}
+  $('rlog').innerHTML=RLOG.length?RLOG.map(r=>`<div>${r.txt}</div>`).join(''):'<p class="note">No reactions yet. Try a spark.</p>'}
+let INSPK='';
+function renderInspect(){const b=S.sel;$('inspEmpty').hidden=!!b;$('inspBody').hidden=!b;if(!b)return;const a=b.a;if(!A.includes(a)){S.sel=null;return}const m=MOLS[a.mol];if(!m)return;const body=$('inspBody');
+  const key=m.f+'|'+m.ats.length;if(INSPK!==key){INSPK=key;body.innerHTML=`<h2 class="ititle" id="iT"></h2><div class="isub" id="iS"></div><div class="kv" id="iK"></div><div class="actions"><button class="btn" id="mBreak">Break apart</button><button class="btn" id="mHeat">Heat it</button><button class="btn" id="mCool">Freeze it</button><button class="btn" id="mDup">Copy ×5</button></div><p class="note" id="iN"></p>`;
+    $('mBreak').onclick=()=>{const M=MOLS[S.sel.a.mol];if(!M)return;for(const x of M.ats)for(const bd of [...x.bonds])removeBond(bd);for(const x of M.ats)kick(x,0.3);BROKEN++;chEv('breakapart',{});toast('Torn into atoms')};
+    $('mHeat').onclick=()=>{const M=MOLS[S.sel.a.mol];if(M)for(const x of M.ats)kick(x,0.5)};$('mCool').onclick=()=>{const M=MOLS[S.sel.a.mol];if(M)for(const x of M.ats){x.vx*=0.05;x.vy*=0.05}};
+    $('mDup').onclick=()=>{const M=MOLS[S.sel.a.mol];if(!M)return;const f=M.f;if(TPL[f]){for(let i=0;i<5;i++)addMol(f,rr(3,BW-3),rr(3,BH-3));ADDED+=5;toast('Copied')}else toast('Only simple molecules can be copied')}}
+  $('iT').textContent=m.name;$('iS').textContent=`${subs(m.f)} · ${m.ats.length} atom${m.ats.length>1?'s':''} · ${phaseOf(a)}`;
+  const nb=new Set();for(const x of m.ats)for(const bd of x.bonds)nb.add(bd);let be=0;for(const bd of nb)be+=bondE(bd.a.e,bd.b.e,bd.o);const fr=m.ats.reduce((s,x)=>s+Math.max(0,free(x)),0);
+  $('iK').innerHTML=kv([['Bonds',nb.size],['Bond energy',be.toFixed(1)+' eV'],['Temperature',Math.round(m.T)+' K'],['Free bonds',fr?fr+' (reactive!)':'none (stable)'],['Clicked atom',`${EL[a.e].n}`],['Its bonds',`${a.used} of ${EL[a.e].val}`]]);
+  $('iN').textContent=fr?'Atoms with free bonds (glowing ring) are radicals: they grab other atoms when they collide.':'All of its atoms have their bonds filled, so it only reacts if something hits it hard enough.'}

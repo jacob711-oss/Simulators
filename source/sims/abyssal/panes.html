@@ -1,0 +1,29 @@
+<div class="pane" id="pane-world">
+    <div class="sl"><div class="row"><span class="k">Water temperature</span><span id="tempV">+0 °C</span></div><input type="range" id="tempS" min="-6" max="8" step="0.25" value="0"></div>
+    <div class="sl"><div class="row"><span class="k">Carbon dioxide (acidity)</span><span id="co2V">420 ppm</span></div><input type="range" id="co2S" min="280" max="1200" step="10" value="420"></div>
+    <div class="sl"><div class="row"><span class="k">River nutrients</span><span id="nutV">100%</span></div><input type="range" id="nutS" min="0" max="500" step="10" value="100"></div>
+    <div class="sl"><div class="row"><span class="k">Fishing boats</span><span id="boatV">0</span></div><input type="range" id="boatS" min="0" max="8" step="1" value="0"></div>
+    <span class="k">Events · press again to stop</span>
+    <div class="evs">
+      <button class="btn" data-ev="heatwave">☀ Marine heatwave</button><button class="btn" data-ev="oil">🛢 Oil spill</button>
+      <button class="btn" data-ev="plastic">🧴 Plastic patch</button><button class="btn" data-ev="bloom">🟢 Algae bloom</button>
+      <button class="btn" data-ev="upwell">⬆ Upwelling</button><button class="btn" data-ev="migrate">🐋 Whale migration</button>
+      <button class="btn" data-ev="storm">🌊 Storm</button><button class="btn" data-ev="normal">↺ Stop all events</button>
+    </div>
+    <span class="k">Views</span>
+    <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Natural</button><button class="btn" data-view="plankton" aria-pressed="false">Plankton</button><button class="btn" data-view="oxygen" aria-pressed="false">Oxygen</button><button class="btn" data-view="temp" aria-pressed="false">Temperature</button><button class="btn" data-view="nutrients" aria-pressed="false">Nutrients</button></div>
+    <div class="row"><span class="k">Labels</span><button class="btn" id="lblBtn" aria-pressed="true">On</button></div>
+    <p class="note">Sunlight only reaches the top 200 m. There, tiny plankton grow on nutrients and feed the whole ocean. Dead things sink as “marine snow” to feed the deep, and rot uses up oxygen: too many nutrients can make a dead zone.</p>
+  </div>
+  <div class="pane" id="pane-life" hidden>
+    <div id="endBox" class="endbox" hidden></div>
+    <div class="kv" id="lStats"></div>
+    <span class="k">Population over time</span>
+    <canvas id="graph"></canvas>
+    <div class="pop" id="plist"></div>
+    <p class="note">Click a species to find one.</p>
+  </div>
+  <div class="pane" id="pane-insp" hidden>
+    <div id="inspEmpty"><p class="note">Click a creature, a coral or the water to inspect it. Double-click a creature to follow it.</p></div>
+    <div id="inspBody" class="hview" hidden></div>
+  </div>

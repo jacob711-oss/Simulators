@@ -1,0 +1,10 @@
+{"id":"flux","icon":"⚡","name":"Flux","tag":"Place charges and magnets, and watch the fields bend particles through space","url":"https://jacob711-oss.github.io/Simulators/flux/","color":"#5ae0ff",
+ "title":"Flux",
+ "theme":"--voidRGB:4,6,14;--deepRGB:8,12,24;--accRGB:90,224,255;--lineRGB:150,190,255;--panel:rgba(8,12,24,.88);--ink:#eef4ff;--ink2:#cfdcf2;--dim:#8a9ab8;",
+ "tabs":[["world","Field"],["stats","Particles"],["insp","Inspect"]],
+ "js":["sim.js","content.js"],
+ "text":{"NAME_A":"Flu","NAME_B":"x","SUB":"An electromagnetism sandbox","TAG":"Place positive and negative charges, paint magnetic fields and fire particle beams. See the invisible forces that hold atoms together",
+  "FREE":"An empty lab: every charge, emitter and magnet, no goals",
+  "WATCH":"A tour of the fields: dipoles, beams bent by magnets and electrons orbiting a nucleus",
+  "FOOT":"Like charges push apart, opposite charges pull together. Moving charges curve in a magnetic field.",
+  "FIND":"Find a charge, emitter or tool…","SCEN_LABEL":"Labs","SCEN_ONE":"lab","DATE_K":"Time","HINT":"Click to place · right-drag to look around","CANVAS_LABEL":"The field lab"}}

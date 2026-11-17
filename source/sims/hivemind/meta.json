@@ -1,0 +1,10 @@
+{"id":"hivemind","icon":"🐜","name":"Hivemind","tag":"Ant colonies that find food by following each other's scent trails","url":"https://jacob711-oss.github.io/Simulators/hivemind/","color":"#ff9a3d",
+ "title":"Hivemind",
+ "theme":"--voidRGB:12,9,5;--deepRGB:20,14,8;--accRGB:255,154,61;--lineRGB:230,190,140;--panel:rgba(22,15,9,.88);--ink:#f6efe4;--ink2:#e6d8c4;--dim:#ab9a82;",
+ "tabs":[["world","Colony"],["stats","Numbers"],["insp","Inspect"]],
+ "js":["sim.js","content.js"],
+ "text":{"NAME_A":"Hive","NAME_B":"mind","SUB":"An ant colony sandbox","TAG":"No ant knows the plan. Each one just follows scent trails, and together they find food, build highways and wage war",
+  "FREE":"Build any world: food, walls, rival nests and weather, with no goals",
+  "WATCH":"A tour of busy colonies: trails, mazes, rival nests and rainstorms",
+  "FOOT":"Searching ants leave a trail that leads home. Ants carrying food leave a trail that leads to food. Others follow the strongest smell.",
+  "FIND":"Find a colony, ant or tool…","SCEN_LABEL":"Worlds","SCEN_ONE":"world","DATE_K":"Day","HINT":"Drag to paint · right-drag to look around","CANVAS_LABEL":"The ant world"}}

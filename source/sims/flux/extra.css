@@ -1,0 +1,1 @@
+.inv{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.inv div{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13px}.inv b{font-family:var(--f-mono);float:right;color:var(--flare)}

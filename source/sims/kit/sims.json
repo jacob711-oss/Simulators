@@ -1,0 +1,106 @@
+[
+ {
+  "id": "barycenter",
+  "icon": "🪐",
+  "name": "Barycenter",
+  "tag": "Gravity, planets, stars and black holes",
+  "url": "https://jacob711-oss.github.io/Simulators/barycenter/",
+  "color": "#e8b04a"
+ },
+ {
+  "id": "biosphere",
+  "icon": "🌿",
+  "name": "Biosphere",
+  "tag": "A living world of animals, plants and people",
+  "url": "https://jacob711-oss.github.io/Simulators/life/",
+  "color": "#7fe0a8"
+ },
+ {
+  "id": "lithosphere",
+  "icon": "🌋",
+  "name": "Lithosphere",
+  "tag": "Drift continents, raise mountains and set off volcanoes",
+  "url": "https://jacob711-oss.github.io/Simulators/lithosphere/",
+  "color": "#ff8a5c"
+ },
+ {
+  "id": "troposphere",
+  "icon": "🌀",
+  "name": "Troposphere",
+  "tag": "Steer winds, brew hurricanes and change the climate",
+  "url": "https://jacob711-oss.github.io/Simulators/troposphere/",
+  "color": "#60d6e6"
+ },
+ {
+  "id": "catalyst",
+  "icon": "⚛️",
+  "name": "Catalyst",
+  "tag": "Mix atoms, spark reactions and build molecules",
+  "url": "https://jacob711-oss.github.io/Simulators/catalyst/",
+  "color": "#c48bff"
+ },
+ {
+  "id": "abyssal",
+  "icon": "🐋",
+  "name": "Abyssal",
+  "tag": "Dive into a living ocean, from coral reefs to the deep sea",
+  "url": "https://jacob711-oss.github.io/Simulators/abyssal/",
+  "color": "#4fa3ff"
+ },
+ {
+  "id": "interchange",
+  "icon": "🚉",
+  "name": "Interchange",
+  "tag": "Draw the transit lines of a growing city and keep everyone moving",
+  "url": "https://jacob711-oss.github.io/Simulators/interchange/",
+  "color": "#ff5ab4"
+ },
+ {
+  "id": "gridlock",
+  "icon": "🚗",
+  "name": "Gridlock",
+  "tag": "Draw the roads of a growing town and keep the traffic flowing",
+  "url": "https://jacob711-oss.github.io/Simulators/gridlock/",
+  "color": "#ffd23a"
+ },
+ {
+  "id": "hivemind",
+  "icon": "🐜",
+  "name": "Hivemind",
+  "tag": "Ant colonies that find food by following each other's scent trails",
+  "url": "https://jacob711-oss.github.io/Simulators/hivemind/",
+  "color": "#ff9a3d"
+ },
+ {
+  "id": "flux",
+  "icon": "⚡",
+  "name": "Flux",
+  "tag": "Place charges and magnets, and watch the fields bend particles through space",
+  "url": "https://jacob711-oss.github.io/Simulators/flux/",
+  "color": "#5ae0ff"
+ },
+ {
+  "id": "seaway",
+  "icon": "🚢",
+  "name": "Seaway",
+  "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving",
+  "url": "https://jacob711-oss.github.io/Simulators/seaway/",
+  "color": "#3ab8e0"
+ },
+ {
+  "id": "contrail",
+  "icon": "✈️",
+  "name": "Contrail",
+  "tag": "Guide planes onto runways, keep them apart and run a busy airport",
+  "url": "https://jacob711-oss.github.io/Simulators/contrail/",
+  "color": "#9fa8ff"
+ },
+ {
+  "id": "quasar",
+  "icon": "✨",
+  "name": "Quasar AI",
+  "tag": "Our AI: chat, make pictures and find videos",
+  "url": "https://jacob711-oss.github.io/Simulators/quasar/",
+  "color": "#9b7bff"
+ }
+]
