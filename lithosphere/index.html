@@ -195,10 +195,13 @@ body.dockHidden .dock,body.dockHidden .zoomb{display:none!important}@media (min-
   .btn{min-height:34px}
   input[type=range]{height:28px}
 }
+/* phones: one-row bars */
+@media (max-width:760px){#lineBar,#toolBar{flex-wrap:nowrap!important;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;justify-content:flex-start!important}#lineBar::-webkit-scrollbar,#toolBar::-webkit-scrollbar{display:none}#lineBar>*,#toolBar>*{flex:0 0 auto}}
 .qlog{display:flex;flex-direction:column;gap:2px;font-size:12px}.qlog div{display:flex;justify-content:space-between;padding:2px 4px;border-radius:4px}.qlog b{font-family:var(--f-mono);font-weight:500}
 .pdir{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 
 </style>
+
 </head>
 <body>
 <canvas id="world" aria-label="The planet: drag to look around, scroll to zoom"></canvas>
@@ -923,7 +926,7 @@ const wxOf=px=>(px-W/2-cam.ox)/cam.z+cam.x,wyOf=py=>(py-H/2)/cam.z+cam.y;
 function freeRect(){let l=0,r=W,t=0,b=H;if(!$('home').hidden)return{l,r,t,b};const vis=e=>e&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().width>0;const hud=document.querySelector('.hud-top'),rail=$('rail'),dock=$('dock');
   if(vis(hud))t=hud.getBoundingClientRect().bottom+8;if(innerWidth>760){if(vis(rail))l=rail.getBoundingClientRect().right+8;if(vis(dock))r=dock.getBoundingClientRect().left-8;b=H-50}else{if(vis(rail))b=rail.getBoundingClientRect().top-8;if(vis(dock)&&document.body.classList.contains('dockOpen'))b=Math.min(b,dock.getBoundingClientRect().top-8)}
   if(r-l<200){l=0;r=W}if(b-t<150){t=0;b=H}return{l,r,t,b}}
-function fitWorld(){const w=SIM.world.w,h=SIM.world.h;if(SIM.world.wrapX){cam.z=Math.max(W/w,H/h);cam.x=w/2;cam.y=h/2;clampCam();return}const f=freeRect(),fw=f.r-f.l,fh=f.b-f.t;cam.z=Math.min(fw/w,fh/h)*0.96;cam.x=w/2-((f.l+f.r)/2-W/2-cam.ox)/cam.z;cam.y=h/2-((f.t+f.b)/2-H/2)/cam.z;clampCam()}
+function fitWorld(){const w=SIM.world.w,h=SIM.world.h;if(SIM.world.wrapX){cam.z=Math.max(W/w,H/h);cam.x=w/2;cam.y=h/2;clampCam();return}const f=freeRect(),fw=f.r-f.l,fh=f.b-f.t;cam.z=Math.min(fw/w,fh/h)*0.96;if(W<760&&fh>fw*1.05)cam.z=Math.min(Math.max(fw/w,fh/h),cam.z*1.7);cam.x=w/2-((f.l+f.r)/2-W/2-cam.ox)/cam.z;cam.y=h/2-((f.t+f.b)/2-H/2)/cam.z;clampCam()}
 function minZoom(){const w=SIM.world.w,h=SIM.world.h;return SIM.world.wrapX?H/h:Math.min(W/w,H/h)*0.5}
 function clampCam(){const h=SIM.world.h,w=SIM.world.w;cam.z=clamp(cam.z,minZoom(),SIM.world.maxZ||40);if(SIM.world.wrapX){const hy=H/2/cam.z;cam.y=clamp(cam.y,Math.min(h/2,hy),Math.max(h/2,h-hy))}else cam.y=clamp(cam.y,-h*0.5,h*1.5);if(SIM.world.wrapX)cam.x=mod(cam.x,w);else cam.x=clamp(cam.x,-w*0.5,w*1.5)}
 function zoomAt(f,px,py){const wx=wxOf(px),wy=wyOf(py);cam.z*=f;clampCam();cam.x+=wx-wxOf(px);cam.y+=wy-wyOf(py);clampCam();bump('zoomed')}
