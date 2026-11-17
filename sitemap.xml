@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://jacob711-oss.github.io/Simulators/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/barycenter/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/life/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/lithosphere/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/troposphere/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/catalyst/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/abyssal/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/interchange/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/gridlock/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/hivemind/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/flux/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/seaway/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/contrail/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://jacob711-oss.github.io/Simulators/quasar/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+</urlset>
