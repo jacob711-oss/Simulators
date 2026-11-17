@@ -1943,7 +1943,7 @@ resize();buildRail();buildSpeeds();buildScen();setSpeed(7);setTool('select');upd
   const strip=s=>s.replace(RE,m=>KEEP.has(m)?m:'').replace(/[️‍]/g,'').replace(/ {2,}/g,' ');
   window.noEmoji=strip;
   // emoji drawn on a square background turn into plain squares as silhouettes: swap them for ones that make good flat icons
-  const SWAP={'🌌':'✨','🚇':'🚈','🌉':'🏗️','🔄':'⇄','🔁':'⟳','🆕':'+','🌁':'🏗️','🌃':'🌙','🌄':'⛰️','🌅':'☀️','🏞️':'⛰️','🎑':'🌙','🖼️':'🎨'};
+  const SWAP={'⚛️':'🧪','⚛':'🧪','☢️':'⚠️','☯️':'⭐','🔆':'☀️','🔅':'☀️','🔃':'⇄','🔀':'⇄','🌌':'✨','🚇':'🚈','🌉':'🏗️','🔄':'⇄','🔁':'⟳','🆕':'+','🌁':'🏗️','🌃':'🌙','🌄':'⛰️','🌅':'☀️','🏞️':'⛰️','🎑':'🌙','🖼️':'🎨'};
   const PLAIN=new Set(['OPTION','TITLE','TEXTAREA','SCRIPT','STYLE','INPUT']);
   // turn one text node into text + flat icon spans
   function flatten(n){const p=n.parentElement;if(!p||p.classList.contains('fi')||p.closest('.fi'))return;
@@ -1960,7 +1960,7 @@ resize();buildRail();buildSpeeds();buildScen();setSpeed(7);setTool('select');upd
   // canvas labels: emoji are left out there (the map draws its own shapes)
   for(const P of [window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype,window.OffscreenCanvasRenderingContext2D&&OffscreenCanvasRenderingContext2D.prototype])if(P)for(const f of ['fillText','strokeText']){const o=P[f];P[f]=function(t,...a){if(typeof t==='string'&&HAS.test(t)){t=strip(t).trim();if(!t)return}return o.call(this,t,...a)}}
   const css=document.createElement('style');
-  css.textContent='.fi{display:inline-block;line-height:1;font-style:normal;filter:grayscale(1) brightness(0) invert(1);opacity:.9;vertical-align:-.08em}.ne-lab{display:none}';
+  css.textContent='.fi{display:inline-block;line-height:1;font-style:normal;filter:brightness(0) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);opacity:.92;vertical-align:-.08em}.ne-lab{display:none}';
   const go=()=>{document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
     new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData'){if(m.target.parentElement&&!m.target.parentElement.classList.contains('fi'))clean(m.target)}else if(m.type==='attributes')clean(m.target);else for(const x of m.addedNodes)clean(x)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})};
   if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
