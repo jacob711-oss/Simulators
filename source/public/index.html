@@ -339,6 +339,15 @@ body.mDemo .rail,body.mDemo .campad,body.mDemo .hint,body.mDemo .insp,body.mDemo
   <label class="fl" id="pSizeL">Size <output id="pSizeO">1.0×</output><input id="pSize" type="range" min="0.2" max="5" step="0.1" value="1"></label>
   <button id="pReset" class="btn ghost" style="align-self:flex-start">Reset</button>
 </div>
+<div id="bhkinds" class="kinds panel" hidden role="group" aria-label="Black hole type">
+  <button class="kind bk" data-bk="primordial"><span class="dot" style="--c:#08060c;--s:4px;box-shadow:0 0 0 2px #c9a8ff,0 0 4px 2px #c9a8ff"></span>Primordial</button>
+  <button class="kind bk" data-bk="stellar" aria-pressed="true"><span class="dot" style="--c:#08060c;--s:8px;box-shadow:0 0 0 2px #b48cff,0 0 6px 3px #b48cff"></span>Stellar</button>
+  <button class="kind bk" data-bk="spinning"><span class="dot" style="--c:#08060c;--s:9px;box-shadow:0 0 0 2px #8fd4ff,0 0 8px 4px #8fd4ff"></span>Spinning (Kerr)</button>
+  <button class="kind bk" data-bk="intermediate"><span class="dot" style="--c:#08060c;--s:12px;box-shadow:0 0 0 2px #b48cff,0 0 8px 4px #b48cff"></span>Intermediate</button>
+  <button class="kind bk" data-bk="supermassive"><span class="dot" style="--c:#08060c;--s:16px;box-shadow:0 0 0 2px #ff9ad8,0 0 10px 5px #ff9ad8"></span>Supermassive</button>
+  <button class="kind bk" data-bk="quasar"><span class="dot" style="--c:#08060c;--s:18px;box-shadow:0 0 0 2px #ffd27a,0 0 14px 7px #ffd27a"></span>Quasar</button>
+  <button class="kind bk" data-bk="ultramassive"><span class="dot" style="--c:#08060c;--s:22px;box-shadow:0 0 0 2px #ff7a7a,0 0 12px 6px #ff7a7a"></span>Ultramassive</button>
+</div>
 <div id="nkinds" class="kinds panel" hidden role="group" aria-label="Nebula type">
   <button class="kind nk" data-nk="emission" aria-pressed="true"><span class="dot" style="--c:#ff6f93;--s:12px;box-shadow:0 0 6px 2px rgba(255,110,150,.6)"></span>Star-forming nebula</button>
   <button class="kind nk" data-nk="dark"><span class="dot" style="--c:#2a2030;--s:12px;box-shadow:0 0 0 1px rgba(200,120,140,.6)"></span>Dark cloud</button>
@@ -648,7 +657,7 @@ const TOOLS={
   moon:{type:'rock',m:0.0123*ME,pal:'moon',anon:true},
   asteroid:{type:'rock',m:1e-10,pal:'asteroid',anon:true},
   comet:{type:'rock',m:1e-16,comet:true},
-  blackhole:{type:'blackhole',m:10}
+  blackhole:{type:'blackhole',m:10,extra:{kindLabel:'Stellar black hole'}}
 };
 
 function rgba(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`}
@@ -682,7 +691,7 @@ function colorFor(b){
   const e=b.m/ME;return pick(e>=10?PAL.giant:e>=0.05?PAL.rocky:PAL.moon);
 }
 function classify(b){
-  if(b.type==='blackhole')return 'Black hole';
+  if(b.type==='blackhole')return b.kindLabel||'Black hole';
   if(b.type==='dwarf')return 'White dwarf';
   if(b.kindLabel)return b.kindLabel;
   if(b.type==='neutron')return 'Neutron star (pulsar)';
@@ -1866,6 +1875,14 @@ const NEBCAT=[
  ['Cassiopeia A','cas a','snr','The youngest known supernova remnant in our galaxy'],
  ['Supernova remnant','snr,supernova remnant','snr','The expanding debris of an exploded star']].map(([n,al,k,about])=>({n,al,k,about}));
 let NEBADD=0,NEWSTARS=0;
+// black hole types, with typical real masses in Suns
+const BHKINDS={primordial:{m:1e-9,lab:'Primordial black hole',why:'Tiny black holes that may have formed in the Big Bang. About the mass of a mountain.'},
+  stellar:{m:10,lab:'Stellar black hole',why:'Left behind when a huge star collapses. About 10 Suns.'},
+  spinning:{m:15,lab:'Spinning (Kerr) black hole',why:'A black hole spinning close to the speed of light, dragging space around with it.'},
+  intermediate:{m:1000,lab:'Intermediate black hole',why:'A rare middle size, about 1,000 Suns, found in dense star clusters.'},
+  supermassive:{m:4.3e6,lab:'Supermassive black hole',why:'Like Sagittarius A* at the centre of our galaxy: 4.3 million Suns.'},
+  quasar:{m:1e9,lab:'Quasar',why:'A supermassive black hole feeding so fast its disk outshines a whole galaxy. About a billion Suns.'},
+  ultramassive:{m:4e10,lab:'Ultramassive black hole',why:'The biggest known, like TON 618: about 40 billion Suns.'}};
 const NEBKINDS={emission:{n:'Star-forming nebula',k:'emission'},dark:{n:'Dark cloud',k:'dark'},cloud:{n:'Gas cloud',k:'cloud'},planetary:{n:'Planetary nebula',k:'planetary'},snr:{n:'Supernova remnant',k:'snr'}};let NEBKIND=NEBKINDS.emission;
 function addNebula(N,opt={}){const R=Math.max(12,cam.dist*(opt.at?0.1:0.13));
   // put it beside what you are looking at, clear of stars and planets, then frame it
@@ -2083,14 +2100,16 @@ const STARKINDS={red:{type:'star',m:0.2},sun:{type:'star',m:1},blue:{type:'star'
   black:{type:'dwarf',m:0.6,extra:{black:1,Teff:5,Lsun:1e-9,kindLabel:'Black dwarf',color:'#16161c'}}};
 const KIND_FIELDS=['Teff','Lsun','rTrue','kindLabel','bd','black'];
 document.querySelectorAll('.nk').forEach(k=>k.addEventListener('click',()=>{NEBKIND=NEBKINDS[k.dataset.nk];document.querySelectorAll('.nk').forEach(x=>x.setAttribute('aria-pressed',x===k))}));
-document.querySelectorAll('.kind:not(.nk)').forEach(k=>k.addEventListener('click',()=>{TOOLS.star={...STARKINDS[k.dataset.kind]};document.querySelectorAll('.kind:not(.nk)').forEach(x=>x.setAttribute('aria-pressed',x===k))}));
+document.querySelectorAll('.kind:not(.nk):not(.bk)').forEach(k=>k.addEventListener('click',()=>{TOOLS.star={...STARKINDS[k.dataset.kind]};document.querySelectorAll('.kind:not(.nk):not(.bk)').forEach(x=>x.setAttribute('aria-pressed',x===k))}));
+document.querySelectorAll('.bk').forEach(k=>k.addEventListener('click',()=>{const B=BHKINDS[k.dataset.bk];TOOLS.blackhole={type:'blackhole',m:B.m,extra:{kindLabel:B.lab}};document.querySelectorAll('.bk').forEach(x=>x.setAttribute('aria-pressed',x===k));toast(B.lab+': '+B.why);BHPICKS++;if(typeof chEv==='function')chEv('bhkind',{k:k.dataset.bk})}));
+let BHPICKS=0;
 function fmtMassAny(m){return m>=0.01?sig(m)+' M☉':m>=1e-6?sig(m/ME)+' M⊕':(m*1.989e30).toExponential(1)+' kg'}
 function syncPlace(){const t=TOOLS[S.tool];if(!t)return;S.pmf=Math.pow(10,+$('pMass').value);S.psz=+$('pSize').value;
   $('pMassO').textContent=`${fmtMassAny(t.m*S.pmf)} (×${S.pmf>=10?Math.round(S.pmf):S.pmf.toPrecision(2)})`;$('pSizeO').textContent=S.psz.toFixed(1)+'×';$('pSizeL').hidden=t.type==='blackhole'}
 $('pMass').addEventListener('input',syncPlace);$('pSize').addEventListener('input',syncPlace);
 $('pReset').addEventListener('click',()=>{$('pMass').value=0;$('pSize').value=1;syncPlace()});
 document.querySelectorAll('.kind').forEach(k=>k.addEventListener('click',()=>setTimeout(syncPlace,0)));
-function setTool(t){S.tool=t;$('kinds').hidden=t!=='star';$('nkinds').hidden=t!=='nebula';document.querySelectorAll('.tool').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));
+function setTool(t){S.tool=t;$('kinds').hidden=t!=='star';$('bhkinds').hidden=t!=='blackhole';$('nkinds').hidden=t!=='nebula';document.querySelectorAll('.tool').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t));
   cv.classList.toggle('spawn',t!=='select');$('hint').textContent=HINTS[t]||HINTS.spawn;S.orbA=0;$('placeOpts').hidden=!TOOLS[t];if(TOOLS[t])syncPlace()}
 document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
 function bindTog(id,key){const el=$(id);el.addEventListener('click',()=>{S[key]=!S[key];el.setAttribute('aria-pressed',S[key]);if(key==='trails'&&S[key])S.bodies.forEach(b=>b.trail=[])})}
@@ -3199,6 +3218,8 @@ const CHALS=[];const CC=(diff,o)=>CHALS.push({diff,...o});const CCN=(diff,o)=>CC
 CC(2.9,{t:'Snowball Earth',g:'Freeze Earth: set its average temperature to −40 °C or colder.',hint:'Select Earth, Edit → Average temperature.',setup:scen('solar'),check:()=>{const b=BN('Earth'),T=b&&b.T;const ok=T!=null&&T-273.15<=-40;return[ok,ok?1:0,T!=null?`Now ${Math.round(T-273.15)} °C`:'—']},fail:()=>BN('Earth')?'':'Earth was destroyed',stars:byTime(30,80)});
 CC(3.1,{t:'Blue Sun',g:'Make the Sun a blue-white star: a surface of 12000 K or hotter.',hint:'Select the Sun, Edit → Average temperature, and set it in kelvin.',setup:scen('solar'),check:()=>{const b=BN('Sun');const T=b&&starTemp(b);const ok=T>=12000;return[ok,ok?1:Math.min(0.9,(T||0)/12000),T?`Now ${Math.round(T)} K`:'—']},fail:()=>BN('Sun')?'':'The Sun was destroyed',stars:byTime(30,80)});
 CC(3.3,{t:'Hot comet',g:'Heat a comet to 500 °C with Edit → Average temperature.',hint:'Find Halley (search bar), press Edit and set its average temperature.',setup:scen('solar'),check:()=>{const ok=CH.events.some(e=>e.k==='settemp'&&/halley|comet/i.test(e.name||'')&&e.T>=773);return[ok,ok?1:0,'']},stars:byTime(40,100)});
+CC(3.05,{t:'Monster at the centre',g:'Add a supermassive black hole (a million Suns or more).',hint:'Pick Black hole, choose Supermassive in the list, then click in space.',setup:scen('solar'),check:()=>{const ok=S.bodies.some(b=>b.type==='blackhole'&&b.m>=1e6);return[ok,ok?1:0,'']},stars:byTime(20,60)});
+CC(2.05,{t:'Tiny but mighty',g:'Add a primordial black hole, the smallest kind.',hint:'Pick Black hole, choose Primordial, then click in space.',setup:scen('solar'),check:()=>{const ok=S.bodies.some(b=>b.type==='blackhole'&&b.m<1e-6);return[ok,ok?1:0,'']},stars:byTime(20,60)});
 // comets
 [['Sun',3.5],['Jupiter',4.2],['Earth',5.2]].forEach(([n,d])=>CC(d,{t:`Comet into ${n}`,g:`Hit ${n} with a comet you create.`,hint:'Pick the Comet tool, then drag to throw it toward the target. The dashed line shows its path.',setup:scen('solar'),
   check:()=>{const ok=evHas(e=>e.k==='merge'&&e.comet&&(e.a===n||e.b===n));return[ok,ok?1:0,ok?'Direct hit!':'No hit yet']},fail:()=>BN(n)?'':`${n} was destroyed`,stars:byTime(45,120)}));
@@ -3349,6 +3370,7 @@ const TSTEPS=[
  ['Nebulas','Pick Nebula in the toolbar and click in space (or search for Orion Nebula and press Add). New stars form inside star-forming nebulas.',r=>NEBADD>r.n,r=>{r.n=NEBADD}],
  ['Travel','Press Travel in the top bar, type a distance (try 4.24 light-years) and press Go.',r=>TRAVELS>r.n,r=>{r.n=TRAVELS}],
  ['Collide with','Click a planet, open Edit, choose a target under Collide with and press Collide. Let time run to watch the crash.',r=>COLLS>r.n,r=>{r.n=COLLS}],
+ ['Black hole types','Pick Black hole in the toolbar, then choose a type in the list that appears: from a tiny primordial black hole to an ultramassive one.',r=>BHPICKS>r.n,r=>{r.n=BHPICKS}],
  ['Average temperature','In Edit, drag the Average temperature slider or type a value and press Set (try 20 °C on Mars). It works on every object: planets, moons, comets, stars and even black holes.',r=>TEMPSET>r.n,r=>{r.n=TEMPSET}],
  ['Views','Try the toolbar views: turn on Zones (habitable zones), Heat (temperature map) or Sky (background stars).',r=>S.zones!==r.z||S.heat!==r.h||S.sky!==r.s,r=>{r.z=S.zones;r.h=S.heat;r.s=S.sky}],
 ];
