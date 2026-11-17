@@ -79,3 +79,55 @@ CC(2.65,{t:'Super species',g:'Create a creature with 3 abilities and grow it to 
 CC(3.25,{t:'Germ warfare',g:'Use a disease microbe of your own to make 15 animals sick.',hint:'Create a microbe with 🤒 Disease and paint it where animals live.',setup:scn('meadow'),check:()=>{const n=CH.events.filter(e=>e.k==='infect'&&e.strain).length;return[n>=15,n/15,`${n} of 15 infected`]},stars:byTime(60,160)});
 TSTEPS.push(['Make a creature','Open the Life tab and press ✨ Create a creature. Give it a name, body and abilities.',r=>CREATED>r.n,r=>{r.n=CREATED}],
   ['Make a microbe','Press 🧫 Create a microbe in the Life tab, then paint it onto the map.',r=>STRPAINT>r.n&&MCREATED>0,r=>{r.n=STRPAINT}]);
+/* ================= Minds: intelligence and personalities for creatures you design ================= */
+const IQN=['Instinct','Clever','Smart','Brilliant','Genius'];
+const PERS=[['bold','Bold','Keeps going when danger is near'],['shy','Shy','Spots danger early and keeps away'],['curious','Curious','Explores every corner'],['playful','Playful','Zig-zags and bounces about'],
+  ['friendly','Friendly','Sticks close to its own kind'],['loner','Loner','Keeps away from others'],['lazy','Lazy','Slow and saves energy'],['energetic','Energetic','Always on the move, fast'],
+  ['greedy','Greedy','Eats more at every meal'],['nocturnal','Night owl','Sleeps by day, active at night'],['wanderer','Wanderer','Roams far across the world'],['homebody','Homebody','Stays near where it was born'],
+  ['brave','Brave','Stands its ground to protect others'],['cautious','Cautious','Careful: senses sharper, moves slower'],['sneaky','Sneaky','Quiet and hard to spot'],['leader','Leader','Others of its kind follow it']];
+const PN=Object.fromEntries(PERS.map(p=>[p[0],p[1]]));
+const NAMESX=['Pip','Mo','Zuri','Kit','Juno','Nova','Bo','Rue','Ash','Fern','Iggy','Luna','Odo','Pax','Remy','Sol','Tia','Vex','Wren','Yuki','Zed','Echo','Fizz','Gus','Hana','Ivo','Jett','Koa','Lark','Milo','Nix','Oona','Pico','Quill','Rook','Sage','Tov','Uma','Vala','Wolf'];
+let MINDS=0;
+function applyMind(key,d){const s=SP[key];if(!s)return;const iq=Math.max(1,Math.min(5,d.iq||1));s.iq=iq;s.pers=(d.pers||[]).slice(0,3);
+  s.sense*=1+0.12*(iq-1);s.meta*=1+0.05*(iq-1);// a bigger brain notices more but needs more food
+  if(iq>=4){if(s.diet==='carn')PACKS.add(key);else s.herd=1}
+  if(s.pers.includes('nocturnal'))NOCT.add(key);if(s.pers.includes('greedy')&&s.eat)s.eat*=1.25;if(s.pers.includes('friendly')||s.pers.includes('leader'))s.herd=1}
+{const mc=makeCreature;makeCreature=function(d,quiet){const k=mc(d,quiet);applyMind(k,d);return k}}
+// every animal of a designed species gets a name, the species' personality plus quirks of its own
+{const add0=addAnimal;addAnimal=function(sp,x0,y0,o){const a=add0(sp,x0,y0,o);const s=SP[sp];if(a&&s&&s.custom&&!a.pers){const mine=new Set(s.pers||[]);
+    const pool=PERS.map(p=>p[0]).filter(p=>!mine.has(p));const n=1+(rnd()<0.5?1:0);for(let k=0;k<n&&pool.length;k++)mine.add(pool.splice(Math.floor(rnd()*pool.length),1)[0]);
+    a.pers=[...mine];a.iq=Math.max(1,Math.min(5,(s.iq||1)+(rnd()<0.2?1:rnd()<0.2?-1:0)));a.nick=NAMESX[Math.floor(rnd()*NAMESX.length)];a.hx=a.x;a.hy=a.y;
+    const g=a.genes;if(a.pers.includes('energetic'))g.speed*=1.12;if(a.pers.includes('lazy'))g.speed*=0.86;if(a.pers.includes('cautious')){g.sense*=1.15;g.speed*=0.94}if(a.pers.includes('shy'))g.sense*=1.1}
+  return a}}
+const turnTo=(a,ang,k)=>{let d=ang-a.dir;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;a.dir+=d*k};
+const pDist=(ax,ay,bx,by)=>Math.hypot(dWX(ax-bx),dWY(ay-by));
+{const st0=stepAnimal;stepAnimal=function(a,dt){const r=st0(a,dt);if(a.dead||!a.pers)return r;const P=a.pers,iq=a.iq||1,s=SP[a.sp];
+  // memory: smart creatures remember where they last found food and go back when hungry
+  if(iq>=2){if(a._le!=null&&a.e>a._le+0.002)a.mem={x:a.x,y:a.y};a._le=a.e;
+    if(a.mem&&a.state==='wander'&&a.e<0.75&&rnd()<0.15*iq*dt*4)turnTo(a,Math.atan2(dWY(a.mem.y-a.y),dWX(a.mem.x-a.x)),0.35)}
+  // geniuses (and shy or cautious ones) spot predators early and steer away
+  if((iq>=5||P.includes('shy')||P.includes('cautious'))&&PREDS[a.sp]&&PREDS[a.sp].length&&!P.includes('bold')&&!P.includes('brave')){let fx=0,fy=0;
+    nearSp(PREDS[a.sp],a.x,a.y,s.sense*(iq>=5?1.4:1.2),b=>{if(!b.dead){fx+=dWX(a.x-b.x);fy+=dWY(a.y-b.y)}});if(fx||fy)turnTo(a,Math.atan2(fy,fx),0.4)}
+  if(a.state==='wander'){
+    if(P.includes('curious'))a.dir+=(rnd()-0.5)*1.6*dt*3;if(P.includes('playful'))a.dir+=Math.sin(S.t*3+a.id)*0.6*dt*3;
+    if(P.includes('wanderer')){if(!a.wd||rnd()<0.01*dt)a.wd=rnd()*Math.PI*2;turnTo(a,a.wd,0.15)}
+    if(P.includes('homebody')&&a.hx!=null&&pDist(a.x,a.y,a.hx,a.hy)>14)turnTo(a,Math.atan2(dWY(a.hy-a.y),dWX(a.hx-a.x)),0.3)
+    if(P.includes('friendly')||P.includes('loner')){let n=null,nd=1e9;nearSp([a.sp],a.x,a.y,10,b=>{if(b!==a&&!b.dead){const d=pDist(a.x,a.y,b.x,b.y);if(d<nd){nd=d;n=b}}});
+      if(n){const ang=Math.atan2(dWY(n.y-a.y),dWX(n.x-a.x));if(P.includes('friendly')&&nd>4)turnTo(a,ang,0.3);if(P.includes('loner')&&nd<6)turnTo(a,ang+Math.PI,0.35)}}
+    if(!P.includes('leader')){let L=null;nearSp([a.sp],a.x,a.y,12,b=>{if(!L&&b!==a&&b.pers&&b.pers.includes('leader'))L=b});if(L&&pDist(a.x,a.y,L.x,L.y)>3)turnTo(a,Math.atan2(dWY(L.y-a.y),dWX(L.x-a.x)),0.2)}}
+  if(P.includes('sneaky'))a.hidden=a.hidden||a.state!=='hunt'&&rnd()<0.3;
+  return r}}
+// the inspector shows each creature's name, mind and personality
+{const bi=buildInspector;buildInspector=function(){bi();const o=S.sel;if(!o||!o.pers)return;const B=$('inspBody'),d=document.createElement('div');d.className='kv';
+  d.innerHTML=`<div><span class="k">Name</span><span class="v"></span></div><div><span class="k">Intelligence</span><span class="v">${IQN[(o.iq||1)-1]}</span></div><div><span class="k">Personality</span><span class="v"></span></div><div><span class="k">Memory</span><span class="v">${o.mem?'remembers a good feeding spot':(o.iq||1)>=2?'still exploring':'lives by instinct'}</span></div>`;
+  d.children[0].children[1].textContent=o.nick||'';d.children[2].children[1].textContent=o.pers.map(p=>PN[p]).join(', ');B.insertBefore(d,B.children[1]||null)}}
+// the creature maker gets an intelligence slider and personality choices
+{const oc=openCreature;openCreature=function(){oc();const ab=$('mkAb');if(!ab)return;const w=document.createElement('div');w.style.cssText='display:grid;gap:8px';
+  w.innerHTML=`<div class="sl"><div class="row"><span class="k">Intelligence</span><span id="mkIqV">Smart</span></div><input type="range" id="mkIq" min="1" max="5" step="1" value="3"></div><span class="k">Personality · pick up to 3 (each animal also gets its own quirks)</span><div class="mkgrid" id="mkPers">${chips(PERS,[])}</div>`;
+  ab.after(w);wireChips($('mkPers'),true,3);const iv=()=>$('mkIqV').textContent=IQN[$('mkIq').value-1];$('mkIq').oninput=iv;iv();
+  const go=$('mkGo'),g0=go.onclick;go.onclick=()=>{const iq=+$('mkIq').value,pers=picked($('mkPers'));const before=CUSTOM.cre.length;MINDNEXT={iq,pers};g0();MINDNEXT=null;
+    const d=CUSTOM.cre[CUSTOM.cre.length-1];if(CUSTOM.cre.length>before&&d){d.iq=iq;d.pers=pers;saveCustom();const k=SPK.find(k=>SP[k].custom&&SP[k].n===d.n);if(k)applyMind(k,d);MINDS++;chEv('mind',{iq,n:pers.length})}}}}
+let MINDNEXT=null;$('mkCre').onclick=()=>openCreature();
+CC(1.48,{t:'Genius creature',g:'Create a creature with Genius intelligence and release 5 of them.',hint:'Life tab: Create a creature, slide Intelligence all the way to Genius.',setup:scn('meadow'),check:()=>{const n=S.animals.filter(a=>!a.dead&&a.iq>=5).length;return[n>=5,n/5,`${n} of 5 geniuses`]},stars:byTime(60,150)});
+CC(2.68,{t:'Big personalities',g:'Grow a creature with 3 personality traits to 25 animals.',hint:'Pick 3 personalities in the creature maker. Friendly and Leader help them stay together.',setup:scn('meadow'),check:()=>{const ks=SPK.filter(k=>SP[k].custom&&(SP[k].pers||[]).length>=3);const n=S.animals.filter(a=>!a.dead&&ks.includes(a.sp)).length;return[n>=25,n/25,ks.length?`${n} of 25`:'Make a creature with 3 personalities']},stars:byTime(150,360)});
+TSTEPS.push(['Minds','In the creature maker, set an Intelligence level and pick personalities. Then click one of your creatures to see its name, mind and personality.',r=>MINDS>r.n,r=>{r.n=MINDS}]);
