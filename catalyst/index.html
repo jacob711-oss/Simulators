@@ -229,6 +229,7 @@ const b=document.createElement(at.id==='hSims'?'button':'a');b.id='shareBtn';b.c
 b.onclick=async e=>{e.preventDefault();const d={title:document.title,text:(document.querySelector('meta[name=description]')||{}).content||document.title,url:location.href.split('#')[0]};
  try{if(navigator.share){await navigator.share(d);return}}catch(x){if(x&&x.name==='AbortError')return}try{await navigator.clipboard.writeText(d.url);b.lastChild.textContent='Link copied!';setTimeout(()=>b.lastChild.textContent='Share',2000)}catch(x){prompt('Copy this link:',d.url)}};
 if(at.id==='hSims')at.after(b);else at.appendChild(b)};if(document.readyState!=='loading')go();else document.addEventListener('DOMContentLoaded',go);setTimeout(go,1500)})();</script>
+<script>(()=>{if(!('serviceWorker' in navigator)||!(location.protocol==='https:'||location.hostname==='localhost'))return;const i=location.pathname.toLowerCase().indexOf('/simulators/');if(i<0)return;const root=location.pathname.slice(0,i+12);addEventListener('load',()=>navigator.serviceWorker.register(root+'sw.js',{scope:root}).catch(()=>{}))})()</script>
 <!--/SEO-->
 </head>
 <body>

@@ -108,6 +108,7 @@ const b=document.createElement(at.id==='hSims'?'button':'a');b.id='shareBtn';b.c
 b.onclick=async e=>{e.preventDefault();const d={title:document.title,text:(document.querySelector('meta[name=description]')||{}).content||document.title,url:location.href.split('#')[0]};
  try{if(navigator.share){await navigator.share(d);return}}catch(x){if(x&&x.name==='AbortError')return}try{await navigator.clipboard.writeText(d.url);b.lastChild.textContent='Link copied!';setTimeout(()=>b.lastChild.textContent='Share',2000)}catch(x){prompt('Copy this link:',d.url)}};
 if(at.id==='hSims')at.after(b);else at.appendChild(b)};if(document.readyState!=='loading')go();else document.addEventListener('DOMContentLoaded',go);setTimeout(go,1500)})();</script>"""
+SW_JS="<script>(()=>{if(!('serviceWorker' in navigator)||!(location.protocol==='https:'||location.hostname==='localhost'))return;const i=location.pathname.toLowerCase().indexOf('/simulators/');if(i<0)return;const root=location.pathname.slice(0,i+12);addEventListener('load',()=>navigator.serviceWorker.register(root+'sw.js',{scope:root}).catch(()=>{}))})()</script>"
 def block(title,desc,url,img,icon,ld):
     e=lambda s:html.escape(s,quote=True)
     return ('<!--SEO-->\n'+f'<link rel="canonical" href="{e(url)}">\n<meta name="robots" content="index,follow">\n<meta name="theme-color" content="#06080f">\n'
@@ -115,7 +116,7 @@ def block(title,desc,url,img,icon,ld):
       f'<meta property="og:type" content="website">\n<meta property="og:site_name" content="Our Simulations!">\n<meta property="og:title" content="{e(title)}">\n<meta property="og:description" content="{e(desc)}">\n'
       f'<meta property="og:url" content="{e(url)}">\n<meta property="og:image" content="{e(img)}">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
       f'<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:title" content="{e(title)}">\n<meta name="twitter:description" content="{e(desc)}">\n<meta name="twitter:image" content="{e(img)}">\n'
-      f'<script type="application/ld+json">{json.dumps(ld)}</script>\n'+SHARE_JS+'\n<!--/SEO-->')
+      f'<script type="application/ld+json">{json.dumps(ld)}</script>\n'+SHARE_JS+'\n'+SW_JS+'\n<!--/SEO-->')
 def put(path,blk,desc):
     t=open(path,encoding='utf-8').read();t=re.sub(r'<!--SEO-->.*?<!--/SEO-->\n?','',t,flags=re.S)
     if 'name="description"' not in t:t=t.replace('</title>','</title>\n<meta name="description" content="'+html.escape(desc,quote=True)+'">',1)
@@ -135,5 +136,19 @@ hubdesc=f"{len([s for s in SIMS if s['id']!='quasar'])} free simulators that run
 hubld={"@context":"https://schema.org","@type":"WebSite","name":"Our Simulations!","url":BASE,"description":hubdesc,"hasPart":[{"@type":"VideoGame","name":s['name'],"url":s['url']} for s in SIMS if s['id']!='quasar']}
 for p in [os.path.join(SITE,'index.html'),os.path.join(SITE,'simulations','index.html')]:
     put(p,block('Our Simulations! Free online simulators',hubdesc,BASE,BASE+'simulations/og/hub.jpg',favicon('S','#b388ff'),hubld),hubdesc)
+# offline play: a service worker that keeps a copy of every page. Pages are fetched fresh when online
+# (so updates show straight away) and the saved copy is used when offline.
+import hashlib
+pages=['./']+[u.split('/Simulators/',1)[1] for u in urls if u!=BASE]+['simulations/']
+ver=hashlib.md5(''.join(open(os.path.join(SITE,(q if q!='./' else '')+'index.html'),'rb').read().hex()[:64] for q in pages).encode()).hexdigest()[:10]
+open(os.path.join(SITE,'sw.js'),'w').write(f'''const V='sims-{ver}',PAGES={json.dumps(pages)};
+self.addEventListener('install',e=>{{e.waitUntil(caches.open(V).then(c=>c.addAll(PAGES)).catch(()=>{{}}));self.skipWaiting()}});
+self.addEventListener('activate',e=>{{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k.startsWith('sims-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))}});
+self.addEventListener('fetch',e=>{{const r=e.request,u=new URL(r.url);if(r.method!=='GET')return;
+  const mine=u.origin===location.origin&&u.pathname.startsWith('/Simulators/'),fonts=/fonts\\.(googleapis|gstatic)\\.com$/.test(u.hostname),libs=u.hostname==='cdnjs.cloudflare.com';
+  if(!mine&&!fonts&&!libs)return;
+  if(r.mode==='navigate'||r.destination==='document'){{e.respondWith(fetch(r).then(res=>{{const c=res.clone();caches.open(V).then(x=>x.put(r,c));return res}}).catch(()=>caches.match(r,{{ignoreSearch:true}}).then(m=>m||caches.match('./'))));return}}
+  e.respondWith(caches.match(r).then(m=>{{const net=fetch(r).then(res=>{{if(res.ok||res.type==='opaque'){{const c=res.clone();caches.open(V).then(x=>x.put(r,c))}}return res}}).catch(()=>m);return m||net}}))}});
+''')
 open(os.path.join(SITE,'sitemap.xml'),'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+''.join(f'  <url><loc>{u}</loc><changefreq>weekly</changefreq><priority>{"1.0" if u==BASE else "0.8"}</priority></url>\n' for u in urls)+'</urlset>\n')
 print('seo pages',len(urls),'share pictures',len(os.listdir(OG)))
