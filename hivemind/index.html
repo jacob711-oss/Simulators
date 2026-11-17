@@ -521,7 +521,7 @@ DEMO.push(
   const strip=s=>s.replace(RE,m=>KEEP.has(m)?m:'').replace(/ {2,}/g,' ');
   window.noEmoji=strip;
   const short=t=>(t||'').split(/[:(.,—]/)[0].trim().slice(0,22);
-  function fixBtn(b){if(!b||!(b.tagName==='BUTTON'||b.tagName==='A'||b.tagName==='SUMMARY'))return;const t=b.textContent.trim();if(t&&!/^[\d∞\s.,]+$/.test(t))return;
+  function fixBtn(b){if(!b||!(b.tagName==='BUTTON'||b.tagName==='A'||b.tagName==='SUMMARY'))return;if(b.querySelector('svg,img,canvas,.ne-lab'))return;const t=b.textContent.trim();if(t&&!/^[\d∞\s.,]+$/.test(t))return;
     const lab=short(b.getAttribute('title')||b.getAttribute('aria-label'));if(!lab)return;const n=document.createElement('span');n.className='ne-lab';n.textContent=lab+(t?' ':'');b.insertBefore(n,b.firstChild)}
   function clean(root){if(!root)return;if(root.nodeType===3){if(HAS.test(root.nodeValue)){const v=strip(root.nodeValue);root.nodeValue=/^\s/.test(root.nodeValue)?v:v.replace(/^\s+/,'');const b=root.parentElement&&root.parentElement.closest('button,a,summary');if(b)fixBtn(b)}return}
     if(root.nodeType!==1)return;if(root.tagName==='SCRIPT'||root.tagName==='STYLE'||root.tagName==='TEXTAREA')return;
@@ -533,7 +533,7 @@ DEMO.push(
   // canvas labels too
   for(const P of [window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype,window.OffscreenCanvasRenderingContext2D&&OffscreenCanvasRenderingContext2D.prototype])if(P)for(const f of ['fillText','strokeText']){const o=P[f];P[f]=function(t,...a){if(typeof t==='string'&&HAS.test(t)){t=strip(t).trim();if(!t)return}return o.call(this,t,...a)}}
   const css=document.createElement('style');css.textContent='.ico:empty,.si:empty,.ic:empty{display:none!important}.ne-lab{font-size:12px;font-weight:600;letter-spacing:.02em}';
-  const go=()=>{document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
+  const go=()=>{document.querySelectorAll('button .ne-lab').forEach(l=>{if(l.parentElement.querySelector('svg,img'))l.remove()});document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
     new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')clean(m.target);else for(const n of m.addedNodes)clean(n);if(m.type==='attributes')clean(m.target)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})};
   if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
 })();
