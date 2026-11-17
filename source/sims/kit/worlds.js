@@ -98,6 +98,7 @@
   const osh=showHome;showHome=function(){if(CUR){saveNow(true);CUR=null;document.body.classList.remove('inWorld')}osh()};
   hb.onclick=()=>showHome();
   // a changed town/sea/world inside a saved world keeps saving into the same world
+  {const m=location.hash.match(/^#world=([\w-]+)/);if(m){setTimeout(()=>{history.replaceState(null,'',location.pathname+location.search);playWorld(m[1])},400)}}
   window.WORLD={save:saveNow,list:listWorlds,current:()=>CUR,fp:()=>SIM.saveState?SIM.saveState().length:snapshot().objs.length};
   TSTEPS.push(['Your worlds','Free play keeps your worlds: press Free play on the home page to see them, or Create world to start a new one. While playing a world, Save & exit (next to Home) keeps it for later.',r=>Date.now()-r.t0>6000,r=>{r.t0=Date.now()}]);
 })();

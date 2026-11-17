@@ -1,13 +1,15 @@
 # Builds the "Our Simulations!" page from sims.json: one card per simulator (preview, name, short description), plus a review form.
 import json,html,os
 SITE='/home/user/barycenter-site';SIMS=json.load(open(os.path.join(SITE,'sims.json')))
+CATS={'barycenter': 'Space', 'biosphere': 'Life', 'abyssal': 'Life', 'hivemind': 'Life', 'lithosphere': 'Earth', 'troposphere': 'Earth', 'catalyst': 'Science', 'flux': 'Science', 'interchange': 'Transport', 'gridlock': 'Transport', 'seaway': 'Transport', 'contrail': 'Transport', 'quasar': 'AI'}
 cards=[]
 for s in sorted(SIMS,key=lambda x:x['id']!='quasar'):
     img=f"img/{s['id']}.jpg"
     has=os.path.exists(os.path.join(SITE,'simulations',img))
     pic=f'<img src="{img}" alt="" loading="lazy" width="800" height="500">' if has else f'<div class="ph">{html.escape(s["icon"])}</div>'
     feat=' feat' if s['id']=='quasar' else ''
-    cards.append(f'''<a class="card{feat}" href="{html.escape(s['url'])}" style="--c:{html.escape(s.get('color','#9fa8ff'))}">
+    cat=CATS.get(s['id'],'More')
+    cards.append(f'''<a class="card{feat}" data-cat="{cat}" data-text="{html.escape((s['name']+' '+s['tag']+' '+cat).lower())}" href="{html.escape(s['url'])}" style="--c:{html.escape(s.get('color','#9fa8ff'))}">
   <div class="pv">{pic}<span class="play">{'Chat ▸' if feat else 'Play ▸'}</span></div>
   <div class="txt"><h2><span class="ic">{html.escape(s['icon'])}</span>{html.escape(s['name'])}</h2><p>{html.escape(s['tag'])}</p></div>
 </a>''')
@@ -51,13 +53,23 @@ main{max-width:1240px;margin:0 auto;padding:12px 20px 56px;display:grid;grid-tem
 .stars{display:flex;gap:4px}.stars button{font-size:32px;line-height:1;background:none;border:0;cursor:pointer;color:#3a4260;padding:2px}.stars button.on{color:#ffd23a}
 .send{justify-self:start;font:600 16px 'IBM Plex Sans',system-ui,sans-serif;color:#06080f;background:linear-gradient(90deg,#ffd23a,#ff9a3d);border:0;border-radius:99px;padding:12px 26px;cursor:pointer}.send:disabled{opacity:.6;cursor:default}
 .msg{font-size:15px;margin:0}.msg.ok{color:#7fe0a8}.msg.err{color:#ff8a8a}.hp{position:absolute;left:-9999px}
+.tools2{max-width:1240px;margin:0 auto;padding:4px 20px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#q{flex:1 1 240px;max-width:360px;font:16px 'IBM Plex Sans',sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:10px 16px}#q:focus{outline:2px solid #9fa8ff}
+.cats{display:flex;gap:6px;flex-wrap:wrap}.cats button{font:500 13px 'IBM Plex Mono',monospace;color:var(--dim);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:99px;padding:7px 13px;cursor:pointer}.cats button.on{color:var(--ink);border-color:#ffd23a;background:rgba(255,210,58,.1)}
+.none{grid-column:1/-1;color:var(--dim)}.card.hide{display:none}
+.cont{max-width:1240px;margin:0 auto;padding:6px 20px 18px}.cont h2{font-family:'Oxanium',sans-serif;font-size:22px;margin:0 0 10px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}.cw{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}.cw:hover{border-color:var(--c)}
+.cw .th{width:72px;height:48px;border-radius:8px;background:#000 center/cover no-repeat;flex:0 0 72px}.cw b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cw small{color:var(--dim);font-size:12px}.cw span{min-width:0}
 footer{text-align:center;color:var(--dim);font-size:13px;padding:0 20px 40px}
 @media (max-width:520px){header{padding:36px 16px 12px}main{padding:8px 16px 40px;grid-template-columns:1fr;gap:16px}.play{opacity:1;transform:none}.rv{padding:0 16px}.rvcard{padding:18px}}
 </style></head>
 <body>
 <header><div class="brand"><img class="hlogo" src="https://jacob711-oss.github.io/Simulators/simulations/og/logo-anim.svg" alt="" width="84" height="84"><h1>Our Simulations!</h1></div><p class="sub">Every simulator we have made, all in one place. Click a preview to jump in. Each one has challenges, a tutorial and a free-play sandbox.</p>
 <div class="chips"><span class="count">%COUNT% simulators</span><a class="count" href="https://jacob711-oss.github.io/Simulators/quasar/">🌌 Ask Quasar AI</a><a class="count" href="#review">✍️ Leave a review</a></div></header>
+<section class="cont" id="cont" hidden><h2>Continue playing</h2><div class="cgrid" id="cgrid"></div></section>
+<div class="tools2"><input id="q" type="search" placeholder="Search simulators…" aria-label="Search simulators"><div class="cats" id="cats"><button class="on" data-c="">All</button><button data-c="Space">Space</button><button data-c="Life">Life</button><button data-c="Earth">Earth</button><button data-c="Science">Science</button><button data-c="Transport">Transport</button><button data-c="AI">AI</button></div></div>
 <main>
+<p class="none" id="none" hidden>No simulators match that search.</p>
 %CARDS%
 </main>
 <section class="rv" id="review"><div class="rvcard">
@@ -73,6 +85,17 @@ footer{text-align:center;color:var(--dim);font-size:13px;padding:0 20px 40px}
 </form></div></section>
 <footer>New simulators appear here as soon as they are made.</footer>
 <script>
+// search and categories
+(()=>{const q=document.getElementById('q'),cards=[...document.querySelectorAll('.card')],none=document.getElementById('none');let cat='';
+  const go=()=>{const t=q.value.trim().toLowerCase();let n=0;for(const c of cards){const ok=(!cat||c.dataset.cat===cat)&&(!t||c.dataset.text.includes(t));c.classList.toggle('hide',!ok);if(ok)n++}none.hidden=n>0};
+  q.addEventListener('input',go);document.querySelectorAll('#cats button').forEach(b=>b.onclick=()=>{cat=b.dataset.c;document.querySelectorAll('#cats button').forEach(x=>x.classList.toggle('on',x===b));go()})})();
+// continue playing: your latest saved worlds from every simulator (saved in this browser)
+(()=>{const S=%SIMJSON%;try{const r=indexedDB.open('sim_worlds',1);r.onupgradeneeded=()=>{const s=r.result.createObjectStore('worlds',{keyPath:'id'});s.createIndex('game','game')};
+  r.onsuccess=()=>{try{const t=r.result.transaction('worlds','readonly').objectStore('worlds').getAll();t.onsuccess=()=>{const ws=(t.result||[]).filter(w=>S[w.game]).sort((a,b)=>b.updated-a.updated).slice(0,6);if(!ws.length)return;
+    const g=document.getElementById('cgrid');for(const w of ws){const s=S[w.game],a=document.createElement('a');a.className='cw';a.style.setProperty('--c',s.color);a.href=s.url+'#world='+encodeURIComponent(w.id);
+      a.innerHTML='<div class="th"></div><span><b></b><small></small></span>';if(w.thumb)a.querySelector('.th').style.backgroundImage=`url(${w.thumb})`;a.querySelector('b').textContent=w.name;
+      const m=(Date.now()-w.updated)/6e4;a.querySelector('small').textContent=s.name+' · '+(m<60?Math.max(1,Math.round(m))+' min ago':m<1440?Math.round(m/60)+' h ago':new Date(w.updated).toLocaleDateString());g.appendChild(a)}
+    document.getElementById('cont').hidden=false}}catch(e){}}}catch(e){}})();
 (()=>{const to=['nicholas4yan','gmail.com'].join('@'),cc=['lwpiano50002016','gmail.com'].join('@'),f=document.getElementById('rvForm'),msg=document.getElementById('rvMsg');let rating=5;
 const st=[...document.querySelectorAll('#stars button')];const paint=()=>st.forEach((b,i)=>{b.classList.toggle('on',i<rating);b.setAttribute('aria-checked',i+1===rating)});st.forEach((b,i)=>b.onclick=e=>{e.preventDefault();rating=i+1;paint()});paint();
 const sel=f.simulator,q=new URLSearchParams(location.search).get('sim');if(q)for(const o of sel.options)if(o.text.toLowerCase()===q.toLowerCase())sel.value=o.text;
@@ -87,7 +110,8 @@ f.onsubmit=async e=>{e.preventDefault();if(f._honey.value)return;const stars='�
 </body></html>
 '''
 PAGE=PAGE.replace('</body></html>','<script>'+open('/tmp/claude-0/-home-user/89fb5cec-fa03-5d89-9ad5-7295f7c6bb89/scratchpad/sims/kit/noemoji.js').read()+'</script>\n</body></html>')
-page=PAGE.replace('%COUNT%',str(len([x for x in SIMS if x['id']!='quasar']))).replace('%CARDS%','\n'.join(cards)).replace('%OPTS%',OPTS).replace('%STARS%',STARS)
+SIMJSON=json.dumps({x['id']:{'name':x['name'],'url':x['url'],'color':x.get('color','#9fa8ff')} for x in SIMS})
+page=PAGE.replace('%SIMJSON%',SIMJSON).replace('%COUNT%',str(len([x for x in SIMS if x['id']!='quasar']))).replace('%CARDS%','\n'.join(cards)).replace('%OPTS%',OPTS).replace('%STARS%',STARS)
 os.makedirs(os.path.join(SITE,'simulations'),exist_ok=True);open(os.path.join(SITE,'simulations','index.html'),'w').write(page);
 # the main address shows the same page (pictures live in simulations/img)
 open(os.path.join(SITE,'index.html'),'w').write(page.replace('src="img/','src="simulations/img/'));
