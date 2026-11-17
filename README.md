@@ -2,11 +2,11 @@
 
 A 3D gravity sandbox that runs in your browser. Build star systems, add famous stars, planets and black holes, collide worlds, and run time from hours to 100 years per second.
 
-**Play:** https://jacob711-oss.github.io/simulators/
+**Play:** https://jacob711-oss.github.io/Simulators/
 
 No install or account needed. Works on computers, tablets and phones.
 
-**Also try Biosphere**, a living-world sandbox where plants and animals eat, breed and evolve: https://jacob711-oss.github.io/simulators/life/
+**Also try Biosphere**, a living-world sandbox where plants and animals eat, breed and evolve: https://jacob711-oss.github.io/Simulators/life/
 
 ## Controls
 - Drag to orbit the camera, right-drag to pan, scroll to zoom toward the cursor

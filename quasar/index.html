@@ -47,7 +47,7 @@ textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(
 <body>
 <header><div class="logo" aria-hidden="true"></div><h1>QUASAR</h1><span class="hsp"></span>
 <button class="hbtn" id="newChat" title="Start a new chat">＋ New chat</button>
-<a class="hbtn wide" href="https://jacob711-oss.github.io/simulators/simulations/">🗂️ Simulators</a></header>
+<a class="hbtn wide" href="https://jacob711-oss.github.io/Simulators/simulations/">🗂️ Simulators</a></header>
 <main id="main"><div class="wrap" id="log">
 <div class="hero" id="hero"><div class="logo big"></div><h2>Hi, I'm Quasar ✨</h2><p>Ask me anything, ask me to draw a picture, or ask to see a video.</p>
 <div class="sugg">
@@ -63,7 +63,7 @@ textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(
 <div class="hint">Quasar can make mistakes. Pictures are made by AI; videos come from Wikimedia Commons.</div></footer>
 <script>
 (()=>{
-const SIMS=[["Barycenter","space, gravity, planets and black holes","https://jacob711-oss.github.io/simulators/barycenter/"],["Biosphere","a living world of animals, plants and microbes","https://jacob711-oss.github.io/simulators/life/"],["Lithosphere","continents, mountains and volcanoes","https://jacob711-oss.github.io/simulators/lithosphere/"],["Troposphere","weather, winds and hurricanes","https://jacob711-oss.github.io/simulators/troposphere/"],["Catalyst","atoms, molecules and chemical reactions","https://jacob711-oss.github.io/simulators/catalyst/"],["Abyssal","the ocean, from reefs to the deep sea","https://jacob711-oss.github.io/simulators/abyssal/"],["Interchange","trains, metros and trams in a growing city","https://jacob711-oss.github.io/simulators/interchange/"],["Gridlock","roads, buses and traffic","https://jacob711-oss.github.io/simulators/gridlock/"],["Hivemind","ant colonies, scent trails and raids","https://jacob711-oss.github.io/simulators/hivemind/"],["Flux","electric charges and magnets","https://jacob711-oss.github.io/simulators/flux/"],["Seaway","ships and island ports","https://jacob711-oss.github.io/simulators/seaway/"],["Contrail","air traffic control and airports","https://jacob711-oss.github.io/simulators/contrail/"]];
+const SIMS=[["Barycenter","space, gravity, planets and black holes","https://jacob711-oss.github.io/Simulators/barycenter/"],["Biosphere","a living world of animals, plants and microbes","https://jacob711-oss.github.io/Simulators/life/"],["Lithosphere","continents, mountains and volcanoes","https://jacob711-oss.github.io/Simulators/lithosphere/"],["Troposphere","weather, winds and hurricanes","https://jacob711-oss.github.io/Simulators/troposphere/"],["Catalyst","atoms, molecules and chemical reactions","https://jacob711-oss.github.io/Simulators/catalyst/"],["Abyssal","the ocean, from reefs to the deep sea","https://jacob711-oss.github.io/Simulators/abyssal/"],["Interchange","trains, metros and trams in a growing city","https://jacob711-oss.github.io/Simulators/interchange/"],["Gridlock","roads, buses and traffic","https://jacob711-oss.github.io/Simulators/gridlock/"],["Hivemind","ant colonies, scent trails and raids","https://jacob711-oss.github.io/Simulators/hivemind/"],["Flux","electric charges and magnets","https://jacob711-oss.github.io/Simulators/flux/"],["Seaway","ships and island ports","https://jacob711-oss.github.io/Simulators/seaway/"],["Contrail","air traffic control and airports","https://jacob711-oss.github.io/Simulators/contrail/"]];
 const SYSTEM=`You are Quasar, a friendly, upbeat AI assistant on the Simulators website. You are safe for all ages: refuse anything harmful, hateful, sexual or violent in a kind way. Answer clearly and fairly briefly, using Markdown (short paragraphs, bullet lists, **bold**) when it helps.
 You can make pictures and show videos. When the user wants a picture, drawing or image, write one short friendly sentence and then, on its own line, [IMAGE: a detailed English description of the picture]. When the user wants to watch or see a video, write one short sentence and then, on its own line, [VIDEO: two to four search words]. Only add these tags when the user asks for a picture or a video.
 This website has these simulators, which you can recommend with Markdown links when they fit: ${SIMS.map(s=>`${s[0]} (${s[1]}): ${s[2]}`).join('; ')}.`;
@@ -122,6 +122,31 @@ inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));inp.placeholder={chat:'Message Quasar…',image:'Describe a picture to make…',video:'What video do you want to see?'}[mode];inp.focus()});
 document.querySelectorAll('.sugg button').forEach(b=>b.onclick=()=>send(b.dataset.q,b.dataset.m));
 $('newChat').onclick=()=>{hist=[];save();log.querySelectorAll('.msg').forEach(m=>m.remove());$('hero').hidden=false};
+})();
+</script>
+<script id="noemoji">/* ===== no emoji: strips emoji from every label, button, message and canvas label; emoji-only buttons get a word ===== */
+(function(){
+  if(window.__noEmoji)return;window.__noEmoji=true;
+  const RE=/(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|⃣)?(?:‍(?:\p{Extended_Pictographic})(?:️)?)*|️|‍|[\u{1F3FB}-\u{1F3FF}]/gu,HAS=/\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+  const KEEP=new Set([...'★☆✓✔✗✕✖×→←↑↓↔⤢⊗⊙▸◂−±°©®™']);
+  const strip=s=>s.replace(RE,m=>KEEP.has(m)?m:'').replace(/ {2,}/g,' ');
+  window.noEmoji=strip;
+  const short=t=>(t||'').split(/[:(.,—]/)[0].trim().slice(0,22);
+  function fixBtn(b){if(!b||!(b.tagName==='BUTTON'||b.tagName==='A'||b.tagName==='SUMMARY'))return;const t=b.textContent.trim();if(t&&!/^[\d∞\s.,]+$/.test(t))return;
+    const lab=short(b.getAttribute('title')||b.getAttribute('aria-label'));if(!lab)return;const n=document.createElement('span');n.className='ne-lab';n.textContent=lab+(t?' ':'');b.insertBefore(n,b.firstChild)}
+  function clean(root){if(!root)return;if(root.nodeType===3){if(HAS.test(root.nodeValue)){const v=strip(root.nodeValue);root.nodeValue=/^\s/.test(root.nodeValue)?v:v.replace(/^\s+/,'');const b=root.parentElement&&root.parentElement.closest('button,a,summary');if(b)fixBtn(b)}return}
+    if(root.nodeType!==1)return;if(root.tagName==='SCRIPT'||root.tagName==='STYLE'||root.tagName==='TEXTAREA')return;
+    for(const a of ['title','aria-label','placeholder','alt'])if(root.hasAttribute&&root.hasAttribute(a)&&HAS.test(root.getAttribute(a)))root.setAttribute(a,strip(root.getAttribute(a)).trim());
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);let n,touched=new Set();
+    while((n=w.nextNode())){if(n.nodeType===1){if(n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.tagName==='TEXTAREA')continue;for(const a of ['title','aria-label','placeholder','alt'])if(n.hasAttribute(a)&&HAS.test(n.getAttribute(a)))n.setAttribute(a,strip(n.getAttribute(a)).trim());continue}
+      if(HAS.test(n.nodeValue)){n.nodeValue=strip(n.nodeValue).replace(/^\s+(?=\S)/,m=>n.previousSibling?' ':'');const b=n.parentElement&&n.parentElement.closest('button,a,summary');if(b)touched.add(b)}}
+    for(const b of touched)fixBtn(b);root.querySelectorAll&&root.querySelectorAll('button,a,summary').forEach(b=>{if(!b.textContent.trim())fixBtn(b)})}
+  // canvas labels too
+  for(const P of [window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype,window.OffscreenCanvasRenderingContext2D&&OffscreenCanvasRenderingContext2D.prototype])if(P)for(const f of ['fillText','strokeText']){const o=P[f];P[f]=function(t,...a){if(typeof t==='string'&&HAS.test(t)){t=strip(t).trim();if(!t)return}return o.call(this,t,...a)}}
+  const css=document.createElement('style');css.textContent='.ico:empty,.si:empty,.ic:empty{display:none!important}.ne-lab{font-size:12px;font-weight:600;letter-spacing:.02em}';
+  const go=()=>{document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
+    new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')clean(m.target);else for(const n of m.addedNodes)clean(n);if(m.type==='attributes')clean(m.target)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})};
+  if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
 })();
 </script>
 </body></html>
