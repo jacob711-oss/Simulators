@@ -46,8 +46,9 @@ def sub(m):
 shell=re.sub(r'\{\{(\w+)\}\}',sub,shell)
 js='const __STATE_NAMES='+json.dumps(state_names([open(os.path.join(D,f)).read() for f in M['js']]))+';\n'+'const SIMLIST='+json.dumps(SIMS,ensure_ascii=False)+',LB_GAME='+json.dumps(M['id'])+';\n'+'\n'.join(open(os.path.join(K,'core.js')).read() if f=='@core' else open(os.path.join(K,'run.js')).read() if f=='@run' else open(os.path.join(K,'extras.js')).read() if f=='@extras' else open(os.path.join(K,'noemoji.js')).read() if f=='@noemoji' else open(os.path.join(K,'worlds.js')).read() if f=='@worlds' else open(os.path.join(K,'askq.js')).read() if f=='@askq' else open(os.path.join(D,f)).read() for f in ['@core']+M['js']+['@noemoji','@extras','@askq','@run','@worlds'])+'\n'+open(os.path.join(K,'acct.js')).read()
 head=f'<title>{html.escape(M["title"])}</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">\n'
-frag=head+css+'\n'+shell+'\n<script>\n'+js+'\n</script>\n'
+libs=''.join('<script>\n'+open(os.path.join(D,l)).read()+'\n</script>\n' for l in M.get('libs',[]))
+frag=head+css+'\n'+shell+'\n'+libs+'<script>\n'+js+'\n</script>\n'
 out=os.path.join(os.path.dirname(D),M['id']+'.html');open(out,'w').write(frag)
-page='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="description" content="'+html.escape(M['text']['TAG'],quote=True)+'">\n'+head+css+'\n</head>\n<body>\n'+shell+'\n<script>\n'+js+'\n</script>\n</body>\n</html>\n'
+page='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="description" content="'+html.escape(M['text']['TAG'],quote=True)+'">\n'+head+css+'\n</head>\n<body>\n'+shell+'\n'+libs+'<script>\n'+js+'\n</script>\n</body>\n</html>\n'
 os.makedirs(os.path.join(D,'site'),exist_ok=True);open(os.path.join(D,'site','index.html'),'w').write(page)
 print(out,len(frag))

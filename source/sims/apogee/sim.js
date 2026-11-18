@@ -26,6 +26,11 @@ const PRESETS={
  lunar:{nm:'Moon lander (there and back)',parts:['chute','pod1','shield','dec','tankM','tankM','spark','legs','dec','tankL','tankL','lifter','dec','tankL','tankL','tankL','tankL','thunder','fins']},
  heavy:{nm:'Big crew (3 seats)',parts:['chute','pod3','shield','dec','tankM','tankM','spark','dec','tankL','tankL','tankL','thunder','fins']},
 };
+const OMEGA=2*Math.PI/21600,PAD_A0=-Math.PI/2;let PREDV=0;
+const padAngle=t=>PAD_A0+OMEGA*t;
+function airVel(b,dx,dy){return b===0?[-OMEGA*dy,OMEGA*dx]:[0,0]}
+function soundSpeed(alt){const T=alt<11000?288-6.5*alt/1000:alt<20000?216.6:alt<47000?216.6+(alt-20000)/27000*54:270-(alt-47000)/13000*70;return 20.05*Math.sqrt(Math.max(150,T))}
+function machCd(M){return M<0.8?1:M<1.05?1+(M-0.8)/0.25*1.1:M<1.3?2.1-(M-1.05)/0.25*0.6:Math.max(1.05,1.5-(M-1.3)*0.25)}
 let DESIGN=PRESETS.orbiter.parts.slice(),R=null,DEB=[],PRED=[],PINFO={},MODE='build',MISSION={};
 const AP={mode:'',ph:''};
 const G={throttleStep:0.1,autoChute:true,crashV:9};
@@ -60,29 +65,29 @@ function rho(b,alt){const B0=BODIES[b];return B0.atm&&alt<B0.atm?B0.rho0*Math.ex
 /* ---------- physics ---------- */
 function gravity(x,y,t){let ax=0,ay=0;for(let i=0;i<2;i++){const p=bodyPos(i,t),dx=p[0]-x,dy=p[1]-y,d2=dx*dx+dy*dy,d=Math.sqrt(d2),g=BODIES[i].mu/d2;ax+=dx/d*g;ay+=dy/d*g}return[ax,ay]}
 function thrustNow(r,dt,alt,b){if(!r.lit||r.dead)return 0;let F=0;const p=rho(b,alt)/1.2;for(const i of engines(r)){const P=PT[r.parts[i]],isp=lerp(P.isp[1],P.isp[0],clamp(p,0,1));
-    if(P.k==='srb'){if(r.fuel[i]<=0)continue;const md=P.thr/(isp*G0);r.fuel[i]=Math.max(0,r.fuel[i]-md*dt);F+=P.thr}
-    else{if(r.thr<=0)continue;const fl=liquid(r);if(fl<=0)continue;const f=P.thr*r.thr,md=f/(isp*G0)*dt;let need=md;for(const j of bottomSec(r)){if(PT[r.parts[j]].k!=='tank'||need<=0)continue;const take=Math.min(r.fuel[j],need*r.fuel[j]/fl+1e-9);r.fuel[j]-=take;need-=take}F+=f}}return F}
+    if(P.k==='srb'){if(r.fuel[i]<=0)continue;const md=P.thr/(P.isp[0]*G0);r.fuel[i]=Math.max(0,r.fuel[i]-md*dt);F+=P.thr*isp/P.isp[0]}
+    else{if(r.thr<=0)continue;const fl=liquid(r);if(fl<=0)continue;const f=P.thr*r.thr*isp/P.isp[0],md=P.thr*r.thr/(P.isp[0]*G0)*dt;let need=md;for(const j of bottomSec(r)){if(PT[r.parts[j]].k!=='tank'||need<=0)continue;const take=Math.min(r.fuel[j],need*r.fuel[j]/fl+1e-9);r.fuel[j]-=take;need-=take}F+=f}}return F}
 function stepRocket(r,dt){if(r.dead)return;const t=S.t,q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy),alt=rr-B0.R,ux=q.dx/rr,uy=q.dy/rr,m=rMass(r);
   // steering: your keys, the stability assist or the autopilot
   let cmd=DRAG.rot;if(AP.mode)cmd=apSteer(r)??cmd;const trq=r.parts.reduce((s,p)=>s+(PT[p].trq||0),0)+(r.lit?0.06*PT_thrust(r):0),aC=trq/Math.max(1,m)*0.5;
   if(!cmd&&r.sas){let tgt=null;const sp=Math.hypot(q.vx,q.vy);if(r.sas==='hold')tgt=r.sasA;else if(r.sas==='pro'&&sp>1)tgt=Math.atan2(q.vy,q.vx);else if(r.sas==='retro'&&sp>1)tgt=Math.atan2(-q.vy,-q.vx);else if(r.sas==='up')tgt=Math.atan2(uy,ux);
     if(AP.mode&&AP.tgt!=null)tgt=AP.tgt;if(tgt!=null){let d=tgt-r.a;d=Math.atan2(Math.sin(d),Math.cos(d));const want=clamp(d*2.2,-1.2,1.2);cmd=clamp((want-r.om)*4,-1,1)}}
   else if(cmd)r.sasA=r.a;
-  let aero=0;const den=rho(q.b,alt),vrx=q.vx,vry=q.vy,vs=Math.hypot(vrx,vry);
-  if(den>0&&vs>30&&r.landed<0){const aoa=Math.atan2(Math.sin(Math.atan2(vry,vrx)-r.a),Math.cos(Math.atan2(vry,vrx)-r.a)),qd=0.5*den*vs*vs;aero=(has(r,'fins')?1:-0.35)*Math.sin(aoa)*qd/1000/Math.max(1,m)*0.6}
+  let aero=0;const den=rho(q.b,alt),av=airVel(q.b,q.dx,q.dy),vrx=q.vx-av[0],vry=q.vy-av[1],vs=Math.hypot(vrx,vry);r.mach=den>0?vs/soundSpeed(alt):0;r.q=0.5*den*vs*vs;r.maxQ=Math.max(r.maxQ||0,r.q);
+  if(den>0&&vs>30&&r.landed<0){const aoa=Math.atan2(Math.sin(Math.atan2(vry,vrx)-r.a),Math.cos(Math.atan2(vry,vrx)-r.a)),qd=0.5*den*vs*vs;aero=(has(r,'fins')?1:-0.35)*Math.sin(aoa)*qd/1000/Math.max(1,m)*0.6;if(qd>32000&&Math.abs(aoa)>0.5&&r.landed<0){boom(r,'broke apart: it turned sideways while flying fast through thick air');return}}
   r.om+=(cmd*aC+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt;
   // forces
-  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);let ax=F*dx/m,ay=F*dy/m;
-  if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?450:0),Fd=0.5*den*vs*vs*cda/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;
+  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);let ax=F*dx/m,ay=F*dy/m,dragA=0;
+  if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?450:0),Fd=0.5*den*vs*vs*cda*machCd(r.mach)/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;dragA=Fd/m;
     const heat=den*vs*vs*vs*2.6e-10*(has(r,'shield')&&Math.cos(Math.atan2(vry,vrx)-r.a)<-0.7?0.08:1);r.heat=Math.max(0,r.heat+(heat-0.06)*dt);if(r.heat>1){boom(r,'burned up coming back into the air');return}}else r.heat=Math.max(0,r.heat-0.08*dt);
   if(r.chute===1&&G.autoChute&&den>0&&alt<5000&&vs<260&&q.vx*ux+q.vy*uy<0)openChute(r);
   if(r.chute===2&&vs>320&&den>0.05){r.chute=-1;callout('The parachute ripped!',r.x,r.y,'#ffb347')}
-  if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0];r.vy=bv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
+  if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){if(r.landed===0){const c=Math.cos(OMEGA*dt),s=Math.sin(OMEGA*dt),lx=r.lx*c-r.ly*s;r.ly=r.lx*s+r.ly*c;r.lx=lx}const sv=airVel(r.landed,r.lx,r.ly);r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0]+sv[0];r.vy=bv[1]+sv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
     r.landed=-1;callout('Lift-off!',r.x,r.y,'#9fd0ff');ev('liftoff');chEv('liftoff',{b:q.b})}
-  const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt;
+  r.gf=r.landed>=0?1:Math.hypot(ax,ay)/G0;r.maxG=Math.max(r.maxG||0,r.gf);const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt;
   // the ground
   const q2=rel(r,t+dt),rr2=Math.hypot(q2.dx,q2.dy),half=rocketLen(r.parts)/2,bottom=rr2-B0.R-Math.max(0,half*Math.cos(r.a-Math.atan2(q2.dy,q2.dx)));
-  if(bottom<=0){const vimp=Math.hypot(q2.vx,q2.vy),up=Math.atan2(q2.dy,q2.dx),tilt=Math.abs(Math.atan2(Math.sin(r.a-up),Math.cos(r.a-up))),safe=G.crashV+(has(r,'legs')?6:0);
+  if(bottom<=0){const sv2=airVel(q2.b,q2.dx,q2.dy),vimp=Math.hypot(q2.vx-sv2[0],q2.vy-sv2[1]),up=Math.atan2(q2.dy,q2.dx),tilt=Math.abs(Math.atan2(Math.sin(r.a-up),Math.cos(r.a-up))),safe=G.crashV+(has(r,'legs')?6:0);
     if(vimp>safe)return boom(r,`hit ${BODIES[q2.b].nm} at ${Math.round(vimp)} m/s`);if(tilt>0.7&&vimp>2)return boom(r,'tipped over on landing');
     r.landed=q2.b;const bp=bodyPos(q2.b,t);const k=(BODIES[q2.b].R+half)/rr2;r.lx=q2.dx*k;r.ly=q2.dy*k;r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.om=0;r.thr=0;const wasFlight=r.maxAlt>200;
     if(wasFlight){const nm=BODIES[q2.b].nm;callout(`Landed on ${nm}!`,r.x,r.y,'#8fe39a');toast(`Touchdown on ${nm} at ${vimp.toFixed(1)} m/s. ${r.crew.length?'The crew are safe!':''}`,6000);ev('land'+q2.b);if(r.maxAlt>BODIES[0].atm&&q2.b===0)ev('returned');if(mv('land1')&&q2.b===0)ev('moonReturn');chEv('land',{b:q2.b,v:vimp});if(AP.mode==='home')apOff('Landed safely')}}
@@ -100,10 +105,10 @@ function stepDebris(dt){for(const d of DEB){if(d.dead)continue;d.age+=dt;const g
     if(den>0){const bv=bodyVel(b,S.t),vx=d.vx-bv[0],vy=d.vy-bv[1],vs=Math.hypot(vx,vy),m=d.parts.reduce((s,p,i)=>s+PT[p].m+(d.fuel[i]||0),0),Fd=0.5*den*vs*vs*0.9*10/1000;if(vs>0.1){ax-=vx/vs*Fd/m;ay-=vy/vs*Fd/m}}
     d.vx+=ax*dt;d.vy+=ay*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.a+=d.om*dt;if(alt<0){d.dead=1;for(let i=0;i<5;i++)PARTS.push({k:'fire',x:d.x,y:d.y,vx:rr(-8,8),vy:rr(-8,8),age:rr(0,.3),s:rr(3,7)})}}DEB=DEB.filter(d=>!d.dead&&d.age<900)}
 /* ---------- the flight path ahead ---------- */
-function predict(){PRED=[];PINFO={};if(!R||R.dead||R.landed>=0)return;const t0=S.t,b0=domBody(R.x,R.y,t0),o=orbitOf(R,t0);let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0,inLuna=b0===1,closest=1e18,closestT=0;const m0=moonPos(t0),maxT=o.e<1&&o.period<4e5?o.period*1.02:4e5;
+function predict(){PRED=[];PINFO={};if(!R||R.dead||R.landed>=0){PREDV++;return}const t0=S.t,b0=domBody(R.x,R.y,t0),o=orbitOf(R,t0);let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0,inLuna=b0===1,closest=1e18,closestT=0;const m0=moonPos(t0),maxT=o.e<1&&o.period<4e5?o.period*1.02:4e5;
   for(let i=0;i<1400&&t-t0<maxT;i++){const bnow=domBody(x,y,t),bp=bodyPos(bnow,t),r0=Math.hypot(x-bp[0],y-bp[1]),v=Math.hypot(vx-bodyVel(bnow,t)[0],vy-bodyVel(bnow,t)[1]);const dt=clamp(r0/Math.max(v,1)*0.012,0.5,200);
     const g1=gravity(x,y,t);vx+=g1[0]*dt*0.5;vy+=g1[1]*dt*0.5;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt*0.5;vy+=g2[1]*dt*0.5;
     const mp=moonPos(t),dm=Math.hypot(x-mp[0],y-mp[1]);if(dm<closest){closest=dm;closestT=t}if(bnow===1&&b0===0&&!PINFO.enc){PINFO.enc=true;PINFO.encT=t-t0}
     let px=x,py=y;if(b0===1){px=x-mp[0]+m0[0];py=y-mp[1]+m0[1]}PRED.push([px,py]);
     const bb=domBody(x,y,t),bq=bodyPos(bb,t);if(Math.hypot(x-bq[0],y-bq[1])<BODIES[bb].R){PINFO.impact=BODIES[bb].nm;PINFO.impT=t-t0;break}}
-  PINFO.closest=closest-BODIES[1].R;PINFO.closestT=closestT-t0}
+  PINFO.closest=closest-BODIES[1].R;PINFO.closestT=closestT-t0;PREDV++}

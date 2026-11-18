@@ -622,7 +622,7 @@ setInterval(()=>{if(document.visibilityState==='visible')remember()},15000);addE
 function siteProgress(){const all=LS.get('quasar_activity')||{};return Object.values(all).sort((a,b)=>b.when-a.when).slice(0,14).map(a=>`- ${a.name}: ${a.done!=null?`${a.done}/${a.total} challenges, ${a.stars}/${a.maxStars} stars`:'played'}${a.doing?`; last doing: ${a.doing}`:''}; ${Math.round((Date.now()-a.when)/60000)} min ago`).join('\n')}
 /* ---------- the chat panel ---------- */
 const css=`#aqBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;border:1px solid rgba(180,150,255,.55);background:rgba(14,12,26,.92);color:#efe8ff;font:600 13px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.45);cursor:pointer}
-#aqBtn svg{width:18px;height:18px}#aqBtn.aqIn{position:static;box-shadow:none;padding:6px 11px 6px 9px;background:rgba(60,40,120,.55);font-size:12.5px}@media (max-width:760px){#aqBtn.aqIn span{display:none}#aqBtn.aqIn{padding:6px 8px}}#aqBtn:hover{border-color:#b388ff}
+#aqBtn svg{width:18px;height:18px}#aqBtn.aqIn{position:static;box-shadow:none;padding:6px 11px 6px 9px;background:rgba(60,40,120,.55);font-size:12.5px}@media (max-width:1500px){#aqBtn.aqIn span{display:none}#aqBtn.aqIn{padding:6px 9px}}#aqBtn:hover{border-color:#b388ff}
 #aqP{position:fixed;right:12px;bottom:12px;z-index:80;width:min(390px,calc(100vw - 24px));height:min(560px,calc(100vh - 24px));display:flex;flex-direction:column;background:#0e0c1a;color:#ece8f6;isolation:isolate;border:1px solid rgba(180,150,255,.4);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.6);font:14px/1.45 system-ui,sans-serif;overflow:hidden}
 #aqP[hidden],#aqBtn[hidden]{display:none}#aqP header{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.08)}#aqP header b{font-size:15px}#aqP header small{color:#a99fc4;display:block;font-size:11.5px}
 #aqP header button{margin-left:auto;background:none;border:0;color:#cfc6e8;font-size:20px;cursor:pointer;padding:2px 8px}
@@ -865,7 +865,7 @@ resize();buildRail();buildSpeeds();buildScen();if(SIM.init)SIM.init();setSpeed(S
    A world is saved by walking every piece of the game's state (listed at build time in __STATE_NAMES), keeping shared
    references, typed arrays, Sets and Maps, then squeezing it with gzip into the browser's IndexedDB. */
 (function(){
-  const GAME=SIM.id,NAMES=(typeof __STATE_NAMES!=='undefined'?__STATE_NAMES:[]).filter(n=>!/^(SIM|TB|SCENS|SCENLIST|LC|SC|SC3|TEX|LCL|LCS|CL|VIEW|JOB|DETS|DET|PARTS|FX|HOVER|DRAG|DRAGR|TOOLD|INSPK|BPATH|ACTX|MODE|off|ox|img|vOff|vx|vImg|bOff|bx|bImg|sig|SEAG|SPC|BPREV)$/.test(n));
+  const GAME=SIM.id,NOSAVE=SIM.noSave||[],NAMES=(typeof __STATE_NAMES!=='undefined'?__STATE_NAMES:[]).filter(n=>!NOSAVE.includes(n)).filter(n=>!/^(SIM|TB|SCENS|SCENLIST|LC|SC|SC3|TEX|LCL|LCS|CL|VIEW|JOB|DETS|DET|PARTS|FX|HOVER|DRAG|DRAGR|TOOLD|INSPK|BPATH|ACTX|MODE|off|ox|img|vOff|vx|vImg|bOff|bx|bImg|sig|SEAG|SPC|BPREV)$/.test(n));
   const geval=eval;const get=n=>{try{return geval(n)}catch(e){return undefined}};
   /* ---------- turning the world into data and back ---------- */
   const TA={Float32Array,Float64Array,Int8Array,Int16Array,Int32Array,Uint8Array,Uint16Array,Uint32Array,Uint8ClampedArray};

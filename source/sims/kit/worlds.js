@@ -2,7 +2,7 @@
    A world is saved by walking every piece of the game's state (listed at build time in __STATE_NAMES), keeping shared
    references, typed arrays, Sets and Maps, then squeezing it with gzip into the browser's IndexedDB. */
 (function(){
-  const GAME=SIM.id,NAMES=(typeof __STATE_NAMES!=='undefined'?__STATE_NAMES:[]).filter(n=>!/^(SIM|TB|SCENS|SCENLIST|LC|SC|SC3|TEX|LCL|LCS|CL|VIEW|JOB|DETS|DET|PARTS|FX|HOVER|DRAG|DRAGR|TOOLD|INSPK|BPATH|ACTX|MODE|off|ox|img|vOff|vx|vImg|bOff|bx|bImg|sig|SEAG|SPC|BPREV)$/.test(n));
+  const GAME=SIM.id,NOSAVE=SIM.noSave||[],NAMES=(typeof __STATE_NAMES!=='undefined'?__STATE_NAMES:[]).filter(n=>!NOSAVE.includes(n)).filter(n=>!/^(SIM|TB|SCENS|SCENLIST|LC|SC|SC3|TEX|LCL|LCS|CL|VIEW|JOB|DETS|DET|PARTS|FX|HOVER|DRAG|DRAGR|TOOLD|INSPK|BPATH|ACTX|MODE|off|ox|img|vOff|vx|vImg|bOff|bx|bImg|sig|SEAG|SPC|BPREV)$/.test(n));
   const geval=eval;const get=n=>{try{return geval(n)}catch(e){return undefined}};
   /* ---------- turning the world into data and back ---------- */
   const TA={Float32Array,Float64Array,Int8Array,Int16Array,Int32Array,Uint8Array,Uint16Array,Uint32Array,Uint8ClampedArray};
