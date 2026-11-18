@@ -104,11 +104,11 @@
   "color": "#9b7bff"
  },
  {
-  "id": "arena",
-  "icon": "🏟️",
-  "name": "Arena",
-  "tag": "Play or coach 14 sports, from football and cricket to golf, tennis and the 100 m",
-  "url": "https://jacob711-oss.github.io/Simulators/arena/",
+  "id": "sports",
+  "icon": "🏆",
+  "name": "Sports",
+  "tag": "Every sport in one place: pick football, cricket, tennis, golf and 11 more, then play, coach or watch",
+  "url": "https://jacob711-oss.github.io/Simulators/sports/",
   "color": "#ffb547"
  }
 ]
