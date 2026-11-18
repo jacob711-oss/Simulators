@@ -872,6 +872,76 @@ var SNAPS=0;
     const o={t:'Photographer',g:'Save a picture of the world with the camera button.',hint:`The camera button is ${where}.`,check:()=>{const ok=typeof evN==='function'?evN('snap')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='snap'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(10,30):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;else o.setup=su;CC(1.02,o)}}catch(e){}
 })();
 
+/* ==ASKQ== Ask Quasar: an AI helper inside every simulator. It reads what you are doing, so you never have to explain. */
+(function(){if(window.__askq)return;window.__askq=1;
+try{if(typeof CC==='function'&&typeof TSTEPS!=='undefined'){const kit=typeof SIM!=='undefined';
+  TSTEPS.push(['Ask Quasar','Press Ask Quasar at the top. Quasar can see your game, so ask it anything, like what to do next.',r=>(window.AQO||0)>r.n,r=>{r.n=window.AQO||0}]);
+  const o={t:'Curious mind',g:'Ask Quasar a question about your game (it needs the internet).',hint:'Press Ask Quasar at the top and tap one of the suggestions.',check:()=>{const ok=typeof evN==='function'?evN('askq')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='askq'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(30,90):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;CC(1.03,o)}}catch(e){}
+
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const tracking=()=>LS.get('quasar_track')!==false;
+const gameId=()=>{try{if(typeof SIM!=='undefined'&&SIM.id)return SIM.id}catch(e){}const p=location.pathname.toLowerCase();return p.includes('/life')?'biosphere':p.includes('barycenter')?'barycenter':(document.title||'game').toLowerCase().split(/\s/)[0]};
+const gameName=()=>{try{if(typeof SIM!=='undefined'&&SIM.name)return SIM.name}catch(e){}return(document.title||'Simulator').split(/[·|—-]/)[0].trim()};
+const vis=e=>e&&e.offsetParent!==null&&getComputedStyle(e).visibility!=='hidden';
+const txt=(el,n)=>vis(el)?el.innerText.replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim().slice(0,n||600):'';
+function progress(){const o={};try{if(typeof CHALS!=='undefined'&&typeof PROG!=='undefined'){const n=CHALS.length;let st=0,done=0,next=null;CHALS.forEach(c=>{const s=PROG.stars[c.t]||0;st+=s;if(s)done++;else if(!next)next=c});o.stars=st;o.maxStars=n*3;o.done=done;o.total=n;o.plays=PROG.plays||0;if(next)o.next=`${next.t}: ${next.g}`}}catch(e){}return o}
+function snapshot(){const o={game:gameName(),page:location.href.split('#')[0]};try{const home=document.getElementById('home');o.screen=home&&!home.hidden?'home menu':'playing'}catch(e){}
+  try{if(typeof SIM!=='undefined'&&typeof S!=='undefined'){const sc=(SIM.scens||[]).find(s=>s.id===S.scen);o.scenario=sc?sc.name:S.scen;if(SIM.dateTxt)o.clock=SIM.dateTxt();if(SIM.dateSub)o.status=SIM.dateSub();if(SIM.stats)o.stats=SIM.stats().map(([k,v])=>k+': '+v).join(', ');o.tool=S.tool;o.view=S.view;o.speed=S.paused?'paused':S.speed+'×'}}catch(e){}
+  try{if(typeof CH!=='undefined'&&CH.active)o.challenge=`${CH.active.t}: ${CH.active.g}. Progress: ${(document.getElementById('chProg')||{}).textContent||''}. Hint: ${CH.active.hint||'none'}`;if(typeof TUT!=='undefined'&&TUT.on&&typeof TSTEPS!=='undefined'){const st=TSTEPS[TUT.i];if(st)o.tutorial=`step ${TUT.i+1} of ${TSTEPS.length}: ${st[0]}: ${st[1]}`}}catch(e){}
+  if(!o.challenge&&!o.tutorial){const h=document.getElementById('chHud');const t=txt(h,300);if(t)o.challengeBox=t}
+  o.selected=txt(document.getElementById('inspBody'),600)||'';const pane=document.querySelector('#dock .pane:not([hidden])');if(pane&&vis(pane)){const cl=pane.cloneNode(true);cl.querySelectorAll('select,option,script,canvas,svg').forEach(e=>e.remove());cl.querySelectorAll('input[type=range]').forEach(e=>e.replaceWith(' ['+e.value+'] '));o.openPanel=cl.textContent.replace(/\s+/g,' ').trim().slice(0,700)}
+  if(!o.stats){o.screenText=[...document.querySelectorAll('.panel,.hud,#hud,header')].filter(e=>vis(e)&&!e.closest('#aqP')).map(e=>e.innerText.replace(/\s+/g,' ').trim()).filter(Boolean).join(' | ').slice(0,1200)}o.progress=progress();return o}
+function remember(){if(!tracking())return;try{const s=snapshot(),all=LS.get('quasar_activity')||{};const p=s.progress||{};all[gameId()]={name:s.game,url:s.page,when:Date.now(),stars:p.stars,maxStars:p.maxStars,done:p.done,total:p.total,next:p.next,doing:[s.scenario,s.challenge&&('challenge '+s.challenge.split('. Progress')[0]),s.tutorial&&'tutorial',s.clock].filter(Boolean).join(' · ').slice(0,240)};LS.set('quasar_activity',all)}catch(e){}}
+setInterval(()=>{if(document.visibilityState==='visible')remember()},15000);addEventListener('pagehide',remember);setTimeout(remember,4000);
+function siteProgress(){const all=LS.get('quasar_activity')||{};return Object.values(all).sort((a,b)=>b.when-a.when).slice(0,14).map(a=>`- ${a.name}: ${a.done!=null?`${a.done}/${a.total} challenges, ${a.stars}/${a.maxStars} stars`:'played'}${a.doing?`; last doing: ${a.doing}`:''}; ${Math.round((Date.now()-a.when)/60000)} min ago`).join('\n')}
+/* ---------- the chat panel ---------- */
+const css=`#aqBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;border:1px solid rgba(180,150,255,.55);background:rgba(14,12,26,.92);color:#efe8ff;font:600 13px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.45);cursor:pointer}
+#aqBtn svg{width:18px;height:18px}#aqBtn.aqIn{position:static;box-shadow:none;padding:6px 11px 6px 9px;background:rgba(60,40,120,.55);font-size:12.5px}@media (max-width:760px){#aqBtn.aqIn span{display:none}#aqBtn.aqIn{padding:6px 8px}}#aqBtn:hover{border-color:#b388ff}
+#aqP{position:fixed;right:12px;bottom:12px;z-index:80;width:min(390px,calc(100vw - 24px));height:min(560px,calc(100vh - 24px));display:flex;flex-direction:column;background:#0e0c1a;color:#ece8f6;isolation:isolate;border:1px solid rgba(180,150,255,.4);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.6);font:14px/1.45 system-ui,sans-serif;overflow:hidden}
+#aqP[hidden],#aqBtn[hidden]{display:none}#aqP header{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.08)}#aqP header b{font-size:15px}#aqP header small{color:#a99fc4;display:block;font-size:11.5px}
+#aqP header button{margin-left:auto;background:none;border:0;color:#cfc6e8;font-size:20px;cursor:pointer;padding:2px 8px}
+#aqM{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}.aqm{max-width:88%;padding:8px 11px;border-radius:12px;white-space:normal;word-wrap:break-word}.aqm.me{align-self:flex-end;background:#3b2f6b}.aqm.ai{align-self:flex-start;background:rgba(255,255,255,.06)}.aqm ul{margin:4px 0 4px 18px;padding:0}
+#aqC{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}#aqC button{border:1px solid rgba(180,150,255,.35);background:none;color:#d8ccff;border-radius:999px;padding:5px 10px;font:12.5px system-ui,sans-serif;cursor:pointer}
+#aqF{display:flex;gap:6px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08)}#aqF input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;padding:9px 11px;font:14px system-ui,sans-serif}#aqF button{border:0;border-radius:10px;background:#8b5cf6;color:#fff;padding:0 14px;font:600 14px system-ui,sans-serif;cursor:pointer}
+#aqT{padding:0 12px 9px;font-size:11.5px;color:#9a90b8}#aqT a{color:#c4b0ff;cursor:pointer;text-decoration:underline}
+@media (max-width:760px){#aqBtn{right:10px;bottom:auto;top:calc(var(--hudH,70px) + 14px);padding:8px 11px}#aqP{right:0;left:0;bottom:0;width:100vw;height:78vh;border-radius:16px 16px 0 0}}`;
+const icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(-25 12 12)"/><path d="M19 3.5v3M17.5 5h3"/></svg>';
+let hist=[];try{hist=JSON.parse(sessionStorage.getItem('aq_hist_'+gameId())||'[]')}catch(e){}
+const save=()=>{try{sessionStorage.setItem('aq_hist_'+gameId(),JSON.stringify(hist.slice(-20)))}catch(e){}};
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function md(s){const L=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n');let out='',ul=false;for(const l of L){const m=l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);if(m){if(!ul){out+='<ul>';ul=true}out+='<li>'+m[1]+'</li>'}else{if(ul){out+='</ul>';ul=false}out+=l?l+'<br>':'<br>'}}if(ul)out+='</ul>';return out.replace(/(<br>)+$/,'')}
+function add(role,text){const d=document.createElement('div');d.className='aqm '+(role==='user'?'me':'ai');d.innerHTML=md(text);document.getElementById('aqM').appendChild(d);d.scrollIntoView({block:'end'});return d}
+function system(){const s=snapshot();const live=tracking()?JSON.stringify(s,null,1).slice(0,3500):'(the player turned off progress tracking)';
+  return `You are Quasar, the friendly AI helper built into "${s.game}", one of the free browser simulators on the Our Simulations! website. Many players are kids, so use simple words, be encouraging, and keep answers short (under 120 words) unless they ask for more.
+You can SEE what the player is doing: the live game state below is read automatically every time they ask. Never ask them to describe what is on screen; use it. Refer to real buttons, tools, tabs and challenge names you can see. When they ask how to do something, give 2–5 clear steps.
+Live game state right now:
+${live}
+${tracking()?`The player's progress across the website (most recent first):\n${siteProgress()||'- nothing recorded yet'}`:''}`}
+let busy=false;
+async function ask(q){if(busy||!q.trim())return;busy=true;hist.push({role:'user',content:q});add('user',q);const box=add('ai','…');let out='';
+  if(!navigator.onLine){box.innerHTML='Quasar needs the internet to answer. Everything else in the simulator still works offline.';busy=false;hist.pop();return}
+  try{const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',stream:true,private:true,messages:[{role:'system',content:system()},...hist.slice(-10)]})});
+    if(!r.ok||!r.body)throw new Error('http '+r.status);const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+    for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')continue;try{const j=JSON.parse(d),t=j.choices&&j.choices[0]&&(j.choices[0].delta||{}).content;if(t){out+=t;box.innerHTML=md(out.replace(/<think>[\s\S]*?(<\/think>|$)/g,''));box.scrollIntoView({block:'end'})}}catch(e){}}}
+    if(!out.trim())throw new Error('empty')}
+  catch(e){try{const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(q)+'?private=true&model=openai&system='+encodeURIComponent(system().slice(0,3000)));out=await r.text();box.innerHTML=md(out)}catch(e2){out='';box.innerHTML='Sorry, I could not reach Quasar just now. Try again in a moment.'}}
+  out=out.replace(/<think>[\s\S]*?<\/think>/g,'').trim();if(out){hist.push({role:'assistant',content:out});save()}else hist.pop();busy=false;try{if(typeof chEv==='function')chEv('askq',{});window.AQN=(window.AQN||0)+1}catch(e){}}
+function build(){if(document.getElementById('aqBtn'))return;const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+  const b=document.createElement('button');b.id='aqBtn';b.type='button';b.innerHTML=icon+'<span>Ask Quasar</span>';b.title='Ask Quasar, the AI helper. It can see what you are doing.';const host=document.querySelector('.hud-top .right')||(document.getElementById('homeBtn')||{}).parentElement;if(host&&host!==document.body){b.className='btn aqIn';host.insertBefore(b,host.querySelector('#homeBtn')||null)}else document.body.appendChild(b);
+  const p=document.createElement('div');p.id='aqP';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','Ask Quasar');
+  p.innerHTML=`<header>${icon.replace('<svg','<svg width="22" height="22" style="color:#b388ff"')}<div><b>Quasar</b><small>Sees your game and progress, so just ask</small></div><button id="aqX" aria-label="Close">×</button></header><div id="aqM"></div><div id="aqC"></div><div id="aqT"></div><form id="aqF"><input id="aqI" placeholder="Ask anything about this game…" autocomplete="off"><button>Send</button></form>`;document.body.appendChild(p);
+  const chips=['What should I do next?','Explain what I am looking at','Help me with this challenge','How am I doing overall?'];const C=document.getElementById('aqC');for(const c of chips){const x=document.createElement('button');x.type='button';x.textContent=c;x.onclick=()=>ask(c);C.appendChild(x)}
+  const T=document.getElementById('aqT');const tr=()=>{T.innerHTML=tracking()?'Quasar can see this game and your progress. <a id="aqOff">Turn off</a>':'Progress tracking is off. <a id="aqOff">Turn on</a>';document.getElementById('aqOff').onclick=()=>{LS.set('quasar_track',!tracking());if(!tracking())try{localStorage.removeItem('quasar_activity')}catch(e){}tr()}};tr();
+  if(hist.length)hist.forEach(h=>add(h.role,h.content));else add('assistant',`Hi! I'm Quasar. I can see what you're doing in ${gameName()}, so just ask, like "what should I do next?"`);
+  const open=v=>{p.hidden=!v;b.hidden=v;if(v){remember();setTimeout(()=>document.getElementById('aqI').focus(),50);try{window.AQO=(window.AQO||0)+1;if(typeof chEv==='function')chEv('askqopen',{})}catch(e){}}};
+  b.onclick=()=>open(true);document.getElementById('aqX').onclick=()=>open(false);
+  document.getElementById('aqF').onsubmit=e=>{e.preventDefault();const i=document.getElementById('aqI');const q=i.value;i.value='';ask(q)};
+  p.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')open(false)});p.addEventListener('pointerdown',e=>e.stopPropagation())}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
+window.askQuasar=q=>{const b=document.getElementById('aqBtn');if(b)b.click();if(q)ask(q)};
+})();
+/* ==/ASKQ== */
+
 /* ===== simulator kit: UI, home, accounts, challenges, tutorial, demo, main loop ===== */
 const cv=$('world'),ctx=cv.getContext('2d');
 function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);measureHud();if(SIM.resize)SIM.resize()}

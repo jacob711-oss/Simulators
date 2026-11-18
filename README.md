@@ -26,7 +26,7 @@ No install or account needed. Works on computers, tablets and phones.
 
 **3D Cricket Championship:** the original arcade cricket game, in 3D. [Play](https://jacob711-oss.github.io/Simulators/arena/cricket3d/)
 
-**Quasar AI:** chat, web search with sources, picture making, videos, and questions about your photos and files. [Open Quasar](https://jacob711-oss.github.io/Simulators/quasar/)
+**Quasar AI:** also inside every simulator (Ask Quasar at the top): it sees your game and tracks your progress, so you never have to explain. Chat, web search with sources, picture making, videos, and questions about your photos and files. [Open Quasar](https://jacob711-oss.github.io/Simulators/quasar/)
 
 ## In every simulator
 - **Works offline:** visit once online, and every simulator opens later without internet.

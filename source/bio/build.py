@@ -15,7 +15,7 @@ ui=re.sub(r"function ctxSwap\(p,f\)\{.*?\n","",ui);ui=ui.replace("const CTXREF={
 ui=ui.replace("function climateEvent(ev){chEv('event',{ev});","function climateEvent(ev){chEv('event',{ev});EVN++;")
 assert 'ctxSwap' not in ui and 'let gx=ctx' in ui and 'EVN++' in ui
 game=game.replace('resize();buildRail();',open('creator.js').read()+'\nresize();buildRail();',1)
-game=game+'\n'+open('../sims/kit/noemoji.js').read()+'\n'+open('../sims/kit/extras.js').read()
+game=game+'\n'+open('../sims/kit/noemoji.js').read()+'\n'+open('../sims/kit/extras.js').read()+'\n'+open('../sims/kit/askq.js').read()
 import sys as _s;_s.path.insert(0,'../sims/kit');from statenames import state_names as _sn
 _names=[n for n in _sn([sim,ui,game]) if n not in ('S',)]+['S']
 game=game+'\nvar SIM={id:"biosphere",name:"Biosphere",freeScen:"meadow",home:"meadow",defSpeed:7,saveEvery:60000,scens:SCEN.map(s=>({id:s.id,name:s.n,desc:s.d})),start:id=>{leaveHome();loadScen(id);countPlay()}};\nvar __STATE_NAMES='+__import__('json').dumps(_names)+';\n'+open('../sims/kit/worlds.js').read()

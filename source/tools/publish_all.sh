@@ -3,6 +3,12 @@
 set -e
 cd "$(dirname "$0")"
 python3 sims/publish.py
+python3 - <<'PY'
+import re
+p='barycenter.html';s=open(p).read();q=open('sims/kit/askq.js').read()
+s=re.sub(r'/\* ==ASKQ==.*?/\* ==/ASKQ== \*/\n?','',s,flags=re.S)
+i=s.rindex('</script>');s=s[:i]+q+'\n'+s[i:];open(p,'w').write(s)
+PY
 bash build_pub.sh >/dev/null 2>&1
 (cd bio && python3 build.py >/dev/null)
 python3 - <<'PY'
