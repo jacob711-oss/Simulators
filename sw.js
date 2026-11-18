@@ -1,4 +1,4 @@
-const V='sims-b3e02d500c',PAGES=["./", "barycenter/", "life/", "lithosphere/", "troposphere/", "catalyst/", "abyssal/", "interchange/", "gridlock/", "hivemind/", "flux/", "seaway/", "contrail/", "quasar/", "simulations/"];
+const V='sims-14ba44d59a',PAGES=["./", "barycenter/", "life/", "lithosphere/", "troposphere/", "catalyst/", "abyssal/", "interchange/", "gridlock/", "hivemind/", "flux/", "seaway/", "contrail/", "quasar/", "arena/", "simulations/"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(PAGES)).catch(()=>{}));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k.startsWith('sims-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET')return;

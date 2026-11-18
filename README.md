@@ -22,6 +22,9 @@ No install or account needed. Works on computers, tablets and phones.
 | Flux | Place electric charges and magnets and bend particle beams | [Play](https://jacob711-oss.github.io/Simulators/flux/) |
 | Seaway | Run shipping lines between island ports | [Play](https://jacob711-oss.github.io/Simulators/seaway/) |
 | Contrail | Air traffic control: guide planes onto runways and keep them apart | [Play](https://jacob711-oss.github.io/Simulators/contrail/) |
+| Arena | 14 sports in one stadium: football, basketball, ice hockey, handball, rugby sevens, cricket, baseball, tennis, badminton, table tennis, volleyball, golf, the 100 m and the 50 m swim. Play as an athlete, coach, or watch | [Play](https://jacob711-oss.github.io/Simulators/arena/) |
+
+**3D Cricket Championship:** the original arcade cricket game, in 3D. [Play](https://jacob711-oss.github.io/Simulators/arena/cricket3d/)
 
 **Quasar AI:** chat, web search with sources, picture making, videos, and questions about your photos and files. [Open Quasar](https://jacob711-oss.github.io/Simulators/quasar/)
 
@@ -35,7 +38,7 @@ No install or account needed. Works on computers, tablets and phones.
 
 ## On the Our Simulations! page
 - **Continue playing:** your latest saved worlds from every simulator, one tap to jump back in.
-- **Search and categories:** Space, Life, Earth, Science, Transport and AI.
+- **Search and categories:** Space, Life, Earth, Science, Transport, Sport and AI.
 - **Share** buttons, picture link previews, and an installable home-screen icon.
 
 ## Reviews

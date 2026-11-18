@@ -102,5 +102,13 @@
   "tag": "Our AI: chat, make pictures and find videos",
   "url": "https://jacob711-oss.github.io/Simulators/quasar/",
   "color": "#9b7bff"
+ },
+ {
+  "id": "arena",
+  "icon": "🏟️",
+  "name": "Arena",
+  "tag": "Play or coach 14 sports, from football and cricket to golf, tennis and the 100 m",
+  "url": "https://jacob711-oss.github.io/Simulators/arena/",
+  "color": "#ffb547"
  }
 ]

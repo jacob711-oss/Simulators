@@ -1,7 +1,7 @@
 # Builds the "Our Simulations!" page from sims.json: one card per simulator (preview, name, short description), plus a review form.
 import json,html,os
 SITE='/home/user/barycenter-site';SIMS=json.load(open(os.path.join(SITE,'sims.json')))
-CATS={'barycenter': 'Space', 'biosphere': 'Life', 'abyssal': 'Life', 'hivemind': 'Life', 'lithosphere': 'Earth', 'troposphere': 'Earth', 'catalyst': 'Science', 'flux': 'Science', 'interchange': 'Transport', 'gridlock': 'Transport', 'seaway': 'Transport', 'contrail': 'Transport', 'quasar': 'AI'}
+CATS={'barycenter': 'Space', 'biosphere': 'Life', 'abyssal': 'Life', 'hivemind': 'Life', 'lithosphere': 'Earth', 'troposphere': 'Earth', 'catalyst': 'Science', 'flux': 'Science', 'interchange': 'Transport', 'gridlock': 'Transport', 'seaway': 'Transport', 'contrail': 'Transport', 'arena': 'Sport', 'quasar': 'AI'}
 cards=[]
 for s in sorted(SIMS,key=lambda x:x['id']!='quasar'):
     img=f"img/{s['id']}.jpg"
@@ -67,7 +67,7 @@ footer{text-align:center;color:var(--dim);font-size:13px;padding:0 20px 40px}
 <header><div class="brand"><img class="hlogo" src="https://jacob711-oss.github.io/Simulators/simulations/og/logo-anim.svg" alt="" width="84" height="84"><h1>Our Simulations!</h1></div><p class="sub">Every simulator we have made, all in one place. Click a preview to jump in. Each one has challenges, a tutorial and a free-play sandbox.</p>
 <div class="chips"><span class="count">%COUNT% simulators</span><a class="count" href="https://jacob711-oss.github.io/Simulators/quasar/">🌌 Ask Quasar AI</a><a class="count" href="#review">✍️ Leave a review</a></div></header>
 <section class="cont" id="cont" hidden><h2>Continue playing</h2><div class="cgrid" id="cgrid"></div></section>
-<div class="tools2"><input id="q" type="search" placeholder="Search simulators…" aria-label="Search simulators"><div class="cats" id="cats"><button class="on" data-c="">All</button><button data-c="Space">Space</button><button data-c="Life">Life</button><button data-c="Earth">Earth</button><button data-c="Science">Science</button><button data-c="Transport">Transport</button><button data-c="AI">AI</button></div></div>
+<div class="tools2"><input id="q" type="search" placeholder="Search simulators…" aria-label="Search simulators"><div class="cats" id="cats"><button class="on" data-c="">All</button><button data-c="Space">Space</button><button data-c="Life">Life</button><button data-c="Earth">Earth</button><button data-c="Science">Science</button><button data-c="Transport">Transport</button><button data-c="Sport">Sport</button><button data-c="AI">AI</button></div></div>
 <main>
 <p class="none" id="none" hidden>No simulators match that search.</p>
 %CARDS%
