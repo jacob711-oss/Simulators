@@ -7,7 +7,7 @@ let SP='football',P=[],PID=0,CTRL=-1;
 let B={x:CX,y:CY,z:0,vx:0,vy:0,vz:0,own:-1,lt:0,lp:-1,kt:0,bn:0,fly:null,sv:-1,shot:0};
 let M={sc:[0,0]};
 let TEAMS=[{nm:'Red Comets',sh:'RED',col:'#ff5a4e',dk:'#6e1a14'},{nm:'Blue Harbour',sh:'BLU',col:'#3fa2ff',dk:'#0f3a66'}];
-const G={sk:[70,70],tac:1,ctrl:true,loft:false,overs:3,wind:0,club:'auto',gcam:true,auto:true};
+const G={autoSw:false,sk:[70,70],tac:1,ctrl:true,loft:false,overs:3,wind:0,club:'auto',gcam:true,auto:true};
 let EVC={};
 let HEAT=[new Float32Array(56*37),new Float32Array(56*37)],HIST=[];
 let FR={x0:0,x1:0,y0:0,y1:0};
@@ -92,7 +92,7 @@ function render(c,now){c.fillStyle='#0b0d12';c.fillRect(0,0,W,H);const E=ENG[sc(
 const SPORTLIST=()=>Object.keys(SC).map(id=>({id,name:SC[id].nm,desc:SC[id].desc}));
 function buildSportOpts(){const box=$('spOpts');if(!box)return;box.innerHTML=(ENG[sc().eng].opts||(()=>''))();box.querySelectorAll('[data-opt]').forEach(el=>{const f=()=>{ENG[sc().eng].opt(el.dataset.opt,el);syncPanel()};el.oninput=f;if(el.tagName==='BUTTON')el.onclick=f})}
 function syncPanel(){if(!$('sb'))return;const E=ENG[sc().eng];$('sb').innerHTML=E.sb();$('sk0V').textContent=G.sk[0];$('sk1V').textContent=G.sk[1];$('sk0L').textContent=TEAMS[0].nm+' skill';$('sk1L').textContent=TEAMS[1].nm+' skill';
-  $('ctrlBtn').textContent=G.ctrl?'On':'Off';$('ctrlBtn').setAttribute('aria-pressed',G.ctrl);$('ctrlL').textContent='You play for '+TEAMS[0].nm;
+  $('ctrlBtn').textContent=G.ctrl?'On':'Off';if($('autoSwBtn')){$('autoSwBtn').textContent=G.autoSw?'On':'Off';$('autoSwBtn').setAttribute('aria-pressed',G.autoSw);$('swRow').hidden=sc().eng!=='inv'}$('ctrlBtn').setAttribute('aria-pressed',G.ctrl);$('ctrlL').textContent='You play for '+TEAMS[0].nm;
   document.querySelectorAll('[data-tac]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.tac===G.tac));$('spSel').value=SP;$('msg').textContent=M.msg||'';$('tacRow').hidden=!E.tactics;
   if(E.sync)E.sync()}
 function initPanel(){const sel=$('spSel');sel.innerHTML=Object.keys(SC).map(id=>`<option value="${id}">${SC[id].nm}</option>`).join('');sel.onchange=()=>{loadScen(sel.value);chEv('sport',{sp:sel.value});toast(SC[sel.value].nm)};

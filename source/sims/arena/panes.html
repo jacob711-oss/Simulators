@@ -2,7 +2,9 @@
     <div class="sb" id="sb"></div>
     <p class="note" id="msg"></p>
     <div class="row"><span class="k">Sport</span><select id="spSel" class="btn"></select></div>
+    <button class="btn" id="learnBtn" style="width:100%">📘 Learn this sport (tutorial)</button>
     <div class="row"><span class="k" id="ctrlL">You play</span><button class="btn" id="ctrlBtn" aria-pressed="true">On</button></div>
+    <div id="swRow"><div class="row"><span class="k">Switch player by itself</span><button class="btn" id="autoSwBtn" aria-pressed="false">Off</button></div><button class="btn" id="swPanelBtn" style="width:100%">🔁 Switch player (Q)</button></div>
     <div class="sl"><div class="row"><span class="k" id="sk0L">Red skill</span><span id="sk0V"></span></div><input type="range" id="sk0" min="20" max="100" step="1" value="70"></div>
     <div class="sl"><div class="row"><span class="k" id="sk1L">Blue skill</span><span id="sk1V"></span></div><input type="range" id="sk1" min="20" max="100" step="1" value="70"></div>
     <div id="tacRow"><span class="k">Your team's tactics</span>
@@ -12,7 +14,7 @@
     <div class="evs"><button class="btn" data-ev="restart">🔁 New match</button><button class="btn" data-ev="follow">🎥 Follow the ball</button><button class="btn" data-ev="fresh">💧 Fresh legs</button><button class="btn" data-ev="swap">🔄 Swap teams</button><button class="btn" data-ev="next">⏭ Skip ahead</button></div>
     <span class="k">Views</span>
     <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Match</button><button class="btn" data-view="heat">Heat map</button><button class="btn" data-view="tactics">Where players are heading</button></div>
-    <p class="note">Pick 🎮 Play to join in as the player with the yellow ring. Hold or drag on the field to run, tap to pass or shoot to that spot. Keys: arrows or WASD to run, Space to shoot, E to pass, Q to switch player, L for lofted shots.</p>
+    <p class="note">Pick 🎮 Play to join in as the player with the yellow ring. Hold or drag on the field to run, tap to pass or shoot to that spot. Keys: arrows or WASD to run, Space to shoot, E to pass, Q or the Switch player button to change who you control, L for lofted shots.</p>
   </div>
   <div class="pane" id="pane-stats" hidden>
     <div class="kv" id="cStats"></div>

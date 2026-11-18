@@ -200,6 +200,8 @@ body.dockHidden .dock,body.dockHidden .zoomb{display:none!important}@media (min-
 .sb{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px}.sbx{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;font-size:12.5px;font-weight:600}.sbx span:last-child{text-align:right}.sbx b{font-family:Oxanium,var(--f-mono);font-size:24px;color:var(--ink)}.sbs{font-size:12px;color:var(--dim);text-align:center;margin-top:3px}
 #spSel{min-width:150px}#msg:empty{display:none}
 
+#swFloat{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(58px + env(safe-area-inset-bottom));z-index:30;padding:10px 18px;font-size:14px;border-radius:999px}@media (max-width:760px){#swFloat{bottom:auto;top:calc(var(--hudH,60px) + 14px)}}
+
 </style>
 
 <!--SEO-->
@@ -262,7 +264,9 @@ if(at.id==='hSims')at.after(b);else at.appendChild(b)};if(document.readyState!==
     <div class="sb" id="sb"></div>
     <p class="note" id="msg"></p>
     <div class="row"><span class="k">Sport</span><select id="spSel" class="btn"></select></div>
+    <button class="btn" id="learnBtn" style="width:100%">📘 Learn this sport (tutorial)</button>
     <div class="row"><span class="k" id="ctrlL">You play</span><button class="btn" id="ctrlBtn" aria-pressed="true">On</button></div>
+    <div id="swRow"><div class="row"><span class="k">Switch player by itself</span><button class="btn" id="autoSwBtn" aria-pressed="false">Off</button></div><button class="btn" id="swPanelBtn" style="width:100%">🔁 Switch player (Q)</button></div>
     <div class="sl"><div class="row"><span class="k" id="sk0L">Red skill</span><span id="sk0V"></span></div><input type="range" id="sk0" min="20" max="100" step="1" value="70"></div>
     <div class="sl"><div class="row"><span class="k" id="sk1L">Blue skill</span><span id="sk1V"></span></div><input type="range" id="sk1" min="20" max="100" step="1" value="70"></div>
     <div id="tacRow"><span class="k">Your team's tactics</span>
@@ -272,7 +276,7 @@ if(at.id==='hSims')at.after(b);else at.appendChild(b)};if(document.readyState!==
     <div class="evs"><button class="btn" data-ev="restart">🔁 New match</button><button class="btn" data-ev="follow">🎥 Follow the ball</button><button class="btn" data-ev="fresh">💧 Fresh legs</button><button class="btn" data-ev="swap">🔄 Swap teams</button><button class="btn" data-ev="next">⏭ Skip ahead</button></div>
     <span class="k">Views</span>
     <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Match</button><button class="btn" data-view="heat">Heat map</button><button class="btn" data-view="tactics">Where players are heading</button></div>
-    <p class="note">Pick 🎮 Play to join in as the player with the yellow ring. Hold or drag on the field to run, tap to pass or shoot to that spot. Keys: arrows or WASD to run, Space to shoot, E to pass, Q to switch player, L for lofted shots.</p>
+    <p class="note">Pick 🎮 Play to join in as the player with the yellow ring. Hold or drag on the field to run, tap to pass or shoot to that spot. Keys: arrows or WASD to run, Space to shoot, E to pass, Q or the Switch player button to change who you control, L for lofted shots.</p>
   </div>
   <div class="pane" id="pane-stats" hidden>
     <div class="kv" id="cStats"></div>
@@ -352,7 +356,7 @@ document.addEventListener('pointerdown',e=>{if(D.open&&!D.contains(e.target))D.o
 </div>
 
 <script>
-const __STATE_NAMES=["WW", "WH", "CX", "CY", "NM1", "NM2", "SP", "P", "PID", "CTRL", "B", "M", "TEAMS", "G", "EVC", "HEAT", "HIST", "FR", "PARTS", "HOVER", "DRAG", "isYou", "ev", "evc", "sc", "byId", "gauss", "SC", "ctrlOn", "Z", "HEATC", "SPORTLIST", "ROLES", "roleName", "dirOf", "uOf", "xOf", "yOf", "vOf", "ordinal", "XS", "XB", "BRX", "BRY", "FIELD", "inOval", "HP", "BASES", "MOUND", "FENCE", "BPOS", "angOf", "fair", "half", "VPOS", "vBase", "CLUBS", "GB", "HOLE", "GM", "GG", "rr2", "LIE", "RC", "gDist", "vsPar", "LANEC", "coachOK", "SIM", "play", "need"];
+const __STATE_NAMES=["WW", "WH", "CX", "CY", "NM1", "NM2", "SP", "P", "PID", "CTRL", "B", "M", "TEAMS", "G", "EVC", "HEAT", "HIST", "FR", "PARTS", "HOVER", "DRAG", "isYou", "ev", "evc", "sc", "byId", "gauss", "SC", "ctrlOn", "Z", "HEATC", "SPORTLIST", "ROLES", "roleName", "dirOf", "uOf", "xOf", "yOf", "vOf", "ordinal", "XS", "XB", "BRX", "BRY", "FIELD", "inOval", "HP", "BASES", "MOUND", "FENCE", "BPOS", "angOf", "fair", "half", "VPOS", "vBase", "CLUBS", "GB", "HOLE", "GM", "GG", "rr2", "LIE", "RC", "gDist", "vsPar", "LANEC", "coachOK", "SIM", "play", "need", "goSp", "did", "base", "TUTAT"];
 const SIMLIST=[{"id": "barycenter", "icon": "🪐", "name": "Barycenter", "tag": "Gravity, planets, stars and black holes", "url": "https://jacob711-oss.github.io/Simulators/barycenter/", "color": "#e8b04a"}, {"id": "biosphere", "icon": "🌿", "name": "Biosphere", "tag": "A living world of animals, plants and people", "url": "https://jacob711-oss.github.io/Simulators/life/", "color": "#7fe0a8"}, {"id": "lithosphere", "icon": "🌋", "name": "Lithosphere", "tag": "Drift continents, raise mountains and set off volcanoes", "url": "https://jacob711-oss.github.io/Simulators/lithosphere/", "color": "#ff8a5c"}, {"id": "troposphere", "icon": "🌀", "name": "Troposphere", "tag": "Steer winds, brew hurricanes and change the climate", "url": "https://jacob711-oss.github.io/Simulators/troposphere/", "color": "#60d6e6"}, {"id": "catalyst", "icon": "⚛️", "name": "Catalyst", "tag": "Mix atoms, spark reactions and build molecules", "url": "https://jacob711-oss.github.io/Simulators/catalyst/", "color": "#c48bff"}, {"id": "abyssal", "icon": "🐋", "name": "Abyssal", "tag": "Dive into a living ocean, from coral reefs to the deep sea", "url": "https://jacob711-oss.github.io/Simulators/abyssal/", "color": "#4fa3ff"}, {"id": "interchange", "icon": "🚉", "name": "Interchange", "tag": "Draw the transit lines of a growing city and keep everyone moving", "url": "https://jacob711-oss.github.io/Simulators/interchange/", "color": "#ff5ab4"}, {"id": "gridlock", "icon": "🚗", "name": "Gridlock", "tag": "Draw the roads of a growing town and keep the traffic flowing", "url": "https://jacob711-oss.github.io/Simulators/gridlock/", "color": "#ffd23a"}, {"id": "hivemind", "icon": "🐜", "name": "Hivemind", "tag": "Ant colonies that find food by following each other's scent trails", "url": "https://jacob711-oss.github.io/Simulators/hivemind/", "color": "#ff9a3d"}, {"id": "flux", "icon": "⚡", "name": "Flux", "tag": "Place charges and magnets, and watch the fields bend particles through space", "url": "https://jacob711-oss.github.io/Simulators/flux/", "color": "#5ae0ff"}, {"id": "seaway", "icon": "🚢", "name": "Seaway", "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving", "url": "https://jacob711-oss.github.io/Simulators/seaway/", "color": "#3ab8e0"}, {"id": "contrail", "icon": "✈️", "name": "Contrail", "tag": "Guide planes onto runways, keep them apart and run a busy airport", "url": "https://jacob711-oss.github.io/Simulators/contrail/", "color": "#9fa8ff"}, {"id": "quasar", "icon": "✨", "name": "Quasar AI", "tag": "Our AI: chat, make pictures and find videos", "url": "https://jacob711-oss.github.io/Simulators/quasar/", "color": "#9b7bff"}, {"id": "arena", "icon": "🏟️", "name": "Arena", "tag": "Play or coach 14 sports, from football and cricket to golf, tennis and the 100 m", "url": "https://jacob711-oss.github.io/Simulators/arena/", "color": "#ffb547"}],LB_GAME="arena";
 /* ===== simulator kit: core helpers shared by every simulator ===== */
 const $=id=>document.getElementById(id);
@@ -386,7 +390,7 @@ let SP='football',P=[],PID=0,CTRL=-1;
 let B={x:CX,y:CY,z:0,vx:0,vy:0,vz:0,own:-1,lt:0,lp:-1,kt:0,bn:0,fly:null,sv:-1,shot:0};
 let M={sc:[0,0]};
 let TEAMS=[{nm:'Red Comets',sh:'RED',col:'#ff5a4e',dk:'#6e1a14'},{nm:'Blue Harbour',sh:'BLU',col:'#3fa2ff',dk:'#0f3a66'}];
-const G={sk:[70,70],tac:1,ctrl:true,loft:false,overs:3,wind:0,club:'auto',gcam:true,auto:true};
+const G={autoSw:false,sk:[70,70],tac:1,ctrl:true,loft:false,overs:3,wind:0,club:'auto',gcam:true,auto:true};
 let EVC={};
 let HEAT=[new Float32Array(56*37),new Float32Array(56*37)],HIST=[];
 let FR={x0:0,x1:0,y0:0,y1:0};
@@ -471,7 +475,7 @@ function render(c,now){c.fillStyle='#0b0d12';c.fillRect(0,0,W,H);const E=ENG[sc(
 const SPORTLIST=()=>Object.keys(SC).map(id=>({id,name:SC[id].nm,desc:SC[id].desc}));
 function buildSportOpts(){const box=$('spOpts');if(!box)return;box.innerHTML=(ENG[sc().eng].opts||(()=>''))();box.querySelectorAll('[data-opt]').forEach(el=>{const f=()=>{ENG[sc().eng].opt(el.dataset.opt,el);syncPanel()};el.oninput=f;if(el.tagName==='BUTTON')el.onclick=f})}
 function syncPanel(){if(!$('sb'))return;const E=ENG[sc().eng];$('sb').innerHTML=E.sb();$('sk0V').textContent=G.sk[0];$('sk1V').textContent=G.sk[1];$('sk0L').textContent=TEAMS[0].nm+' skill';$('sk1L').textContent=TEAMS[1].nm+' skill';
-  $('ctrlBtn').textContent=G.ctrl?'On':'Off';$('ctrlBtn').setAttribute('aria-pressed',G.ctrl);$('ctrlL').textContent='You play for '+TEAMS[0].nm;
+  $('ctrlBtn').textContent=G.ctrl?'On':'Off';if($('autoSwBtn')){$('autoSwBtn').textContent=G.autoSw?'On':'Off';$('autoSwBtn').setAttribute('aria-pressed',G.autoSw);$('swRow').hidden=sc().eng!=='inv'}$('ctrlBtn').setAttribute('aria-pressed',G.ctrl);$('ctrlL').textContent='You play for '+TEAMS[0].nm;
   document.querySelectorAll('[data-tac]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.tac===G.tac));$('spSel').value=SP;$('msg').textContent=M.msg||'';$('tacRow').hidden=!E.tactics;
   if(E.sync)E.sync()}
 function initPanel(){const sel=$('spSel');sel.innerHTML=Object.keys(SC).map(id=>`<option value="${id}">${SC[id].nm}</option>`).join('');sel.onchange=()=>{loadScen(sel.value);chEv('sport',{sp:sel.value});toast(SC[sel.value].nm)};
@@ -564,11 +568,12 @@ const ordinal=n=>['','1st','2nd','3rd','4th','5th','6th','7th','8th','9th'][n]||
 function sbHtml(a,b,sub){return `<div class="sbx"><span style="color:${TEAMS[0].col}">${TEAMS[0].nm}</span><b>${a} – ${b}</b><span style="color:${TEAMS[1].col}">${TEAMS[1].nm}</span></div><div class="sbs">${sub}</div>`}
 function endMatch(){M.over=true;M.overT=0;const [a,b]=M.sc,w=a>b?0:b>a?1:-1;const txt=w<0?`It's a draw, ${a} – ${b}`:`${TEAMS[w].nm} win ${Math.max(a,b)} – ${Math.min(a,b)}`;toast('Full time: '+txt,6000);say(txt);callout(w<0?'DRAW':'FULL TIME',CX,CY-6,'#fff');ev('ended');if(w===0)ev('win0');chEv('end',{w,sp:SP,a,b})}
 function predBall(p){const v2=B.vx*B.vx+B.vy*B.vy;if(v2>4){const t=clamp(((p.x-B.x)*B.vx+(p.y-B.y)*B.vy)/v2,0,1.5);return[B.x+B.vx*t,B.y+B.vy*t]}const d=Math.hypot(B.x-p.x,B.y-p.y),k=clamp(d/p.spd,0,1.2)*0.75;return[B.x+B.vx*k,B.y+B.vy*k]}
-function pickCtrl(){const cur=byId(CTRL);const own=B.own>=0?byId(B.own):null;if(own&&own.t===0){CTRL=own.id;return}if(DRAG.lock>S.t&&cur)return;
+function switchPlayer(){if(sc().eng!=='inv')return;const own=B.own>=0?byId(B.own):null;let c=null;if(own&&own.t===0&&own.id!==CTRL)c=own;else c=P.filter(q=>q.t===0&&!q.keep&&!q.off&&q.id!==CTRL).sort((x,y)=>Math.hypot(x.x-B.x,x.y-B.y)-Math.hypot(y.x-B.x,y.y-B.y))[0];if(c){CTRL=c.id;DRAG.lock=S.t+1;ev('switched');chEv('switch',{})}}
+function pickCtrl(){const cur=byId(CTRL);if(!G.autoSw&&cur&&cur.t===0&&!cur.off)return;const own=B.own>=0?byId(B.own):null;if(own&&own.t===0){CTRL=own.id;return}if(DRAG.lock>S.t&&cur)return;
   let best=null,bd=1e9;for(const p of P){if(p.t!==0||p.keep||p.off)continue;const d=Math.hypot(p.x-B.x,p.y-B.y);if(d<bd){bd=d;best=p}}if(!best)return;if(!cur||cur.t!==0||Math.hypot(cur.x-B.x,cur.y-B.y)-bd>6)CTRL=best.id}
 function userInv(p,dt){const s=sc(),own=B.own===p.id,up=DRAG.up;
   if(up){DRAG.up=null;if(up.tap){if(own&&M.state==='play'){const g=goalOf(p.t),dg=Math.hypot(up.x-g.x,up.y-g.y);if(dg<(s.goal?s.goal.w*1.6:7)&&!s.rugby){shoot(p,up.y);ev('youShot')}else{kickTo(p,up.x,up.y,G.loft||Math.hypot(up.x-p.x,up.y-p.y)>28);ev('youPass')}}else DRAG.goTo=[up.x,up.y]}}
-  if(DRAG.act){const a=DRAG.act;DRAG.act=0;if(own&&M.state==='play'){if(a===1&&!s.rugby){shoot(p);ev('youShot')}else{const b=bestPass(p,true);if(b){pass(p,b.q);ev('youPass')}}}else if(a===3){const c=P.filter(q=>q.t===0&&!q.keep&&q.id!==CTRL).sort((x,y)=>Math.hypot(x.x-B.x,x.y-B.y)-Math.hypot(y.x-B.x,y.y-B.y))[0];if(c){CTRL=c.id;DRAG.lock=S.t+2}}else if(a===1){p.cd=0;p.lunge=0.35}}
+  if(DRAG.act){const a=DRAG.act;DRAG.act=0;if(a===3){switchPlayer()}else if(own&&M.state==='play'){if(a===1&&!s.rugby){shoot(p);ev('youShot')}else{const b=bestPass(p,true);if(b){pass(p,b.q);ev('youPass')}}}else if(a===3)switchPlayer();else if(a===1){p.cd=0;p.lunge=0.35}}
   if(p.lunge>0)p.lunge-=dt;
   const mv=ctrlMove();if(mv){DRAG.goTo=null;if(mv.to)steer(p,mv.to[0],mv.to[1],1,dt);else steer(p,p.x+mv.dx*8,p.y+mv.dy*8,1,dt);DRAG.idle=0;return true}
   if(DRAG.goTo){steer(p,DRAG.goTo[0],DRAG.goTo[1],1,dt);if(Math.hypot(p.x-DRAG.goTo[0],p.y-DRAG.goTo[1])<1)DRAG.goTo=null;return true}
@@ -1126,9 +1131,10 @@ const SIM={id:'arena',name:'Arena',defTool:'ctrl',world:{w:WW,h:WH,wrapX:false,m
   get scens(){return SPORTLIST()},
   load(id){loadSport(id)},
   after(){if(!$('home').hidden)return;setTool(G.ctrl?'ctrl':'select')},
-  init(){initPanel()},
+  init(){initPanel();$('learnBtn').onclick=()=>learnSport();$('autoSwBtn').onclick=()=>{G.autoSw=!G.autoSw;toast(G.autoSw?'You will switch to the player nearest the ball by yourself':'You stay as the same player until you press Switch player');syncPanel()};$('swPanelBtn').onclick=()=>switchPlayer();
+    const fb=document.createElement('button');fb.id='swFloat';fb.className='btn panel';fb.textContent='🔁 Switch player';fb.hidden=true;fb.onclick=e=>{e.stopPropagation();switchPlayer()};document.body.appendChild(fb)},
   step(dt){ENG[sc().eng].step(dt)},
-  frame(dt){for(const p of PARTS)p.age+=dt;PARTS=PARTS.filter(p=>p.age<(p.k==='txt'?2.2:1));DRAG.idle+=dt;if(DRAG.keys.size)DRAG.idle=0;
+  frame(dt){const sf=$('swFloat');if(sf){const show=ctrlOn()&&sc().eng==='inv';if(sf.hidden===show)sf.hidden=!show}for(const p of PARTS)p.age+=dt;PARTS=PARTS.filter(p=>p.age<(p.k==='txt'?2.2:1));DRAG.idle+=dt;if(DRAG.keys.size)DRAG.idle=0;
     if(DRAG.ptr){DRAG.idle=0;if(performance.now()-DRAG.ptr.t0>220)DRAG.ptr.hold=true}if(S.sel&&S.sel.ball&&S.follow&&ENG[sc().eng].ballPos){}},
   render,
   stats:()=>{const E=ENG[sc().eng];return E.chips?E.chips():[['Sport',sc().nm],[TEAMS[0].sh,M.sc[0]],[TEAMS[1].sh,M.sc[1]]]},
@@ -1187,21 +1193,42 @@ CC(3.4,{t:'Super coach',g:'Win a whole football match without playing: only tact
 CC(3.5,{t:'Run chase',g:'Win a 2-over cricket match.',hint:'Score fast when you bat, and bowl a good length to take wickets.',scen:'cricket',setup:()=>{play();G.overs=2;loadSport('cricket')},check:()=>{const v=evc('win0');return[v>=1,v,M.over&&!v?'Lost this one':'']},fail:()=>M.over&&!evc('win0')?'The other team won':'',stars:byTime(240,420)});
 CC(3.6,{t:'Match point',g:'Win a full tennis match.',hint:'Long rallies favour the more skilful player. Aim for the corners.',scen:'tennis',setup:()=>{play();G.sk=[85,65]},check:()=>{const v=evc('win0');return[v>=1,M.n.games[0]/4,`${M.n.games[0]} – ${M.n.games[1]} in games`]},fail:()=>M.over&&!evc('win0')?'Your rival won':'',stars:byTime(400,800)});
 CC(3.8,{t:'Hole in one',g:'Sink your tee shot on a par 3.',hint:'This is hole 2, a par 3. Line up on the flag and get the power just right. It takes luck!',scen:'golf',setup:()=>{play();G.club='auto';holeStart(2)},check:need('ace0',1,'aces'),stars:byTime(300,900)});
+// the tutorial walks through every sport; each sport's first step loads it for you
+const goSp=(id,k,extra)=>r=>{if(SP!==id)loadScen(id);G.ctrl=true;setTool('ctrl');setSpeed(SP==='golf'?2:1);if(extra)extra();r.n=evc(k)};
+const did=k=>r=>evc(k)>r.n,base=k=>r=>{r.n=evc(k)};
+const TUTAT={};
 TSTEPS.push(
  ['Look around','Right-drag (or two fingers) to move around the stadium. Scroll or pinch to zoom.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
  ['Join the game','Pick 🎮 Play. The player with the yellow ring is you.',()=>S.tool==='ctrl'&&G.ctrl],
  ['Run','Hold or drag on the pitch to run there, or use the arrow keys or WASD.',r=>DRAG.taps>r.n+2,r=>{r.n=DRAG.taps}],
- ['Pass','When you have the ball, tap a teammate or press E to pass.',r=>evc('youPass')>r.n,r=>{r.n=evc('youPass')}],
- ['Shoot','Tap inside the goal on the right, or press Space, to shoot.',r=>evc('youShot')>r.n,r=>{r.n=evc('youShot')}],
- ['Tactics','In the Match tab, pick Attack or Defend for your team.',r=>evc('tactic')>r.n,r=>{r.n=evc('tactic')}],
+ ['Pass','When you have the ball, tap a teammate or press E to pass.',did('youPass'),base('youPass')],
+ ['Switch player','You stay as the same player until you choose. Press 🔁 Switch player (or Q) to become the teammate nearest the ball.',did('switched'),base('switched')],
+ ['Shoot','Tap inside the goal on the right, or press Space, to shoot.',did('youShot'),base('youShot')],
+ ['Tackle','When Blue has the ball, run at the player with it. Press Space to lunge.',did('youTackle'),base('youTackle')],
+ ['Tactics','In the Match tab, pick Attack or Defend for your team.',did('tactic'),base('tactic')],
  ['Skill','Drag a skill slider. Higher skill means better passes, shots and tackles.',r=>G.sk[0]!==r.a||G.sk[1]!==r.b,r=>{r.a=G.sk[0];r.b=G.sk[1]}],
- ['Move a player','Pick ✋ Move player and drag someone to a new spot.',r=>evc('moved')>r.n,r=>{r.n=evc('moved')}],
- ['Kick the ball','Pick 🦶 Kick ball and drag across the pitch: the ball flies that way.',r=>evc('kicked')>r.n,r=>{r.n=evc('kicked')}],
+ ['Move a player','Pick ✋ Move player and drag someone to a new spot.',did('moved'),base('moved')],
+ ['Kick the ball','Pick 🦶 Kick ball and drag across the pitch: the ball flies that way.',did('kicked'),base('kicked')],
  ['Heat map','Switch to the Heat map view to see where each team has been.',()=>S.view==='heat'],
  ['Stats','Open the Stats tab for possession, shots and every player.',r=>(CNT.tab_stats||0)>r.n,r=>{r.n=CNT.tab_stats||0}],
- ['Another sport','Press Sports at the top (or use the Sport list) and pick cricket.',()=>SP==='cricket'],
- ['Bat','With 🎮 Play, tap the field just before the ball reaches you to hit it there.',r=>evc('youHit')>r.n,r=>{r.n=evc('youHit')}],
+ ['Basketball','Now basketball. Dribble towards the hoop on the right, then press Space or tap the hoop to shoot.',did('youShot'),goSp('basketball','youShot')],
+ ['Ice hockey','The puck slides on the ice and bounces off the boards. Take a shot at the net on the right.',did('youShot'),goSp('hockey','youShot')],
+ ['Handball','Only the keepers may go into the orange goal areas. Pass the ball to a teammate.',did('youPass'),goSp('handball','youPass')],
+ ['Rugby sevens','In rugby, passes must go backwards. Run forward with the ball, then pass to someone behind you.',did('youPass'),goSp('rugby','youPass')],
+ ['Cricket: batting','Tap the field just before the ball reaches you to hit it there. Aim for gaps between the fielders. L switches lofted shots on and off.',did('youHit'),goSp('cricket','youHit')],
+ ['Cricket: bowling','Now you bowl. Tap the light brown pitch to choose where the next ball lands. A few steps in front of the batter is a good length.',did('youAim'),r=>{if(SP!=='cricket')loadScen('cricket');G.ctrl=true;setTool('ctrl');crInnings(1);r.n=evc('youAim')}],
+ ['Baseball','Tap towards the field as the pitch arrives to swing. Tap too early or late and you miss.',did('youHit'),goSp('baseball','youHit')],
+ ['Tennis','Hold or drag on your side to run. You swing by yourself when the ball is in reach. Return the ball once.',did('youHit'),goSp('tennis','youHit')],
+ ['Aim','Tap the far side of the court to choose where your shots land.',did('youAim'),base('youAim')],
+ ['Badminton','The shuttle floats, then drops fast. Get under it to hit it back.',did('youHit'),goSp('badminton','youHit')],
+ ['Table tennis','Stand back from the table and return the ball. Space hits harder but riskier.',did('youHit'),goSp('tabletennis','youHit')],
+ ['Volleyball','Your team gets three touches: pass, set, spike. Tap the far court to aim your spikes.',did('youAim'),goSp('volleyball','youAim')],
+ ['Golf','Drag back from your red ball like a slingshot and let go. The yellow circle shows where it will land.',did('youShot'),goSp('golf','youShot')],
+ ['100 m sprint','Wait for the gun (tapping early is a false start), then tap or press keys as fast as you can until the finish.',did('finished'),goSp('sprint','finished')],
+ ['50 m swim','Same again in the pool: wait for the gun, then tap fast all the way to the wall.',did('finished'),goSp('swim','finished')],
 );
+TSTEPS.forEach((st,i)=>{const m={Basketball:'basketball','Ice hockey':'hockey',Handball:'handball','Rugby sevens':'rugby','Cricket: batting':'cricket',Baseball:'baseball',Tennis:'tennis',Badminton:'badminton','Table tennis':'tabletennis',Volleyball:'volleyball',Golf:'golf','100 m sprint':'sprint','50 m swim':'swim','Join the game':'football'}[st[0]];if(m)TUTAT[m]=i});
+function learnSport(){const id=SP;startTutorial();TUT.i=TUTAT[id]??0;if(id==='football'){TUT.i=1}tutStep();toast(`Tutorial: ${sc().nm}`)}
 DEMO.push(
  ['football','Football','Eleven a side. Players keep their shape, press the ball and look for the open pass.',()=>{G.ctrl=false;setSpeed(3)}],
  ['basketball','Basketball','Five on five. Guards bring the ball up, then the team works it for an open shot.',()=>{G.ctrl=false;setSpeed(3)}],

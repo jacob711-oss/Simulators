@@ -27,21 +27,42 @@ CC(3.4,{t:'Super coach',g:'Win a whole football match without playing: only tact
 CC(3.5,{t:'Run chase',g:'Win a 2-over cricket match.',hint:'Score fast when you bat, and bowl a good length to take wickets.',scen:'cricket',setup:()=>{play();G.overs=2;loadSport('cricket')},check:()=>{const v=evc('win0');return[v>=1,v,M.over&&!v?'Lost this one':'']},fail:()=>M.over&&!evc('win0')?'The other team won':'',stars:byTime(240,420)});
 CC(3.6,{t:'Match point',g:'Win a full tennis match.',hint:'Long rallies favour the more skilful player. Aim for the corners.',scen:'tennis',setup:()=>{play();G.sk=[85,65]},check:()=>{const v=evc('win0');return[v>=1,M.n.games[0]/4,`${M.n.games[0]} – ${M.n.games[1]} in games`]},fail:()=>M.over&&!evc('win0')?'Your rival won':'',stars:byTime(400,800)});
 CC(3.8,{t:'Hole in one',g:'Sink your tee shot on a par 3.',hint:'This is hole 2, a par 3. Line up on the flag and get the power just right. It takes luck!',scen:'golf',setup:()=>{play();G.club='auto';holeStart(2)},check:need('ace0',1,'aces'),stars:byTime(300,900)});
+// the tutorial walks through every sport; each sport's first step loads it for you
+const goSp=(id,k,extra)=>r=>{if(SP!==id)loadScen(id);G.ctrl=true;setTool('ctrl');setSpeed(SP==='golf'?2:1);if(extra)extra();r.n=evc(k)};
+const did=k=>r=>evc(k)>r.n,base=k=>r=>{r.n=evc(k)};
+const TUTAT={};
 TSTEPS.push(
  ['Look around','Right-drag (or two fingers) to move around the stadium. Scroll or pinch to zoom.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
  ['Join the game','Pick 🎮 Play. The player with the yellow ring is you.',()=>S.tool==='ctrl'&&G.ctrl],
  ['Run','Hold or drag on the pitch to run there, or use the arrow keys or WASD.',r=>DRAG.taps>r.n+2,r=>{r.n=DRAG.taps}],
- ['Pass','When you have the ball, tap a teammate or press E to pass.',r=>evc('youPass')>r.n,r=>{r.n=evc('youPass')}],
- ['Shoot','Tap inside the goal on the right, or press Space, to shoot.',r=>evc('youShot')>r.n,r=>{r.n=evc('youShot')}],
- ['Tactics','In the Match tab, pick Attack or Defend for your team.',r=>evc('tactic')>r.n,r=>{r.n=evc('tactic')}],
+ ['Pass','When you have the ball, tap a teammate or press E to pass.',did('youPass'),base('youPass')],
+ ['Switch player','You stay as the same player until you choose. Press 🔁 Switch player (or Q) to become the teammate nearest the ball.',did('switched'),base('switched')],
+ ['Shoot','Tap inside the goal on the right, or press Space, to shoot.',did('youShot'),base('youShot')],
+ ['Tackle','When Blue has the ball, run at the player with it. Press Space to lunge.',did('youTackle'),base('youTackle')],
+ ['Tactics','In the Match tab, pick Attack or Defend for your team.',did('tactic'),base('tactic')],
  ['Skill','Drag a skill slider. Higher skill means better passes, shots and tackles.',r=>G.sk[0]!==r.a||G.sk[1]!==r.b,r=>{r.a=G.sk[0];r.b=G.sk[1]}],
- ['Move a player','Pick ✋ Move player and drag someone to a new spot.',r=>evc('moved')>r.n,r=>{r.n=evc('moved')}],
- ['Kick the ball','Pick 🦶 Kick ball and drag across the pitch: the ball flies that way.',r=>evc('kicked')>r.n,r=>{r.n=evc('kicked')}],
+ ['Move a player','Pick ✋ Move player and drag someone to a new spot.',did('moved'),base('moved')],
+ ['Kick the ball','Pick 🦶 Kick ball and drag across the pitch: the ball flies that way.',did('kicked'),base('kicked')],
  ['Heat map','Switch to the Heat map view to see where each team has been.',()=>S.view==='heat'],
  ['Stats','Open the Stats tab for possession, shots and every player.',r=>(CNT.tab_stats||0)>r.n,r=>{r.n=CNT.tab_stats||0}],
- ['Another sport','Press Sports at the top (or use the Sport list) and pick cricket.',()=>SP==='cricket'],
- ['Bat','With 🎮 Play, tap the field just before the ball reaches you to hit it there.',r=>evc('youHit')>r.n,r=>{r.n=evc('youHit')}],
+ ['Basketball','Now basketball. Dribble towards the hoop on the right, then press Space or tap the hoop to shoot.',did('youShot'),goSp('basketball','youShot')],
+ ['Ice hockey','The puck slides on the ice and bounces off the boards. Take a shot at the net on the right.',did('youShot'),goSp('hockey','youShot')],
+ ['Handball','Only the keepers may go into the orange goal areas. Pass the ball to a teammate.',did('youPass'),goSp('handball','youPass')],
+ ['Rugby sevens','In rugby, passes must go backwards. Run forward with the ball, then pass to someone behind you.',did('youPass'),goSp('rugby','youPass')],
+ ['Cricket: batting','Tap the field just before the ball reaches you to hit it there. Aim for gaps between the fielders. L switches lofted shots on and off.',did('youHit'),goSp('cricket','youHit')],
+ ['Cricket: bowling','Now you bowl. Tap the light brown pitch to choose where the next ball lands. A few steps in front of the batter is a good length.',did('youAim'),r=>{if(SP!=='cricket')loadScen('cricket');G.ctrl=true;setTool('ctrl');crInnings(1);r.n=evc('youAim')}],
+ ['Baseball','Tap towards the field as the pitch arrives to swing. Tap too early or late and you miss.',did('youHit'),goSp('baseball','youHit')],
+ ['Tennis','Hold or drag on your side to run. You swing by yourself when the ball is in reach. Return the ball once.',did('youHit'),goSp('tennis','youHit')],
+ ['Aim','Tap the far side of the court to choose where your shots land.',did('youAim'),base('youAim')],
+ ['Badminton','The shuttle floats, then drops fast. Get under it to hit it back.',did('youHit'),goSp('badminton','youHit')],
+ ['Table tennis','Stand back from the table and return the ball. Space hits harder but riskier.',did('youHit'),goSp('tabletennis','youHit')],
+ ['Volleyball','Your team gets three touches: pass, set, spike. Tap the far court to aim your spikes.',did('youAim'),goSp('volleyball','youAim')],
+ ['Golf','Drag back from your red ball like a slingshot and let go. The yellow circle shows where it will land.',did('youShot'),goSp('golf','youShot')],
+ ['100 m sprint','Wait for the gun (tapping early is a false start), then tap or press keys as fast as you can until the finish.',did('finished'),goSp('sprint','finished')],
+ ['50 m swim','Same again in the pool: wait for the gun, then tap fast all the way to the wall.',did('finished'),goSp('swim','finished')],
 );
+TSTEPS.forEach((st,i)=>{const m={Basketball:'basketball','Ice hockey':'hockey',Handball:'handball','Rugby sevens':'rugby','Cricket: batting':'cricket',Baseball:'baseball',Tennis:'tennis',Badminton:'badminton','Table tennis':'tabletennis',Volleyball:'volleyball',Golf:'golf','100 m sprint':'sprint','50 m swim':'swim','Join the game':'football'}[st[0]];if(m)TUTAT[m]=i});
+function learnSport(){const id=SP;startTutorial();TUT.i=TUTAT[id]??0;if(id==='football'){TUT.i=1}tutStep();toast(`Tutorial: ${sc().nm}`)}
 DEMO.push(
  ['football','Football','Eleven a side. Players keep their shape, press the ball and look for the open pass.',()=>{G.ctrl=false;setSpeed(3)}],
  ['basketball','Basketball','Five on five. Guards bring the ball up, then the team works it for an open shot.',()=>{G.ctrl=false;setSpeed(3)}],
