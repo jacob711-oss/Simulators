@@ -1,0 +1,31 @@
+<div class="pane" id="pane-build">
+    <select id="preset" class="btn" style="width:100%"></select>
+    <span class="k">Your rocket, top to bottom (click a part, then add the next part under it)</span>
+    <div id="stack" class="stack"></div>
+    <div class="evs"><button class="btn" id="saveBtn">💾 Save design</button><button class="btn" id="clearBtn">🧹 Start again</button></div>
+    <div id="rstats"></div>
+    <button class="btn primary" id="launchBtn" style="width:100%;font-size:16px;padding:10px">🚀 Launch</button>
+    <div id="parts"></div>
+  </div>
+  <div class="pane" id="pane-flight" hidden>
+    <div id="flightInfo"></div>
+    <div class="sl"><div class="row"><span class="k">Throttle (W/S, Z full, X off)</span></div><input type="range" id="thrS" min="0" max="100" value="0"></div>
+    <div class="evs"><button class="btn primary" data-fl="stage">⏭ Stage (Space)</button><button class="btn" data-fl="chute">🪂 Parachute (C)</button></div>
+    <span class="k">Point the rocket</span>
+    <div class="views"><button class="btn" data-sas="hold">Hold</button><button class="btn" data-sas="pro">Forward</button><button class="btn" data-sas="retro">Backward</button><button class="btn" data-sas="up">Straight up</button><button class="btn" data-sas="">Off</button></div>
+    <span class="k">Autopilot</span>
+    <div class="evs"><button class="btn" data-fl="orbit">🛰 Fly to orbit</button><button class="btn" data-fl="home">🏠 Come home</button><button class="btn" data-fl="burn">🔥 Do planned burn</button><button class="btn" data-fl="apoff">✋ Autopilot off</button></div>
+    <p class="note" id="apState"></p>
+    <span class="k">Plan a burn</span>
+    <div class="row"><span class="k">When</span><select id="planAt" class="btn"><option value="ap">At the highest point</option><option value="pe">At the lowest point</option><option value="now">Right now</option></select></div>
+    <div class="sl"><div class="row"><span class="k">Speed change</span><span id="planDvV">0 m/s</span></div><input type="range" id="planDv" min="-1500" max="1500" step="10" value="0"></div>
+    <p class="note" id="planInfo"></p>
+    <p class="note" id="phase"></p>
+    <span class="k">Science</span>
+    <div class="evs"><button class="btn" data-fl="crew">📝 Crew report</button><button class="btn" data-fl="sense">🌡 Sensor reading</button><button class="btn" data-fl="sample">🪨 Surface sample</button><button class="btn" data-fl="send">📡 Send data home</button></div>
+    <span class="k">Camera and mission</span>
+    <div class="evs"><button class="btn" data-fl="map">🗺 Map (M)</button><button class="btn" data-fl="follow">🎥 Follow rocket (F)</button><button class="btn" data-fl="recover">✅ Recover (G)</button><button class="btn" data-fl="revert">↩ Revert to launch</button><button class="btn" data-fl="build">🔧 Back to building</button></div>
+  </div>
+  <div class="pane" id="pane-agency" hidden>
+    <div id="agency"></div>
+  </div>

@@ -570,7 +570,7 @@ document.addEventListener('pointerdown',e=>{if(D.open&&!D.contains(e.target))D.o
     <div id="hMain" class="hview">
       <button class="hb" id="hChal"><span class="ht">Challenges</span><span class="hd" id="hChalSub">Goals from easy to fiendish</span></button>
       <button class="hb" id="hDemo"><span class="ht">Demo &amp; tutorial</span><span class="hd">Watch the highlights, or learn the controls step by step</span></button>
-      <button class="hb primary" id="hFree"><span class="ht">Free play</span><span class="hd">The full sandbox: build, break and explore anything</span></button>
+      <button class="hb primary" id="hFree"><span class="ht">Free play</span><span class="hd">The full sandbox: build, break and explore anything</span></button><a class="hb" id="hRockets" href="rockets/" style="text-decoration:none;color:inherit"><span class="ht">Rocket builder: Apogee</span><span class="hd">Build rockets, run a space agency, reach orbit and land on the Moon</span></a>
       <p class="hfoot">Real Newtonian gravity with real masses and orbits where known; some visuals are artistic approximations.</p>
     </div>
     <div id="hChalView" class="hview" hidden>
@@ -3663,6 +3663,7 @@ var SNAPS=0;
     TSTEPS.push(['Take a picture',`Press the camera button ${where} to save a picture of your world.`,r=>SNAPS>r.n,r=>{r.n=SNAPS}]);
     const o={t:'Photographer',g:'Save a picture of the world with the camera button.',hint:`The camera button is ${where}.`,check:()=>{const ok=typeof evN==='function'?evN('snap')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='snap'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(10,30):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;else o.setup=su;CC(1.02,o)}}catch(e){}
 })();
+
 
 
 

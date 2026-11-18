@@ -2,7 +2,7 @@ import json,sys,os,re,html
 K=os.path.dirname(os.path.abspath(__file__));D=os.path.abspath(sys.argv[1])
 M=json.load(open(os.path.join(D,'meta.json')))
 SIMS=json.load(open(os.path.join(K,'sims.json')))
-if not any(s['id']==M['id'] for s in SIMS):
+if not M.get('nohub') and not any(s['id']==M['id'] for s in SIMS):
     SIMS.append({k:M[k] for k in ['id','icon','name','tag','url','color']});json.dump(SIMS,open(os.path.join(K,'sims.json'),'w'),ensure_ascii=False,indent=1)
 css=open(os.path.join(K,'style.css')).read().replace('/*THEME*/',M['theme'])
 extra=open(os.path.join(D,'extra.css')).read() if os.path.exists(os.path.join(D,'extra.css')) else ''

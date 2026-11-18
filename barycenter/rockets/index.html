@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Build rockets from parts, run your own space agency, fly to orbit with real gravity, plan burns, visit Luna and bring your crew home">
+<title>Apogee</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Simulator kit: shared with Barycenter and Biosphere */
+:root{
+  --voidRGB:3,4,11;--deepRGB:8,10,22;--accRGB:127,178,255;--lineRGB:160,190,255;--panel:rgba(8,10,22,.9);--ink:#eef3ff;--ink2:#cfdaf2;--dim:#8a98b8;
+  --void:rgb(var(--voidRGB));
+  --line:rgba(var(--lineRGB),.16);
+  --line-strong:rgba(var(--lineRGB),.34);
+  --flare:#ffc35a;
+  --cool:rgb(var(--accRGB));
+  --danger:#ff6b5a;
+  --f-display:'Oxanium','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --gut:max(16px, env(safe-area-inset-left, 0px));
+  --gutR:max(16px, env(safe-area-inset-right, 0px));
+  --top:calc(env(safe-area-inset-top, 0px) + 12px);
+  --bot:calc(env(safe-area-inset-bottom, 0px) + 12px);
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--void);color:var(--ink);font-family:var(--f-body);overflow:hidden;-webkit-user-select:none;user-select:none}
+#world{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#world.place{cursor:crosshair}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.k{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.v{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.btn{font-family:var(--f-mono);font-size:12px;padding:7px 11px;border:1px solid var(--line-strong);border-radius:7px;color:var(--ink);background:rgba(var(--accRGB),.06);white-space:nowrap}
+.btn:hover{background:rgba(var(--accRGB),.14)}
+.btn[aria-pressed="true"]{background:rgba(var(--accRGB),.22);border-color:var(--cool)}
+.btn.primary{background:rgba(255,195,90,.16);border-color:rgba(255,195,90,.6);color:#ffe6b8}
+.btn.danger{border-color:rgba(255,107,90,.5);color:#ffb1a6}
+.btn.ghost{border-color:transparent;color:var(--dim)}
+input[type=range]{accent-color:var(--cool);width:100%}
+
+/* top bar */
+.hud-top{position:fixed;top:var(--top);left:var(--gut);right:var(--gutR);display:flex;gap:10px;align-items:stretch;z-index:5;pointer-events:none}
+.hud-top>*{pointer-events:auto}
+.brand{padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.1em;margin:0;text-transform:uppercase}.brand h1 b{color:var(--flare)}
+.brand .sub{font-size:11px;color:var(--dim)}
+.time{display:flex;gap:12px;align-items:center;padding:8px 12px}
+#pauseBtn{width:40px;height:40px;border-radius:9px;border:1px solid rgba(255,195,90,.55);background:rgba(255,195,90,.12);font-size:16px}
+.spds{display:flex;gap:3px}.spd{font-family:var(--f-mono);font-size:10px;padding:3px 5px;border-radius:5px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.spd:hover{color:var(--ink)}.spd[aria-pressed="true"]{color:var(--ink);border-color:rgba(255,195,90,.6);background:rgba(255,195,90,.14)}
+.tcol{display:flex;flex-direction:column;gap:4px}
+.right{margin-left:auto;display:flex;gap:10px;align-items:center;padding:8px 10px;flex-wrap:wrap;justify-content:flex-end}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:54px}
+.findwrap{position:relative}
+.find{width:210px;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--ink)}
+.findlist{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9;padding:4px;display:flex;flex-direction:column;gap:2px;max-height:300px;overflow:auto}
+.findlist button{text-align:left;padding:7px 9px;border-radius:6px;font-size:13px}.findlist button:hover,.findlist button.on{background:rgba(var(--accRGB),.14)}
+.findlist small{color:var(--dim);margin-left:6px}
+
+/* tool rail */
+.rail{position:fixed;left:var(--gut);top:calc(var(--top) + var(--hudH,64px) + 10px);bottom:var(--bot);width:86px;overflow-y:auto;overflow-x:hidden;z-index:4;padding:6px;display:flex;flex-direction:column;gap:3px;scrollbar-width:thin}
+.rail h3{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:8px 2px 2px;font-weight:500}
+.tool{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:7px;border:1px solid transparent;font-size:10.5px;color:var(--ink2);line-height:1.1;text-align:center}
+.tool .ico{font-size:19px;line-height:1}
+.tool:hover{background:rgba(var(--accRGB),.1)}.tool[aria-pressed="true"]{background:rgba(255,195,90,.15);border-color:rgba(255,195,90,.55);color:#fff}
+.placeopts{position:fixed;left:calc(var(--gut) + 96px);bottom:var(--bot);z-index:4;padding:8px 12px;display:flex;gap:14px;align-items:center;font-size:12px}
+.placeopts label{display:flex;gap:6px;align-items:center;color:var(--dim)}.placeopts input[type=range]{width:110px}
+.seg{display:flex;gap:3px}.seg button{font-family:var(--f-mono);font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);color:var(--dim)}.seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--cool);background:rgba(var(--accRGB),.16)}
+
+/* dock */
+.dock{position:fixed;right:var(--gutR);top:calc(var(--top) + var(--hudH,64px) + 10px);bottom:var(--bot);width:330px;z-index:4;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--line)}.tab{flex:1;padding:10px 4px;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--flare)}
+.pane{padding:12px 14px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sl{display:flex;flex-direction:column;gap:4px}.sl .row span:last-child{font-family:var(--f-mono);font-size:12px}
+.evs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.views{display:flex;gap:4px;flex-wrap:wrap}
+.splist{display:flex;flex-direction:column;gap:3px}
+.sprow{display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:center;font-size:12.5px;padding:3px 4px;border-radius:5px}
+.sprow:hover{background:rgba(var(--accRGB),.08)}.sprow i{width:10px;height:10px;border-radius:50%;display:block}.sprow b{font-family:var(--f-mono);font-weight:500;font-size:12px}
+.sprow.zero{opacity:.4}
+#graph{width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.25)}
+.gene{display:grid;grid-template-columns:86px 1fr 46px;gap:8px;align-items:center;font-size:12px}
+.gene .bar{height:6px;border-radius:3px;background:rgba(var(--accRGB),.12);overflow:hidden}.gene .bar span{display:block;height:100%;background:var(--cool)}
+.gene input{margin:0}
+.ititle{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0}
+.isub{font-size:12.5px;color:var(--dim);margin-top:-8px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px}.kv div{border:1px solid var(--line);border-radius:7px;padding:6px 8px}.kv .k{display:block}.kv .v{font-size:13px}
+.note{font-size:12px;color:var(--dim);line-height:1.5;margin:0}
+#iPic{width:100%;height:120px;border-radius:8px;background:rgb(var(--deepRGB));display:block}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--top) + var(--hudH,64px) + 16px);z-index:8;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toasts,.toast{pointer-events:none}
+.toast{font-size:13px;padding:8px 14px;border-radius:99px;background:var(--panel);border:1px solid var(--line-strong);animation:tin .25s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--bot);font-family:var(--f-mono);font-size:11.5px;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:7px 14px;white-space:nowrap;z-index:3;pointer-events:none}
+.zoomb{position:fixed;right:calc(var(--gutR) + 342px);bottom:var(--bot);z-index:4;display:flex;flex-direction:column;gap:4px;padding:4px}
+.zoomb button{width:32px;height:30px;border-radius:6px;border:1px solid var(--line);font-size:15px;color:var(--dim)}.zoomb button:hover{color:var(--ink)}
+
+/* scenarios */
+.scen{position:fixed;right:var(--gutR);top:calc(var(--top) + var(--hudH,64px) + 10px);width:min(520px,calc(100% - 32px));z-index:7;padding:14px;display:flex;flex-direction:column;gap:10px;max-height:calc(100% - 120px);overflow:auto}
+.scgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scb{text-align:left;padding:10px 12px;border-radius:9px;border:1px solid var(--line);display:flex;flex-direction:column;gap:3px}.scb:hover{border-color:var(--cool)}
+.scb b{font-family:var(--f-display);font-weight:500;font-size:15px}.scb span{font-size:12px;color:var(--dim);line-height:1.35}
+
+/* home */
+.home{position:fixed;inset:0;z-index:20;pointer-events:none;background:linear-gradient(90deg,rgba(var(--voidRGB),.93) 0,rgba(var(--voidRGB),.78) 34%,rgba(var(--voidRGB),0) 62%)}
+.hcard{pointer-events:auto;position:absolute;left:var(--gut);top:calc(var(--top) + 16px);bottom:calc(var(--bot) + 16px);width:min(560px,calc(100% - 32px));overflow:auto;display:flex;flex-direction:column;gap:22px;padding:8px 4px}
+.htitle{font-family:var(--f-display);font-weight:700;font-size:clamp(40px,7vw,72px);letter-spacing:.08em;text-transform:uppercase;margin:0;line-height:1}.htitle b{color:var(--flare)}
+.htag{margin:10px 0 0;color:var(--dim);font-size:16px}
+.hacct{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:12px;padding:7px 12px;border-radius:99px;border:1px solid var(--line-strong);background:rgba(var(--deepRGB),.82);color:var(--ink);text-decoration:none}
+.chip:hover{border-color:var(--cool)}.chip b{color:var(--flare);font-weight:600}.chip.other{border-color:rgba(127,178,255,.5);color:#cfe0ff}
+.hview{display:flex;flex-direction:column;gap:12px}
+.hb{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:18px 20px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(var(--deepRGB),.84)}
+.hb:hover{border-color:var(--cool);background:rgba(var(--accRGB),.10)}.hb .ht{font-family:var(--f-display);font-weight:500;font-size:22px}.hb .hd{font-size:13px;color:var(--dim);line-height:1.4}
+.hb.primary{border-color:rgba(255,195,90,.6);background:rgba(40,30,12,.86)}.hb.primary:hover{background:rgba(60,44,14,.92)}
+.hfoot{margin:0;font-size:12px;color:var(--dim);line-height:1.5}
+.hbar{display:flex;align-items:center;gap:14px}.hbar h2{font-family:var(--f-display);font-weight:500;font-size:24px;margin:0;flex:1}.hstars{font-family:var(--f-mono);font-size:12px;color:var(--flare)}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.ct{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:8px 9px;border-radius:8px;border:1px solid var(--line);background:rgba(var(--deepRGB),.86);text-align:left;min-height:70px}
+.ct:hover:not(:disabled){border-color:var(--cool)}.ct:disabled{opacity:.45;cursor:not-allowed}.ct .cn{font-family:var(--f-mono);font-size:10px;color:var(--dim)}.ct .ctt{font-size:11.5px;line-height:1.25}
+.ct .cs{font-size:12px;color:var(--flare);letter-spacing:1px;margin-top:auto}.ct.next{border-color:rgba(255,195,90,.7);box-shadow:0 0 0 1px rgba(255,195,90,.3)}
+body.mHome .hud-top,body.mHome .rail,body.mHome .dock,body.mHome .placeopts,body.mHome .hint,body.mHome .zoomb,body.mHome .scen,body.mHome #chHud,body.mHome .toasts{display:none!important}
+body.mDemo .rail,body.mDemo .dock,body.mDemo .placeopts,body.mDemo .hint,body.mDemo .zoomb,body.mDemo .hud-top{display:none!important}
+.chhud{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bot) + 52px);width:min(600px,calc(100% - 480px));min-width:300px;padding:12px 14px;z-index:6;display:flex;flex-direction:column;gap:6px}
+.chtop{display:flex;justify-content:space-between}.chtitle{font-family:var(--f-display);font-weight:500;font-size:17px}.chgoal{font-size:13px;line-height:1.45;color:var(--ink2)}
+.chbarw{height:6px;border-radius:3px;background:rgba(var(--accRGB),.12);overflow:hidden}#chBar{display:block;height:100%;width:0;background:var(--flare);transition:width .25s}
+.chrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.chprog{font-family:var(--f-mono);font-size:11.5px;color:var(--dim)}.chbtns{display:flex;gap:6px}
+.donebg{pointer-events:auto;display:grid;place-items:center;background:rgba(var(--voidRGB),.6)}
+.donecard{width:min(440px,calc(100% - 32px));padding:24px;text-align:center;display:flex;flex-direction:column;gap:10px}.donecard h2{font-family:var(--f-display);font-weight:500;margin:0}
+.dstars{font-size:34px;color:var(--flare);letter-spacing:4px}.dstars .off{color:rgba(255,255,255,.15)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.democap{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bot) + 10px);width:min(640px,calc(100% - 32px));padding:14px 18px;z-index:21;display:flex;flex-direction:column;gap:6px}
+.democap h2{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0}.democap p{margin:0;font-size:14px;color:var(--ink2)}
+.ovl{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(var(--voidRGB),.6)}
+.obox{width:min(460px,calc(100% - 32px));max-height:min(80vh,640px);overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.obox h2{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0;flex:1}
+.arow{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:8px}.arow.cur{border-color:rgba(255,195,90,.6);background:rgba(40,30,12,.5)}
+.arow .an{flex:1;min-width:0}.arow .as{font-family:var(--f-mono);font-size:11px;color:var(--dim)}
+.arow input,.aform input{font:inherit;font-size:13px;padding:7px 9px;border-radius:7px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--ink);min-width:0}
+.arow input{width:80px}.aform{display:flex;gap:6px;flex-wrap:wrap}.aform input{flex:1 1 120px}
+.endbox{border:1px solid rgba(255,107,90,.45);background:rgba(60,16,12,.35);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:4px}.endbox .k{color:#ffb1a6}.endrow{display:flex;justify-content:space-between;font-size:12.5px;text-align:left;padding:2px 0}.endrow b{font-family:var(--f-mono);font-weight:500;color:#ffb1a6}.endrow.ext{opacity:.6;text-decoration:line-through}
+.endbadge{position:fixed;right:calc(var(--gutR) + 342px);top:calc(var(--top) + var(--hudH,64px) + 12px);z-index:4;padding:7px 12px;border-color:rgba(255,107,90,.55);color:#ffc0b6;font-family:var(--f-mono);font-size:12px}
+@media (max-width:760px){.endbadge{right:var(--gutR);top:auto;bottom:calc(var(--bot) + 230px)}}
+body.mHome .endbadge,body.mDemo .endbadge{display:none!important}
+.dna{width:100%;height:28px;display:block;border-radius:6px;background:rgba(0,0,0,.25)}.fam{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.gsel,.coatsel{font:inherit;font-size:12px;background:rgba(0,0,0,.35);color:var(--ink);border:1px solid var(--line-strong);border-radius:6px;padding:4px 6px}
+.legend{position:fixed;left:calc(var(--gut) + 96px);top:calc(var(--top) + var(--hudH,64px) + 12px);z-index:4;padding:8px 12px;width:220px;display:flex;flex-direction:column;gap:5px}.legend .lbar{height:10px;border-radius:5px}.legend .lticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--dim)}
+body.mHome .legend,body.mDemo .legend{display:none!important}@media (max-width:760px){.legend{left:var(--gut);top:auto;bottom:calc(var(--bot) + 190px)}}
+.pbig{font-family:var(--f-display);font-size:54px;line-height:1;color:var(--flare)}
+
+@media (max-width:1600px){.right .stat{display:none}.find{width:170px}}
+@media (max-width:1300px){.brand .sub{display:none}.find{width:140px}.brand{padding:10px}}
+@media (max-width:760px){
+  .hud-top{flex-wrap:wrap}.brand{display:none}.time{flex:1 1 100%}.right{flex:1 1 100%;justify-content:space-between}.findwrap{flex:1 1 100%;order:-1}.find{width:100%;box-sizing:border-box}
+  .rail{top:auto;left:var(--gut);right:var(--gutR);bottom:var(--bot);width:auto;height:64px;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .rail h3{display:none}.tool{min-width:58px}
+  .placeopts{left:var(--gut);bottom:calc(var(--bot) + 72px)}
+  .dock{top:auto;bottom:calc(var(--bot) + 120px);left:var(--gut);right:var(--gutR);width:auto;height:42vh}
+  body:not(.dockOpen) .dock{display:none}
+  .zoomb{right:var(--gutR);bottom:calc(var(--bot) + 120px)}
+  .home{background:rgba(var(--voidRGB),.74)}
+  .chhud{width:auto;min-width:0;left:var(--gut);right:var(--gutR);transform:none;bottom:calc(var(--bot) + 124px);max-height:36vh;overflow:auto}
+  .hint{display:none}
+}
+#dockBtn{display:none}@media (max-width:760px){#dockBtn{display:inline-block}}
+.sprow{text-align:left;width:100%}@media (max-width:760px){#dateSub{display:none}}
+#hAcctBtn,#acctBtn,#hOut,#acct{display:none!important}
+body.dockHidden .dock,body.dockHidden .zoomb{display:none!important}@media (min-width:761px){body.dockHidden #dockBtn{display:inline-block!important}}
+/* phones: compact top bar, big touch targets, nothing covering the panel */
+@media (max-width:760px){
+  .hud-top{gap:6px}
+  .time{padding:6px 8px;gap:8px}#rateTxt{display:none}
+  .time .tcol:last-child .k{display:none}.time .tcol:last-child #dateTxt{font-size:12px;white-space:normal!important;max-width:110px}
+  #pauseBtn{width:44px;height:44px}
+  .spds{flex-wrap:wrap}.spd{padding:7px 8px;font-size:11px;min-width:34px}
+  .right{padding:6px;gap:6px;flex-wrap:nowrap}.findwrap{flex:1 1 120px!important;order:0!important;min-width:0}.find{width:100%!important;font-size:16px!important;padding:8px}
+  .right .btn{padding:8px 9px;font-size:12px}
+  .zoomb{display:none!important}
+  body.dockOpen .legend,body.dockOpen #endBadge{display:none!important}
+  .legend{width:auto;left:var(--gut)!important;right:var(--gutR);top:auto!important;bottom:calc(var(--bot) + 80px)!important}
+  .dock{height:46vh!important;bottom:calc(var(--bot) + 80px)!important}
+  .tab{padding:12px 4px}
+  .tool{min-width:64px;padding:8px 2px}
+  .placeopts{bottom:calc(var(--bot) + 80px)!important;left:var(--gut)!important;right:var(--gutR);flex-wrap:wrap}
+  .chhud{bottom:calc(var(--bot) + 82px)!important}
+  .btn{min-height:34px}
+  input[type=range]{height:28px}
+}
+/* phones: one-row bars */
+@media (max-width:760px){#lineBar,#toolBar{flex-wrap:nowrap!important;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;justify-content:flex-start!important}#lineBar::-webkit-scrollbar,#toolBar::-webkit-scrollbar{display:none}#lineBar>*,#toolBar>*{flex:0 0 auto}}
+.stack{display:flex;flex-direction:column;gap:3px;max-height:230px;overflow:auto}.srow{display:grid;grid-template-columns:1fr auto auto auto;gap:4px;align-items:center;border:1px solid var(--line);border-radius:7px;padding:3px 3px 3px 9px;font-size:13px;cursor:pointer}.srow.on{border-color:var(--flare);background:rgba(var(--accRGB),.1)}.srow .btn{padding:2px 8px;min-height:0}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.pbtn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:6px 8px}.pbtn b{font-size:12.5px;font-weight:600}.pbtn small{font-size:11px;color:var(--dim)}.pbtn[disabled]{opacity:.45}
+.stg{display:flex;flex-direction:column;gap:3px;margin-top:6px}.stg div{display:flex;justify-content:space-between;font-size:12.5px;border-bottom:1px dashed var(--line);padding:2px 0}.stg span{font-family:var(--f-mono);font-size:12px}
+.mlist{display:flex;flex-direction:column;gap:5px}.mlist>div{border:1px solid var(--line);border-radius:8px;padding:6px 9px;display:flex;flex-direction:column;gap:2px;font-size:12.5px}.mlist span{color:var(--ink2)}.mlist small{color:var(--dim);font-family:var(--f-mono)}.mlist .done{opacity:.6}.mlist .lost{opacity:.5;text-decoration:line-through}
+.warn{color:#ff8a6a;font-size:13px;margin:0}.good{color:#8fe39a;font-size:13px;margin:0}
+#apad{position:fixed;inset:0;pointer-events:none;z-index:40;--padB:20px}#apad[hidden]{display:none}#apad button{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(10,14,28,.7);color:#fff;font:700 18px Oxanium,sans-serif;touch-action:none;backdrop-filter:blur(6px)}
+#apad .rot{position:fixed;left:14px;bottom:var(--padB);display:flex;gap:10px}#apad .thr{position:fixed;right:14px;bottom:var(--padB);display:grid;grid-template-columns:64px 90px;grid-template-rows:64px 64px;gap:8px}#apad .thr .stg{grid-column:2;grid-row:1/3;width:90px;height:136px;border-radius:18px;background:rgba(255,120,60,.8);font-size:16px}
+
+</style>
+
+</head>
+<body>
+<canvas id="world" aria-label="Space around Terra and Luna"></canvas>
+
+<header class="hud-top">
+  <div class="brand panel"><h1>Apo<b>gee</b></h1><span class="sub">A rocket and space agency simulator, part of Barycenter</span></div>
+  <div class="time panel">
+    <button id="pauseBtn" title="Pause or resume (Space)" aria-label="Pause"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></svg></button>
+    <div class="tcol"><span class="k">Time rate</span><div class="spds" id="spds"></div><span class="v" id="rateTxt"></span></div>
+    <div class="tcol"><span class="k">Mission</span><span class="v" id="dateTxt" style="white-space:nowrap"></span><span class="v" id="dateSub" style="font-size:11px;color:var(--dim)"></span></div>
+  </div>
+  <div class="right panel">
+    <div id="stats" style="display:contents"></div>
+    <div class="findwrap"><input id="find" class="find" placeholder="Find a part, world or start…" aria-label="Find a part, world or start…" autocomplete="off" spellcheck="false"><div id="findList" class="findlist panel" hidden></div></div>
+    <button id="homeBtn" class="btn" title="Back to the home page">⌂ Home</button>
+    <button id="acctBtn" class="btn" title="Account: save your progress on this device">👤</button>
+    <button id="scenBtn" class="btn">Starts</button>
+    <button id="dockBtn" class="btn">Panel</button>
+  </div>
+</header>
+
+<nav class="rail panel" id="rail" aria-label="Tools"></nav>
+<div class="placeopts panel" id="placeopts" hidden>
+  <label>Brush <input type="range" id="brush" min="1" max="12" value="4"><span id="brushV" class="v">4</span></label>
+  <span id="toolNote" class="note"></span>
+</div>
+
+<aside class="dock panel" id="dock">
+  <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="build" aria-selected="true">Rocket</button><button class="tab" role="tab" data-tab="flight" aria-selected="false">Flight</button><button class="tab" role="tab" data-tab="agency" aria-selected="false">Agency</button><button class="tab" id="dockClose" title="Close this panel" aria-label="Close panel" style="flex:0 0 40px">✕</button></div>
+  <div class="pane" id="pane-build">
+    <select id="preset" class="btn" style="width:100%"></select>
+    <span class="k">Your rocket, top to bottom (click a part, then add the next part under it)</span>
+    <div id="stack" class="stack"></div>
+    <div class="evs"><button class="btn" id="saveBtn">💾 Save design</button><button class="btn" id="clearBtn">🧹 Start again</button></div>
+    <div id="rstats"></div>
+    <button class="btn primary" id="launchBtn" style="width:100%;font-size:16px;padding:10px">🚀 Launch</button>
+    <div id="parts"></div>
+  </div>
+  <div class="pane" id="pane-flight" hidden>
+    <div id="flightInfo"></div>
+    <div class="sl"><div class="row"><span class="k">Throttle (W/S, Z full, X off)</span></div><input type="range" id="thrS" min="0" max="100" value="0"></div>
+    <div class="evs"><button class="btn primary" data-fl="stage">⏭ Stage (Space)</button><button class="btn" data-fl="chute">🪂 Parachute (C)</button></div>
+    <span class="k">Point the rocket</span>
+    <div class="views"><button class="btn" data-sas="hold">Hold</button><button class="btn" data-sas="pro">Forward</button><button class="btn" data-sas="retro">Backward</button><button class="btn" data-sas="up">Straight up</button><button class="btn" data-sas="">Off</button></div>
+    <span class="k">Autopilot</span>
+    <div class="evs"><button class="btn" data-fl="orbit">🛰 Fly to orbit</button><button class="btn" data-fl="home">🏠 Come home</button><button class="btn" data-fl="burn">🔥 Do planned burn</button><button class="btn" data-fl="apoff">✋ Autopilot off</button></div>
+    <p class="note" id="apState"></p>
+    <span class="k">Plan a burn</span>
+    <div class="row"><span class="k">When</span><select id="planAt" class="btn"><option value="ap">At the highest point</option><option value="pe">At the lowest point</option><option value="now">Right now</option></select></div>
+    <div class="sl"><div class="row"><span class="k">Speed change</span><span id="planDvV">0 m/s</span></div><input type="range" id="planDv" min="-1500" max="1500" step="10" value="0"></div>
+    <p class="note" id="planInfo"></p>
+    <p class="note" id="phase"></p>
+    <span class="k">Science</span>
+    <div class="evs"><button class="btn" data-fl="crew">📝 Crew report</button><button class="btn" data-fl="sense">🌡 Sensor reading</button><button class="btn" data-fl="sample">🪨 Surface sample</button><button class="btn" data-fl="send">📡 Send data home</button></div>
+    <span class="k">Camera and mission</span>
+    <div class="evs"><button class="btn" data-fl="map">🗺 Map (M)</button><button class="btn" data-fl="follow">🎥 Follow rocket (F)</button><button class="btn" data-fl="recover">✅ Recover (G)</button><button class="btn" data-fl="revert">↩ Revert to launch</button><button class="btn" data-fl="build">🔧 Back to building</button></div>
+  </div>
+  <div class="pane" id="pane-agency" hidden>
+    <div id="agency"></div>
+  </div>
+
+</aside>
+<div class="zoomb panel"><button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">−</button><button id="zFit" title="Show everything">⤢</button></div>
+<div id="legend" class="legend panel" hidden><span class="k"></span><div class="lbar"></div><div class="lticks"><span></span><span></span><span></span></div></div>
+<div class="hint" id="hint">Space stages · W/S throttle · A/D steer · M map</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="scen panel" id="scen" hidden>
+  <div class="row"><span class="k">Choose a start</span><button class="btn ghost" id="scenClose">×</button></div>
+  <div class="scgrid" id="scgrid"></div>
+</div>
+
+<div id="home" class="home" role="dialog" aria-label="Home">
+  <div class="hcard">
+    <div class="hhead"><h1 class="htitle">Apo<b>gee</b></h1><p class="htag">Build rockets from parts, run your own space agency, fly to orbit with real gravity, plan burns, visit Luna and bring your crew home</p>
+      <div class="hacct"><button class="chip" id="hAcctBtn">👤 <span id="hAcctName">Guest</span></button><button class="chip" id="hPlays" title="Total plays by everyone">▶ <b id="hPlaysN">0</b> <span id="hPlaysL">plays</span></button><style>.sims{position:relative;display:inline-block;z-index:70}.hhead{position:relative;z-index:20}.sims>summary{list-style:none;cursor:pointer}.sims>summary::-webkit-details-marker{display:none}
+.sims[open]>summary{background:rgba(255,255,255,.08)}.simsP{position:absolute;left:0;top:calc(100% + 6px);z-index:60;width:min(320px,86vw);padding:8px;border-radius:12px;background:#0c101c;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(0,0,0,.55);display:grid;gap:6px;text-align:left}
+.simsP a{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#e3e8f4;text-decoration:none;font:inherit}
+.simsP a:hover,.simsP a:focus-visible{background:rgba(255,255,255,.08);border-color:var(--sc,#7fe0a8)}.simsP .si{grid-row:span 2;font-size:24px}.simsP b{color:var(--sc,#fff);font-size:14px}.simsP small{color:#8b95ae;font-size:11.5px;line-height:1.3}.simsP .sn{color:#8b95ae;font-size:11px;padding:2px 4px}</style><details class="sims" id="hSims"><summary class="chip" title="Our other simulators">🧪 Try our other simulators ▾</summary><div class="simsP" id="hSimsP"></div></details><script>(()=>{const ME="apogee",LIST=[{"id": "barycenter", "icon": "🪐", "name": "Barycenter", "tag": "Gravity, planets, stars and black holes", "url": "https://jacob711-oss.github.io/Simulators/barycenter/", "color": "#e8b04a"}, {"id": "biosphere", "icon": "🌿", "name": "Biosphere", "tag": "A living world of animals, plants and people", "url": "https://jacob711-oss.github.io/Simulators/life/", "color": "#7fe0a8"}, {"id": "lithosphere", "icon": "🌋", "name": "Lithosphere", "tag": "Drift continents, raise mountains and set off volcanoes", "url": "https://jacob711-oss.github.io/Simulators/lithosphere/", "color": "#ff8a5c"}, {"id": "troposphere", "icon": "🌀", "name": "Troposphere", "tag": "Steer winds, brew hurricanes and change the climate", "url": "https://jacob711-oss.github.io/Simulators/troposphere/", "color": "#60d6e6"}, {"id": "catalyst", "icon": "⚛️", "name": "Catalyst", "tag": "Mix atoms, spark reactions and build molecules", "url": "https://jacob711-oss.github.io/Simulators/catalyst/", "color": "#c48bff"}, {"id": "abyssal", "icon": "🐋", "name": "Abyssal", "tag": "Dive into a living ocean, from coral reefs to the deep sea", "url": "https://jacob711-oss.github.io/Simulators/abyssal/", "color": "#4fa3ff"}, {"id": "interchange", "icon": "🚉", "name": "Interchange", "tag": "Draw the transit lines of a growing city and keep everyone moving", "url": "https://jacob711-oss.github.io/Simulators/interchange/", "color": "#ff5ab4"}, {"id": "gridlock", "icon": "🚗", "name": "Gridlock", "tag": "Draw the roads of a growing town and keep the traffic flowing", "url": "https://jacob711-oss.github.io/Simulators/gridlock/", "color": "#ffd23a"}, {"id": "hivemind", "icon": "🐜", "name": "Hivemind", "tag": "Ant colonies that find food by following each other's scent trails", "url": "https://jacob711-oss.github.io/Simulators/hivemind/", "color": "#ff9a3d"}, {"id": "flux", "icon": "⚡", "name": "Flux", "tag": "Place charges and magnets, and watch the fields bend particles through space", "url": "https://jacob711-oss.github.io/Simulators/flux/", "color": "#5ae0ff"}, {"id": "seaway", "icon": "🚢", "name": "Seaway", "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving", "url": "https://jacob711-oss.github.io/Simulators/seaway/", "color": "#3ab8e0"}, {"id": "contrail", "icon": "✈️", "name": "Contrail", "tag": "Guide planes onto runways, keep them apart and run a busy airport", "url": "https://jacob711-oss.github.io/Simulators/contrail/", "color": "#9fa8ff"}, {"id": "quasar", "icon": "✨", "name": "Quasar AI", "tag": "Our AI: chat, make pictures and find videos", "url": "https://jacob711-oss.github.io/Simulators/quasar/", "color": "#9b7bff"}, {"id": "sports", "icon": "🏆", "name": "Sports", "tag": "Every sport in one place: pick football, cricket, tennis, golf and 11 more, then play, coach or watch", "url": "https://jacob711-oss.github.io/Simulators/sports/", "color": "#ffb547"}],P=document.getElementById('hSimsP'),D=document.getElementById('hSims');
+const draw=l=>{P.textContent='';for(const s of l){if(s.id===ME||!s.url)continue;const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener';a.style.setProperty('--sc',s.color||'#7fe0a8');
+a.innerHTML='<span class="si"></span><b></b><small></small>';a.children[0].textContent=s.icon||'🧪';a.children[1].textContent=s.name;a.children[2].textContent=s.tag||'';P.appendChild(a)}
+const n=document.createElement('a');n.href='https://jacob711-oss.github.io/Simulators/simulations/';n.target='_blank';n.rel='noopener';n.className='sn';n.style.cssText='display:block;text-align:center;color:#dfe5f5;font-weight:600';n.textContent='🗂️ See all our simulations →';P.appendChild(n);const rv=document.createElement('a');const me=LIST.find(s=>s.id===ME);rv.href='https://jacob711-oss.github.io/Simulators/simulations/?sim='+encodeURIComponent(me?me.name:'')+'#review';rv.target='_blank';rv.rel='noopener';rv.className='sn';rv.style.cssText='display:block;text-align:center;color:#ffd23a;font-weight:600';rv.textContent='✍️ Leave a review';P.appendChild(rv)};draw(LIST);
+try{fetch('https://jacob711-oss.github.io/Simulators/sims.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(l=>{if(Array.isArray(l)&&l.length)draw(l.filter(s=>s&&typeof s.name==='string'&&/^https:\/\//.test(s.url||'')))}).catch(()=>{})}catch(e){}
+document.addEventListener('pointerdown',e=>{if(D.open&&!D.contains(e.target))D.open=false});document.addEventListener('keydown',e=>{if(e.key==='Escape')D.open=false})})()</script></div></div>
+    <div id="hMain" class="hview">
+      <button class="hb" id="hChal"><span class="ht">Challenges</span><span class="hd" id="hChalSub">Goals from easy to fiendish</span></button>
+      <button class="hb" id="hDemo"><span class="ht">Demo &amp; tutorial</span><span class="hd">Watch the highlights, or learn the controls step by step</span></button>
+      <button class="hb primary" id="hFree"><span class="ht">Free play</span><span class="hd">Your space agency: build, launch, earn money and science, unlock parts</span></button>
+      <p class="hfoot">An orbit is falling around a world so fast that you keep missing the ground.</p>
+    </div>
+    <div id="hChalView" class="hview" hidden>
+      <div class="hbar"><button class="btn ghost hback">← Back</button><h2>Challenges</h2><span id="hStars" class="hstars"></span></div>
+      <p class="hfoot">Finish a challenge to unlock the next. Faster solutions earn more stars.</p>
+      <div id="hGrid" class="hgrid"></div>
+    </div>
+    <div id="hDemoView" class="hview" hidden>
+      <div class="hbar"><button class="btn ghost hback">← Back</button><h2>Demo &amp; tutorial</h2></div>
+      <button class="hb" id="hWatch"><span class="ht">Watch the demo</span><span class="hd">The autopilot flies a rocket from the launch pad to orbit</span></button>
+      <button class="hb primary" id="hTut"><span class="ht">Start the tutorial</span><span class="hd">Learn every control step by step; each step completes when you do it</span></button>
+    </div>
+  </div>
+</div>
+<div id="chHud" class="chhud panel" hidden aria-live="polite">
+  <div class="chtop"><span id="chNum" class="k"></span><span id="chTime" class="k"></span></div>
+  <div id="chTitle" class="chtitle"></div>
+  <div id="chGoal" class="chgoal"></div>
+  <div class="chbarw"><span id="chBar"></span></div>
+  <div class="chrow"><span id="chProg" class="chprog"></span><div class="chbtns"><button id="chHint" class="btn">Hint</button><button id="chRestart" class="btn">Restart</button><button id="chExit" class="btn ghost">Exit</button></div></div>
+</div>
+<div id="demoCap" class="democap panel" hidden><span class="k" id="demoStep"></span><h2 id="demoTitle"></h2><p id="demoText"></p><div class="actions"><button class="btn" id="demoNext">Next ›</button><button class="btn ghost" id="demoExit">Exit demo</button></div></div>
+<div id="acct" class="ovl" hidden role="dialog" aria-label="Accounts">
+  <div class="obox panel">
+    <div class="hbar"><h2>Accounts</h2><button class="btn" id="acctClose" aria-label="Close">×</button></div>
+    <p class="hfoot">Your stars, plays and time are saved in this browser on this device. Accounts are shared by all our simulators when they are opened from the same site.</p>
+    <div id="acctList" class="hview" style="gap:6px"></div>
+    <form id="acctForm" class="aform"><input id="acctNew" maxlength="20" placeholder="Your name" autocomplete="off"><input id="acctPin" maxlength="4" inputmode="numeric" placeholder="PIN (optional)" autocomplete="off"><button class="btn primary" type="submit">Create account</button></form>
+    <p class="hfoot" id="acctMsg" aria-live="polite"></p>
+  </div>
+</div>
+<div id="chDone" class="home donebg" hidden role="dialog" aria-label="Challenge result">
+  <div class="donecard panel">
+    <div id="dStars" class="dstars"></div><h2 id="dTitle"></h2><p id="dText" class="hfoot" style="font-size:13px"></p>
+    <div class="actions" style="justify-content:center"><button id="dNext" class="btn primary">Next challenge</button><button id="dRetry" class="btn">Try again</button><button id="dList" class="btn ghost">All challenges</button></div>
+  </div>
+</div>
+
+<script>
+const __STATE_NAMES=["WS", "C0", "G0", "BODIES", "PT", "PRESETS", "DESIGN", "R", "DEB", "PRED", "PINFO", "MODE", "MISSION", "AP", "G", "PARTS", "HOVER", "DRAG", "TB", "sayT", "bodyPos", "bodyVel", "has", "COST", "TECH", "MISSIONS", "CREWPOOL", "CAR", "partOK", "designCost", "EXP", "SITN", "STARS", "LAND", "CRAT", "PAD_A", "fmtKm", "PLAN", "PLANP", "PLANI", "SELI", "PREDT", "TOUCH", "fmtT", "flying", "SIM", "LASTSYNC", "sb", "evAny"];
+const SIMLIST=[{"id": "barycenter", "icon": "🪐", "name": "Barycenter", "tag": "Gravity, planets, stars and black holes", "url": "https://jacob711-oss.github.io/Simulators/barycenter/", "color": "#e8b04a"}, {"id": "biosphere", "icon": "🌿", "name": "Biosphere", "tag": "A living world of animals, plants and people", "url": "https://jacob711-oss.github.io/Simulators/life/", "color": "#7fe0a8"}, {"id": "lithosphere", "icon": "🌋", "name": "Lithosphere", "tag": "Drift continents, raise mountains and set off volcanoes", "url": "https://jacob711-oss.github.io/Simulators/lithosphere/", "color": "#ff8a5c"}, {"id": "troposphere", "icon": "🌀", "name": "Troposphere", "tag": "Steer winds, brew hurricanes and change the climate", "url": "https://jacob711-oss.github.io/Simulators/troposphere/", "color": "#60d6e6"}, {"id": "catalyst", "icon": "⚛️", "name": "Catalyst", "tag": "Mix atoms, spark reactions and build molecules", "url": "https://jacob711-oss.github.io/Simulators/catalyst/", "color": "#c48bff"}, {"id": "abyssal", "icon": "🐋", "name": "Abyssal", "tag": "Dive into a living ocean, from coral reefs to the deep sea", "url": "https://jacob711-oss.github.io/Simulators/abyssal/", "color": "#4fa3ff"}, {"id": "interchange", "icon": "🚉", "name": "Interchange", "tag": "Draw the transit lines of a growing city and keep everyone moving", "url": "https://jacob711-oss.github.io/Simulators/interchange/", "color": "#ff5ab4"}, {"id": "gridlock", "icon": "🚗", "name": "Gridlock", "tag": "Draw the roads of a growing town and keep the traffic flowing", "url": "https://jacob711-oss.github.io/Simulators/gridlock/", "color": "#ffd23a"}, {"id": "hivemind", "icon": "🐜", "name": "Hivemind", "tag": "Ant colonies that find food by following each other's scent trails", "url": "https://jacob711-oss.github.io/Simulators/hivemind/", "color": "#ff9a3d"}, {"id": "flux", "icon": "⚡", "name": "Flux", "tag": "Place charges and magnets, and watch the fields bend particles through space", "url": "https://jacob711-oss.github.io/Simulators/flux/", "color": "#5ae0ff"}, {"id": "seaway", "icon": "🚢", "name": "Seaway", "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving", "url": "https://jacob711-oss.github.io/Simulators/seaway/", "color": "#3ab8e0"}, {"id": "contrail", "icon": "✈️", "name": "Contrail", "tag": "Guide planes onto runways, keep them apart and run a busy airport", "url": "https://jacob711-oss.github.io/Simulators/contrail/", "color": "#9fa8ff"}, {"id": "quasar", "icon": "✨", "name": "Quasar AI", "tag": "Our AI: chat, make pictures and find videos", "url": "https://jacob711-oss.github.io/Simulators/quasar/", "color": "#9b7bff"}, {"id": "sports", "icon": "🏆", "name": "Sports", "tag": "Every sport in one place: pick football, cricket, tennis, golf and 11 more, then play, coach or watch", "url": "https://jacob711-oss.github.io/Simulators/sports/", "color": "#ffb547"}],LB_GAME="apogee";
+/* ===== simulator kit: core helpers shared by every simulator ===== */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,rr=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rr(a,b+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+const mod=(a,n)=>((a%n)+n)%n;
+let W=innerWidth,H=innerHeight,DPR=Math.min(2,devicePixelRatio||1);
+const S={t:0,speed:1,speedI:0,paused:false,sel:null,view:'normal',tool:'select',brush:4,follow:false};
+const cam={x:0,y:0,z:4,ox:0};
+const CNT={moved:0,zoomed:0,scen:0,find:0,tool:0,view:0};const bump=k=>{CNT[k]=(CNT[k]||0)+1};
+function toast(msg,ms=3200){const el=document.createElement('div');el.className='toast panel';el.textContent=msg;const box=$('toasts');box.appendChild(el);while(box.children.length>4)box.firstChild.remove();setTimeout(()=>el.remove(),ms)}
+const fmtN=(v,d=0)=>Number(v).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});
+/* challenges */
+const CH={active:null,idx:-1,events:[],hold:{},t0:0,real0:0,done:false,failed:'',loading:false,ref:{}};
+function chEv(k,d){if(CH.active&&!CH.done&&!CH.loading)CH.events.push({k,...(d||{}),t:S.t})}
+const evN=k=>CH.events.filter(e=>e.k===k).length;
+const evHas=f=>CH.events.some(f);
+// hold a condition for an amount of simulated time (in the simulator's own time units)
+function hold(key,cond,dur){if(!cond){CH.hold[key]=null;return 0}if(CH.hold[key]==null)CH.hold[key]=S.t;return Math.min(1,(S.t-CH.hold[key])/dur)}
+const realSecs=()=>(performance.now()-CH.real0)/1000;
+const byTime=(t3,t2)=>()=>{const s=realSecs();return s<=t3?3:s<=t2?2:1};
+const CHALS=[];const CC=(diff,o)=>CHALS.push({diff,...o});
+const TSTEPS=[];const DEMO=[];
+const since=()=>S.t-CH.t0;
+
+/* ================= Apogee: build rockets and fly them to orbit and the Moon ================= */
+// Units are metres, seconds, tonnes and kilonewtons (so kN / t = m/s²). Terra sits in the middle of a 32,000 km world.
+const WS=3.2e7,C0=WS/2,G0=9.80665;
+const BODIES=[{id:'terra',nm:'Terra',R:640000,mu:9.81*640000*640000,atm:60000,rho0:1.2,H:6000},{id:'luna',nm:'Luna',R:200000,mu:1.62*2e5*2e5,orbit:1.2e7,m0:2.2}];
+BODIES[1].period=2*Math.PI*Math.sqrt(BODIES[1].orbit**3/BODIES[0].mu);BODIES[1].soi=BODIES[1].orbit*Math.pow(BODIES[1].mu/BODIES[0].mu,0.4);
+const PT={
+ pod1:{nm:'Capsule, 1 seat',k:'pod',m:0.84,h:2.1,w:2.4,crew:1,trq:14},
+ pod3:{nm:'Capsule, 3 seats',k:'pod',m:2.4,h:3,w:3.6,crew:3,trq:28},
+ chute:{nm:'Parachute',k:'chute',m:0.1,h:0.6,w:1.3},
+ cone:{nm:'Nose cone',k:'cone',m:0.08,h:1.6,w:2.4},
+ shield:{nm:'Heat shield',k:'shield',m:0.3,h:0.35,w:2.6},
+ dec:{nm:'Decoupler',k:'dec',m:0.05,h:0.4,w:2.4},
+ tankS:{nm:'Small tank',k:'tank',m:0.25,fuel:1.75,h:1.9,w:2.4},
+ tankM:{nm:'Medium tank',k:'tank',m:0.5,fuel:4,h:3.8,w:2.4},
+ tankL:{nm:'Large tank',k:'tank',m:1.1,fuel:9,h:6.5,w:3.6},
+ spark:{nm:'Spark engine (best in space)',k:'eng',m:0.4,thr:60,isp:[240,335],h:1.3,w:1.8},
+ lifter:{nm:'Lifter engine',k:'eng',m:1.3,thr:230,isp:[285,310],h:2,w:2.4},
+ thunder:{nm:'Thunder engine (huge)',k:'eng',m:4,thr:1150,isp:[290,305],h:2.6,w:3.6},
+ srb:{nm:'Solid booster',k:'srb',m:1.2,fuel:6.3,thr:270,isp:[205,225],h:7,w:2.2},
+ fins:{nm:'Fins',k:'fins',m:0.1,h:0,w:0},
+ legs:{nm:'Landing legs',k:'legs',m:0.25,h:0,w:0},
+};
+const PRESETS={
+ hopper:{nm:'Hopper (up and down)',parts:['chute','pod1','tankS','spark']},
+ orbiter:{nm:'Orbiter (reaches orbit)',parts:['chute','pod1','shield','dec','tankM','spark','dec','tankL','lifter','fins']},
+ lunar:{nm:'Moon lander (there and back)',parts:['chute','pod1','shield','dec','tankM','tankM','spark','legs','dec','tankL','tankL','lifter','dec','tankL','tankL','tankL','tankL','thunder','fins']},
+ heavy:{nm:'Big crew (3 seats)',parts:['chute','pod3','shield','dec','tankM','tankM','spark','dec','tankL','tankL','tankL','thunder','fins']},
+};
+let DESIGN=PRESETS.orbiter.parts.slice(),R=null,DEB=[],PRED=[],PINFO={},MODE='build',MISSION={};
+const AP={mode:'',ph:''};
+const G={throttleStep:0.1,autoChute:true,crashV:9};
+let PARTS=[],HOVER=null,DRAG={keys:new Set(),idle:9,rot:0,thr:0},TB=[];
+const sayT=(m,ms)=>{if($('home').hidden)toast(m,ms)};const ev=(k,n)=>{MISSION[k]=(MISSION[k]||0)+(n||1)},mv=k=>MISSION[k]||0;
+/* ---------- the Moon moves around Terra ---------- */
+function moonPos(t){const L=BODIES[1],a=L.m0+2*Math.PI*t/L.period;return[C0+L.orbit*Math.cos(a),C0+L.orbit*Math.sin(a)]}
+function moonVel(t){const L=BODIES[1],a=L.m0+2*Math.PI*t/L.period,w=2*Math.PI/L.period*L.orbit;return[-Math.sin(a)*w,Math.cos(a)*w]}
+const bodyPos=(i,t)=>i?moonPos(t):[C0,C0],bodyVel=(i,t)=>i?moonVel(t):[0,0];
+function domBody(x,y,t){const m=moonPos(t);return Math.hypot(x-m[0],y-m[1])<BODIES[1].soi?1:0}
+/* ---------- rocket bookkeeping ---------- */
+function sections(parts){const S=[[]];parts.forEach((p,i)=>{if(PT[p].k==='dec'&&S[S.length-1].length)S.push([]);S[S.length-1].push(i)});return S}
+function partMass(id,fuel){return PT[id].m+(fuel||0)}
+function stats(parts,fuelArr){const sec=sections(parts),out=[];let above=0;const tot=[];for(let k=0;k<sec.length;k++){let m=0,f=0;for(const i of sec[k]){const fu=fuelArr?fuelArr[i]:(PT[parts[i]].fuel||0);m+=PT[parts[i]].m+fu}tot.push(m)}
+  for(let k=sec.length-1;k>=0;k--){let mass=0;for(let j=0;j<=k;j++)mass+=tot[j];let thr=0,isp0=0,isp1=0,fuel=0,dry=0;for(const i of sec[k]){const P=PT[parts[i]],fu=fuelArr?fuelArr[i]:(P.fuel||0);if(P.k==='eng'||P.k==='srb'){thr+=P.thr;isp0+=P.thr/P.isp[0];isp1+=P.thr/P.isp[1]}if(P.k==='tank'||P.k==='srb')fuel+=fu}
+    const ia=thr?thr/isp0:0,iv=thr?thr/isp1:0,mEnd=mass-fuel;const dvv=thr&&fuel>0?iv*G0*Math.log(mass/mEnd):0,dva=thr&&fuel>0?ia*G0*Math.log(mass/mEnd):0;out.push({k,mass,thr,twr:thr/(mass*9.81),dv:dvv,dvSea:dva,fuel,burn:thr?fuel/(thr/((iv||1)*G0)):0})}
+  return out}// first entry = first stage to fire (the bottom one)
+function rocketLen(parts){return parts.reduce((s,p)=>s+PT[p].h,0)}
+function rocketW(parts){return Math.max(...parts.map(p=>PT[p].w||0),1)}
+function crewNames(n){const A=['Ada','Yuri','Mae','Neil','Sally','Valentina','Chris','Kalpana','Rakesh','Ellen','Tim','Samantha','Jaxon','Mila','Kofi','Rin'],B=['Vega','Orion','Kepler','Lovell','Ride','Hadfield','Peake','Okafor','Ito','Novak','Reyes','Banerjee'];return Array.from({length:n},()=>pick(A)+' '+pick(B))}
+function newRocket(parts,x,y,vx,vy,a){const crew=parts.reduce((s,p)=>s+(PT[p].crew||0),0);return{parts:parts.slice(),fuel:parts.map(p=>PT[p].fuel||0),x,y,vx,vy,a,om:0,thr:0,lit:false,chute:0,heat:0,dead:'',landed:-1,sas:'hold',sasA:a,crew:crewNames(crew),maxAlt:0,t0:S.t,staged:0}}
+function rMass(r){let m=0;r.parts.forEach((p,i)=>m+=PT[p].m+r.fuel[i]);return m}
+function bottomSec(r){const s=sections(r.parts);return s[s.length-1]}
+function engines(r){return bottomSec(r).filter(i=>PT[r.parts[i]].k==='eng'||PT[r.parts[i]].k==='srb')}
+function liquid(r){let f=0;for(const i of bottomSec(r))if(PT[r.parts[i]].k==='tank')f+=r.fuel[i];return f}
+const has=(r,k)=>r.parts.some(p=>PT[p].k===k);
+/* ---------- where am I? ---------- */
+function rel(r,t){const b=domBody(r.x,r.y,t),bp=bodyPos(b,t),bv=bodyVel(b,t);return{b,dx:r.x-bp[0],dy:r.y-bp[1],vx:r.vx-bv[0],vy:r.vy-bv[1]}}
+function orbitOf(r,t){const q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy),v2=q.vx*q.vx+q.vy*q.vy,mu=B0.mu,eps=v2/2-mu/rr,h=q.dx*q.vy-q.dy*q.vx,a=-mu/(2*eps);let e=Math.sqrt(Math.max(0,1+2*eps*h*h/(mu*mu)));
+  const bound=eps<0,pe=(bound?a*(1-Math.min(e,1)):h*h/mu/(1+e))-B0.R,ap=bound?a*(1+Math.min(e,1))-B0.R:Infinity;e=bound?Math.min(e,0.99999):e;return{b:q.b,alt:rr-B0.R,r:rr,spd:Math.sqrt(v2),vr:(q.dx*q.vx+q.dy*q.vy)/rr,vh:Math.abs(h)/rr,ap,pe,e,a,h,period:e<1?2*Math.PI*Math.sqrt(a*a*a/mu):Infinity}}
+function rho(b,alt){const B0=BODIES[b];return B0.atm&&alt<B0.atm?B0.rho0*Math.exp(-alt/B0.H):0}
+/* ---------- physics ---------- */
+function gravity(x,y,t){let ax=0,ay=0;for(let i=0;i<2;i++){const p=bodyPos(i,t),dx=p[0]-x,dy=p[1]-y,d2=dx*dx+dy*dy,d=Math.sqrt(d2),g=BODIES[i].mu/d2;ax+=dx/d*g;ay+=dy/d*g}return[ax,ay]}
+function thrustNow(r,dt,alt,b){if(!r.lit||r.dead)return 0;let F=0;const p=rho(b,alt)/1.2;for(const i of engines(r)){const P=PT[r.parts[i]],isp=lerp(P.isp[1],P.isp[0],clamp(p,0,1));
+    if(P.k==='srb'){if(r.fuel[i]<=0)continue;const md=P.thr/(isp*G0);r.fuel[i]=Math.max(0,r.fuel[i]-md*dt);F+=P.thr}
+    else{if(r.thr<=0)continue;const fl=liquid(r);if(fl<=0)continue;const f=P.thr*r.thr,md=f/(isp*G0)*dt;let need=md;for(const j of bottomSec(r)){if(PT[r.parts[j]].k!=='tank'||need<=0)continue;const take=Math.min(r.fuel[j],need*r.fuel[j]/fl+1e-9);r.fuel[j]-=take;need-=take}F+=f}}return F}
+function stepRocket(r,dt){if(r.dead)return;const t=S.t,q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy),alt=rr-B0.R,ux=q.dx/rr,uy=q.dy/rr,m=rMass(r);
+  // steering: your keys, the stability assist or the autopilot
+  let cmd=DRAG.rot;if(AP.mode)cmd=apSteer(r)??cmd;const trq=r.parts.reduce((s,p)=>s+(PT[p].trq||0),0)+(r.lit?0.06*PT_thrust(r):0),aC=trq/Math.max(1,m)*0.5;
+  if(!cmd&&r.sas){let tgt=null;const sp=Math.hypot(q.vx,q.vy);if(r.sas==='hold')tgt=r.sasA;else if(r.sas==='pro'&&sp>1)tgt=Math.atan2(q.vy,q.vx);else if(r.sas==='retro'&&sp>1)tgt=Math.atan2(-q.vy,-q.vx);else if(r.sas==='up')tgt=Math.atan2(uy,ux);
+    if(AP.mode&&AP.tgt!=null)tgt=AP.tgt;if(tgt!=null){let d=tgt-r.a;d=Math.atan2(Math.sin(d),Math.cos(d));const want=clamp(d*2.2,-1.2,1.2);cmd=clamp((want-r.om)*4,-1,1)}}
+  else if(cmd)r.sasA=r.a;
+  let aero=0;const den=rho(q.b,alt),vrx=q.vx,vry=q.vy,vs=Math.hypot(vrx,vry);
+  if(den>0&&vs>30&&r.landed<0){const aoa=Math.atan2(Math.sin(Math.atan2(vry,vrx)-r.a),Math.cos(Math.atan2(vry,vrx)-r.a)),qd=0.5*den*vs*vs;aero=(has(r,'fins')?1:-0.35)*Math.sin(aoa)*qd/1000/Math.max(1,m)*0.6}
+  r.om+=(cmd*aC+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt;
+  // forces
+  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);let ax=F*dx/m,ay=F*dy/m;
+  if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?450:0),Fd=0.5*den*vs*vs*cda/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;
+    const heat=den*vs*vs*vs*2.6e-10*(has(r,'shield')&&Math.cos(Math.atan2(vry,vrx)-r.a)<-0.7?0.08:1);r.heat=Math.max(0,r.heat+(heat-0.06)*dt);if(r.heat>1){boom(r,'burned up coming back into the air');return}}else r.heat=Math.max(0,r.heat-0.08*dt);
+  if(r.chute===1&&G.autoChute&&den>0&&alt<5000&&vs<260&&q.vx*ux+q.vy*uy<0)openChute(r);
+  if(r.chute===2&&vs>320&&den>0.05){r.chute=-1;callout('The parachute ripped!',r.x,r.y,'#ffb347')}
+  if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0];r.vy=bv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
+    r.landed=-1;callout('Lift-off!',r.x,r.y,'#9fd0ff');ev('liftoff');chEv('liftoff',{b:q.b})}
+  const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt;
+  // the ground
+  const q2=rel(r,t+dt),rr2=Math.hypot(q2.dx,q2.dy),half=rocketLen(r.parts)/2,bottom=rr2-B0.R-Math.max(0,half*Math.cos(r.a-Math.atan2(q2.dy,q2.dx)));
+  if(bottom<=0){const vimp=Math.hypot(q2.vx,q2.vy),up=Math.atan2(q2.dy,q2.dx),tilt=Math.abs(Math.atan2(Math.sin(r.a-up),Math.cos(r.a-up))),safe=G.crashV+(has(r,'legs')?6:0);
+    if(vimp>safe)return boom(r,`hit ${BODIES[q2.b].nm} at ${Math.round(vimp)} m/s`);if(tilt>0.7&&vimp>2)return boom(r,'tipped over on landing');
+    r.landed=q2.b;const bp=bodyPos(q2.b,t);const k=(BODIES[q2.b].R+half)/rr2;r.lx=q2.dx*k;r.ly=q2.dy*k;r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.om=0;r.thr=0;const wasFlight=r.maxAlt>200;
+    if(wasFlight){const nm=BODIES[q2.b].nm;callout(`Landed on ${nm}!`,r.x,r.y,'#8fe39a');toast(`Touchdown on ${nm} at ${vimp.toFixed(1)} m/s. ${r.crew.length?'The crew are safe!':''}`,6000);ev('land'+q2.b);if(r.maxAlt>BODIES[0].atm&&q2.b===0)ev('returned');if(mv('land1')&&q2.b===0)ev('moonReturn');chEv('land',{b:q2.b,v:vimp});if(AP.mode==='home')apOff('Landed safely')}}
+  r.maxAlt=Math.max(r.maxAlt,alt);if(q.b===1&&!mv('soi1')){ev('soi1');toast('You are in Luna’s pull now: its gravity takes over',5000);chEv('soi',{})}}
+function PT_thrust(r){let f=0;for(const i of engines(r))f+=PT[r.parts[i]].thr;return f}
+function openChute(r){if(!has(r,'chute')||r.chute===2)return;r.chute=2;callout('Parachute open',r.x,r.y,'#ffd28a');ev('chute');chEv('chute',{})}
+function boom(r,why){if(r.dead)return;r.dead=why;r.lit=false;r.thr=0;for(let i=0;i<14;i++)PARTS.push({k:'fire',x:r.x+rr(-8,8),y:r.y+rr(-8,8),vx:rr(-15,15),vy:rr(-15,15),age:rr(0,0.3),s:rr(4,12)});callout('BOOM',r.x,r.y,'#ff6a3a');toast(`Your rocket ${why}. Press Revert to try again.`,6000);ev('crash');chEv('crash',{why});if(AP.mode)apOff('')}
+/* ---------- staging ---------- */
+function stage(r){if(!r||r.dead)return;if(!r.lit){r.lit=true;if(r.thr===0)r.thr=1;r.staged++;callout('Ignition!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{});if(r.landed>=0&&PT_thrust(r)===0)toast('There are no engines in this stage');return}
+  const S0=sections(r.parts);if(S0.length<=1){if(has(r,'chute')&&r.chute<2){const q=rel(r,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R,vs=Math.hypot(q.vx,q.vy);if(rho(q.b,alt)>0&&vs<260)openChute(r);else{r.chute=1;toast('Parachute armed: it opens by itself when it is safe (low and slow)')}}return}
+  const drop=S0[S0.length-1],keep=S0.slice(0,-1).flat(),dropParts=drop.map(i=>r.parts[i]),dropFuel=drop.map(i=>r.fuel[i]);const L=rocketLen(r.parts),Lk=keep.reduce((s,i)=>s+PT[r.parts[i]].h,0),dx=Math.cos(r.a),dy=Math.sin(r.a);
+  const dcy=(L/2)-Lk-(L-Lk)/2;DEB.push({parts:dropParts,fuel:dropFuel,x:r.x-dx*(L/2-(L-Lk)/2),y:r.y-dy*(L/2-(L-Lk)/2),vx:r.vx-dx*3,vy:r.vy-dy*3,a:r.a,om:rr(-0.2,0.2),age:0});if(DEB.length>12)DEB.shift();
+  r.parts=keep.map(i=>r.parts[i]);r.fuel=keep.map(i=>r.fuel[i]);r.x+=dx*(L-Lk)/2;r.y+=dy*(L-Lk)/2;r.staged++;r.lit=true;callout('Stage!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{})}
+function stepDebris(dt){for(const d of DEB){if(d.dead)continue;d.age+=dt;const g=gravity(d.x,d.y,S.t);const q={x:d.x,y:d.y};const b=domBody(d.x,d.y,S.t),bp=bodyPos(b,S.t),rr0=Math.hypot(d.x-bp[0],d.y-bp[1]),alt=rr0-BODIES[b].R,den=rho(b,alt);let ax=g[0],ay=g[1];
+    if(den>0){const bv=bodyVel(b,S.t),vx=d.vx-bv[0],vy=d.vy-bv[1],vs=Math.hypot(vx,vy),m=d.parts.reduce((s,p,i)=>s+PT[p].m+(d.fuel[i]||0),0),Fd=0.5*den*vs*vs*0.9*10/1000;if(vs>0.1){ax-=vx/vs*Fd/m;ay-=vy/vs*Fd/m}}
+    d.vx+=ax*dt;d.vy+=ay*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.a+=d.om*dt;if(alt<0){d.dead=1;for(let i=0;i<5;i++)PARTS.push({k:'fire',x:d.x,y:d.y,vx:rr(-8,8),vy:rr(-8,8),age:rr(0,.3),s:rr(3,7)})}}DEB=DEB.filter(d=>!d.dead&&d.age<900)}
+/* ---------- the flight path ahead ---------- */
+function predict(){PRED=[];PINFO={};if(!R||R.dead||R.landed>=0)return;const t0=S.t,b0=domBody(R.x,R.y,t0),o=orbitOf(R,t0);let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0,inLuna=b0===1,closest=1e18,closestT=0;const m0=moonPos(t0),maxT=o.e<1&&o.period<4e5?o.period*1.02:4e5;
+  for(let i=0;i<1400&&t-t0<maxT;i++){const bnow=domBody(x,y,t),bp=bodyPos(bnow,t),r0=Math.hypot(x-bp[0],y-bp[1]),v=Math.hypot(vx-bodyVel(bnow,t)[0],vy-bodyVel(bnow,t)[1]);const dt=clamp(r0/Math.max(v,1)*0.012,0.5,200);
+    const g1=gravity(x,y,t);vx+=g1[0]*dt*0.5;vy+=g1[1]*dt*0.5;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt*0.5;vy+=g2[1]*dt*0.5;
+    const mp=moonPos(t),dm=Math.hypot(x-mp[0],y-mp[1]);if(dm<closest){closest=dm;closestT=t}if(bnow===1&&b0===0&&!PINFO.enc){PINFO.enc=true;PINFO.encT=t-t0}
+    let px=x,py=y;if(b0===1){px=x-mp[0]+m0[0];py=y-mp[1]+m0[1]}PRED.push([px,py]);
+    const bb=domBody(x,y,t),bq=bodyPos(bb,t);if(Math.hypot(x-bq[0],y-bq[1])<BODIES[bb].R){PINFO.impact=BODIES[bb].nm;PINFO.impT=t-t0;break}}
+  PINFO.closest=closest-BODIES[1].R;PINFO.closestT=closestT-t0}
+
+/* ================= Apogee: space agency mode: money, missions, science, research and crew ================= */
+Object.assign(PT,{sci:{nm:'Science pod (sensors and sample jar)',k:'sci',m:0.2,h:0.8,w:2.4}});
+const COST={pod1:6000,pod3:15000,chute:1200,cone:500,shield:1500,dec:600,tankS:800,tankM:1500,tankL:3200,spark:4000,lifter:9000,thunder:22000,srb:3000,fins:400,legs:2500,sci:2800};
+const TECH=[{id:'t0',nm:'Rocketry basics',cost:0,parts:['pod1','chute','dec','tankS','tankM','spark','fins','sci']},{id:'t1',nm:'Bigger rockets',cost:12,parts:['lifter','tankL','cone','srb']},{id:'t2',nm:'Coming home safely',cost:20,parts:['shield']},{id:'t3',nm:'Landing gear and big crews',cost:45,parts:['legs','pod3']},{id:'t4',nm:'Heavy lifting',cost:90,parts:['thunder']}];
+const MISSIONS=[
+ {id:'m1',nm:'First launch',g:'Fly higher than 1 km.',pay:8000,sci:2,ok:()=>R&&R.maxAlt>1000},
+ {id:'m2',nm:'Touch space',g:'Climb above 60 km, where the air ends.',pay:20000,sci:5,ok:()=>R&&R.maxAlt>60000},
+ {id:'m3',nm:'Bring them home',g:'Go to space, then land safely on Terra with your crew.',pay:25000,sci:5,ok:()=>mv('returned')>0},
+ {id:'m4',nm:'Orbit Terra',g:'Get into orbit: lowest point (periapsis) above 60 km.',pay:40000,sci:8,ok:()=>mv('orbit0')>0},
+ {id:'m5',nm:'Science in orbit',g:'Collect any science while in space near Terra.',pay:15000,sci:4,ok:()=>Object.keys(CAR.sciDone).some(k=>k.includes('terra:space'))},
+ {id:'m6',nm:'Fly past Luna',g:'Reach Luna and enter its pull.',pay:60000,sci:10,ok:()=>mv('soi1')>0},
+ {id:'m7',nm:'Orbit Luna',g:'Get into orbit around Luna.',pay:80000,sci:12,ok:()=>mv('orbit1')>0},
+ {id:'m8',nm:'Land on Luna',g:'Land safely on Luna.',pay:120000,sci:20,ok:()=>mv('land1')>0},
+ {id:'m9',nm:'Moon rocks',g:'Take a surface sample on Luna and bring it back to Terra.',pay:150000,sci:25,ok:()=>CAR.rocks>0},
+ {id:'m10',nm:'Escape',g:'Leave Terra’s pull for good (escape speed).',pay:100000,sci:15,ok:()=>mv('escape')>0},
+];
+const CREWPOOL=['Ada Vega','Yuri Kepler','Mae Orion','Neil Okafor','Sally Ride-Novak','Kalpana Ito','Chris Hadfield-Reyes','Valentina Peake','Rakesh Banerjee','Ellen Lovell','Kofi Mensah','Rin Tanaka'];
+const CAR={mode:'career',funds:60000,sci:0,tech:{t0:1},done:{},sciDone:{},crew:[],rocks:0,flights:0};
+function carNew(mode){Object.assign(CAR,{mode,funds:mode==='sandbox'?1e9:60000,sci:mode==='sandbox'?999:0,tech:mode==='sandbox'?Object.fromEntries(TECH.map(t=>[t.id,1])):{t0:1},done:{},sciDone:{},rocks:0,flights:0,crew:CREWPOOL.slice(0,4).map(n=>({nm:n,xp:0,st:'ready'}))});carSave()}
+function carSave(){try{localStorage.setItem('apogee_career',JSON.stringify(CAR))}catch(e){}}
+function carLoad(){try{const v=JSON.parse(localStorage.getItem('apogee_career')||'null');if(v&&v.mode){Object.assign(CAR,v);return true}}catch(e){}return false}
+const partOK=p=>TECH.some(t=>CAR.tech[t.id]&&t.parts.includes(p));
+const designCost=parts=>parts.reduce((s,p)=>s+(COST[p]||0),0);
+function research(id){const t=TECH.find(x=>x.id===id);if(!t||CAR.tech[id])return;if(CAR.sci<t.cost)return toast(`You need ${t.cost} science (you have ${Math.floor(CAR.sci)})`);CAR.sci-=t.cost;CAR.tech[id]=1;carSave();toast(`Researched: ${t.nm}. New parts: ${t.parts.map(p=>PT[p].nm).join(', ')}`,6000);ev('research');chEv('research',{id});syncPanel()}
+function hire(){if(CAR.crew.length>=12)return toast('Your astronaut corps is full');const cost=20000;if(CAR.funds<cost)return toast('Hiring costs 20,000');const nm=CREWPOOL.find(n=>!CAR.crew.some(c=>c.nm===n))||('Recruit '+(CAR.crew.length+1));CAR.funds-=cost;CAR.crew.push({nm,xp:0,st:'ready'});carSave();toast(`${nm} joins the astronaut corps`);syncPanel()}
+/* ---------- science: run experiments in different places ---------- */
+const EXP={crew:{nm:'Crew report',base:5,need:'crew'},sense:{nm:'Sensor reading',base:8,need:'sci'},sample:{nm:'Surface sample',base:14,need:'crew',landed:1}};
+function situation(r){const q=rel(r,S.t),B0=BODIES[q.b],alt=Math.hypot(q.dx,q.dy)-B0.R;if(r.landed>=0)return{b:q.b,s:'landed',m:q.b===0&&Math.abs(Math.atan2(q.dy,q.dx)-PAD_A)<0.01?0.3:1};
+  if(B0.atm&&alt<B0.atm)return{b:q.b,s:alt<18000?'lowair':'highair',m:alt<18000?1:1.4};return{b:q.b,s:alt<(q.b?60000:250000)?'space':'farspace',m:alt<(q.b?60000:250000)?2:2.6}}
+const SITN={landed:'on the ground',lowair:'low in the air',highair:'high in the air',space:'in space nearby',farspace:'far out in space'};
+function runExp(k){if(!R||R.dead)return;const E=EXP[k];if(E.need==='crew'&&!R.crew.length)return toast('This needs a crew on board');if(E.need==='sci'&&!has(R,'sci'))return toast('This needs a Science pod on the rocket');if(E.landed&&R.landed<0)return toast('Land first, then take a sample');
+  const si=situation(R),key=`${k}:${BODIES[si.b].id}:${si.s}`;if(CAR.sciDone[key]||R.data.some(d=>d.key===key))return toast(`You already have a ${E.nm.toLowerCase()} from ${BODIES[si.b].nm} ${SITN[si.s]}`);
+  const val=Math.round(E.base*si.m*(si.b?4:1));R.data.push({key,nm:`${E.nm}: ${BODIES[si.b].nm}, ${SITN[si.s]}`,val,moon:si.b===1&&k==='sample'});callout(`+${val} science stored`,R.x,R.y,'#9fe3ff');toast(`${E.nm} done ${SITN[si.s]} on ${BODIES[si.b].nm}. Worth ${val} science: send it home now for half, or bring it back for all of it.`,6000);ev('exp');chEv('exp',{k,b:si.b,s:si.s});syncPanel()}
+function transmit(){if(!R||!R.data.length)return toast('No science data on board yet');let got=0;for(const d of R.data){const v=d.val*0.5;got+=v;CAR.sciDone[d.key]=1}CAR.sci+=got;R.data=[];carSave();toast(`Sent home: +${got.toFixed(1)} science`);ev('transmit');chEv('transmit',{});syncPanel()}
+function recover(){if(!R)return;const onTerra=R.landed===0&&!R.dead;let got=0,pay=0;if(onTerra){for(const d of R.data){got+=d.val;CAR.sciDone[d.key]=1;if(d.moon)CAR.rocks++}pay=Math.round(designCost(R.parts)*0.8);CAR.sci+=got;CAR.funds+=pay;for(const c of CAR.crew)if(c.st==='flying'){c.st='ready';c.xp+=Math.round(R.maxAlt/20000)+1}}
+  carSave();checkMissions();if(onTerra)toast(`Recovered! +${got} science and ${pay.toLocaleString()} back for the parts.`,6000);R=null;DEB=[];PRED=[];toBuild()}
+/* ---------- missions pay money ---------- */
+function checkMissions(){if(CAR.mode==='sandbox')return;for(const m of MISSIONS){if(CAR.done[m.id])continue;let ok=false;try{ok=m.ok()}catch(e){}if(ok){CAR.done[m.id]=1;CAR.funds+=m.pay;CAR.sci+=m.sci;carSave();toast(`Mission complete: ${m.nm}! +${m.pay.toLocaleString()} and +${m.sci} science`,6500);callout('Mission complete!',R?R.x:C0,R?R.y:C0,'#8fe39a');ev('mission');chEv('mission',{id:m.id})}}}
+
+/* ================= Apogee: drawing space, worlds, rockets and paths ================= */
+const STARS=Array.from({length:260},()=>[Math.random(),Math.random(),Math.random()*0.8+0.2,Math.random()<0.1?1.6:1]);
+const LAND=Array.from({length:14},(_,i)=>{const a=i/14*Math.PI*2+Math.sin(i*7.3)*0.2;return[a,0.12+0.1*Math.abs(Math.sin(i*3.1))]});
+const CRAT=Array.from({length:22},(_,i)=>[Math.sin(i*12.9898)*0.5+0.5,Math.sin(i*78.233)*0.5+0.5,0.05+0.08*Math.abs(Math.sin(i*4.7))]);
+const PAD_A=-Math.PI/2;
+function landAt(a){a=mod(a,Math.PI*2);for(const [c,w] of LAND){let d=Math.abs(mod(a-c+Math.PI,Math.PI*2)-Math.PI);if(d<w)return true}return Math.abs(mod(a-PAD_A+Math.PI,Math.PI*2)-Math.PI)<0.06}
+function drawBody(c,i){const B0=BODIES[i],p=bodyPos(i,S.t),X=sx(p[0]),Y=sy(p[1]),Rp=B0.R*cam.z;if(X+Rp<-50||X-Rp>W+50||Y+Rp<-50||Y-Rp>H+50)return;
+  if(i===0&&B0.atm){const Ra=(B0.R+B0.atm)*cam.z;if(Rp<4e4){const g=c.createRadialGradient(X,Y,Rp*0.98,X,Y,Ra);g.addColorStop(0,'rgba(110,170,255,.45)');g.addColorStop(1,'rgba(110,170,255,0)');c.fillStyle=g;c.beginPath();c.arc(X,Y,Ra,0,7);c.fill()}}
+  if(Rp<4e4){c.fillStyle=i?'#8d8a85':'#2c6cb8';c.beginPath();c.arc(X,Y,Rp,0,7);c.fill();
+    if(i===0){c.fillStyle='#4f9a55';for(const [a,w] of LAND){c.beginPath();c.moveTo(X,Y);c.arc(X,Y,Rp,a-w,a+w);c.closePath();c.fill()}c.fillStyle='rgba(30,70,140,1)';c.beginPath();c.arc(X,Y,Rp*0.985,0,7);c.fill();c.globalCompositeOperation='source-over'}
+    if(i===0){c.fillStyle='#2c6cb8';c.beginPath();c.arc(X,Y,Rp*0.985,0,7);c.fill();c.fillStyle='rgba(79,154,85,.95)';for(const [a,w] of LAND){c.beginPath();c.arc(X,Y,Rp*0.985,a-w,a+w);c.arc(X,Y,Rp*0.55,a+w*0.8,a-w*0.8,true);c.closePath();c.fill()}c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.arc(X,Y-Rp*0.93,Rp*0.22,0.15*Math.PI,0.85*Math.PI);c.fill()}
+    if(i===1){c.fillStyle='rgba(60,58,55,.45)';for(const [u,v,s] of CRAT){const cx=X+(u-0.5)*1.5*Rp,cy=Y+(v-0.5)*1.5*Rp;if(Math.hypot(cx-X,cy-Y)<Rp*0.9){c.beginPath();c.arc(cx,cy,s*Rp,0,7);c.fill()}}}
+    const g=c.createRadialGradient(X-Rp*0.3,Y-Rp*0.3,Rp*0.2,X,Y,Rp);g.addColorStop(0,'rgba(255,255,255,.08)');g.addColorStop(1,'rgba(0,0,0,.35)');c.fillStyle=g;c.beginPath();c.arc(X,Y,Rp,0,7);c.fill();return}
+  // close to the surface: draw the ground as a gently curved strip under the camera
+  const cx=wxOf(W/2),cy=wyOf(H/2),ang=Math.atan2(cy-p[1],cx-p[0]),span=Math.max(W,H)/Rp*1.6,n=48;c.beginPath();for(let k=0;k<=n;k++){const a=ang-span+2*span*k/n;c.lineTo(sx(p[0]+Math.cos(a)*B0.R),sy(p[1]+Math.sin(a)*B0.R))}
+  const deep=Math.max(W,H)*2;c.lineTo(sx(p[0]+Math.cos(ang+span)*B0.R)-Math.cos(ang)*deep,sy(p[1]+Math.sin(ang+span)*B0.R)-Math.sin(ang)*deep);c.lineTo(sx(p[0]+Math.cos(ang-span)*B0.R)-Math.cos(ang)*deep,sy(p[1]+Math.sin(ang-span)*B0.R)-Math.sin(ang)*deep);c.closePath();
+  c.fillStyle=i?'#8d8a85':landAt(ang)?'#3f8a48':'#2a66b0';c.fill();if(i===0&&!landAt(ang)){c.strokeStyle='rgba(255,255,255,.25)';c.lineWidth=2;c.stroke()}
+  if(i===1){c.fillStyle='rgba(60,58,55,.4)';for(let k=0;k<30;k++){const a=ang-span+2*span*((k*0.618)%1),s=(3+k%5*4)*(1+((k*7)%3));const px=p[0]+Math.cos(a)*(B0.R-s*0.3),py=p[1]+Math.sin(a)*(B0.R-s*0.3);c.beginPath();c.ellipse(sx(px),sy(py),s*cam.z,s*cam.z*0.35,a+Math.PI/2,0,7);c.fill()}}
+  if(i===0)drawPad(c)}
+function drawPad(c){const p=bodyPos(0,S.t),B0=BODIES[0],ux=Math.cos(PAD_A),uy=Math.sin(PAD_A),bx=p[0]+ux*B0.R,by=p[1]+uy*B0.R;const X=sx(bx),Y=sy(by),z=cam.z;if(X<-400||X>W+400||Y<-400||Y>H+400)return;
+  c.save();c.translate(X,Y);c.rotate(PAD_A+Math.PI/2);c.fillStyle='#6b6f7a';c.fillRect(-14*z,-1.5*z,28*z,3*z);c.fillStyle='#9aa0ad';c.fillRect(-10*z,-2.2*z,20*z,1*z);c.strokeStyle='#c94a3f';c.lineWidth=Math.max(1,0.6*z);c.beginPath();c.moveTo(9*z,-2*z);c.lineTo(9*z,-42*z);for(let h=-6;h>-42;h-=5){c.moveTo(9*z,h*z);c.lineTo(12*z,(h-4)*z);c.lineTo(12*z,h*z)}c.moveTo(12*z,-2*z);c.lineTo(12*z,-42*z);c.stroke();c.restore()}
+function drawSky(c){const q=R?rel(R,S.t):null;let a=0;if(q&&q.b===0){const alt=Math.hypot(q.dx,q.dy)-BODIES[0].R;a=clamp(1-alt/40000,0,1)}else if(!R&&MODE==='build')a=1;
+  c.fillStyle='#03040b';c.fillRect(0,0,W,H);if(a<1){for(const [u,v,b,s] of STARS){c.globalAlpha=b*(1-a);c.fillStyle='#fff';c.fillRect(((u*W-cam.x*cam.z*1e-6)%W+W)%W,((v*H-cam.y*cam.z*1e-6)%H+H)%H,s,s)}c.globalAlpha=1}
+  if(a>0){const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(70,130,230,${a})`);g.addColorStop(1,`rgba(150,200,255,${a})`);c.fillStyle=g;c.fillRect(0,0,W,H)}}
+function partShape(c,id,y,w,h,z,fuelFrac,lit){const P=PT[id],k=P.k,x=-w/2*z,Y=y*z,Wd=w*z,Hd=h*z;
+  if(k==='pod'){c.fillStyle='#e8e9ee';c.beginPath();c.moveTo(-w*0.18*z,Y);c.lineTo(w*0.18*z,Y);c.lineTo(w/2*z,Y+Hd);c.lineTo(-w/2*z,Y+Hd);c.closePath();c.fill();c.strokeStyle='#8a8f9c';c.lineWidth=1;c.stroke();c.fillStyle='#2b3d5c';c.beginPath();c.arc(0,Y+Hd*0.55,Math.max(1,w*0.13*z),0,7);c.fill();c.fillStyle='#555b68';c.fillRect(-w/2*z,Y+Hd-Math.max(1,0.15*z),Wd,Math.max(1,0.15*z))}
+  else if(k==='chute'){c.fillStyle='#e07a32';c.beginPath();c.ellipse(0,Y+Hd,w/2*z,Hd,0,Math.PI,0);c.fill()}
+  else if(k==='cone'){c.fillStyle='#f0f0f3';c.beginPath();c.moveTo(0,Y);c.quadraticCurveTo(w/2*z,Y+Hd*0.3,w/2*z,Y+Hd);c.lineTo(-w/2*z,Y+Hd);c.quadraticCurveTo(-w/2*z,Y+Hd*0.3,0,Y);c.fill();c.fillStyle='#c94a3f';c.fillRect(-w/2*z,Y+Hd*0.85,Wd,Hd*0.15)}
+  else if(k==='shield'){c.fillStyle='#6b4a32';c.fillRect(x,Y,Wd,Math.max(1.5,Hd))}
+  else if(k==='dec'){c.fillStyle='#3a3d45';c.fillRect(x,Y,Wd,Math.max(1.5,Hd));c.fillStyle='#e8c447';for(let s=0;s<6;s++)c.fillRect(x+s*Wd/6,Y,Wd/12,Math.max(1.5,Hd))}
+  else if(k==='tank'){const g=c.createLinearGradient(x,0,x+Wd,0);g.addColorStop(0,'#c9cbd2');g.addColorStop(0.4,'#f4f5f8');g.addColorStop(1,'#a7aab4');c.fillStyle=g;c.fillRect(x,Y,Wd,Hd);c.fillStyle='rgba(230,120,50,.85)';c.fillRect(x,Y+Hd*(1-fuelFrac),Math.max(1.5,Wd*0.12),Hd*fuelFrac);c.fillStyle='#3a3d45';c.fillRect(x,Y,Wd,Math.max(1,Hd*0.04));c.fillRect(x,Y+Hd*0.96,Wd,Math.max(1,Hd*0.04))}
+  else if(k==='eng'){c.fillStyle='#4a4e58';c.fillRect(-w*0.3*z,Y,w*0.6*z,Hd*0.35);c.fillStyle='#6d717c';c.beginPath();c.moveTo(-w*0.22*z,Y+Hd*0.35);c.lineTo(w*0.22*z,Y+Hd*0.35);c.lineTo(w/2*z,Y+Hd);c.lineTo(-w/2*z,Y+Hd);c.closePath();c.fill();c.strokeStyle='#2c2f36';c.stroke()}
+  else if(k==='srb'){c.fillStyle='#f2f2f2';c.fillRect(x,Y,Wd,Hd);c.fillStyle='#d9534f';c.fillRect(x,Y+Hd*0.1,Wd,Hd*0.06);c.fillRect(x,Y+Hd*0.75,Wd,Hd*0.06);c.fillStyle='#555';c.beginPath();c.moveTo(-w*0.3*z,Y+Hd);c.lineTo(w*0.3*z,Y+Hd);c.lineTo(w*0.42*z,Y+Hd+0.8*z);c.lineTo(-w*0.42*z,Y+Hd+0.8*z);c.fill()}}
+function drawRocketAt(c,parts,fuel,X,Y,a,z,opts){opts=opts||{};const L=rocketLen(parts),Wm=rocketW(parts);c.save();c.translate(X,Y);c.rotate(a+Math.PI/2);
+  if(L*z<6){c.fillStyle=opts.debris?'#8a8f9c':'#fff';c.beginPath();c.moveTo(0,-6);c.lineTo(4,5);c.lineTo(-4,5);c.closePath();c.fill();c.restore();return}
+  let y=-L/2;const ys=[];parts.forEach((p,i)=>{ys.push(y);y+=PT[p].h});
+  if(opts.chute===2){const top=-L/2;c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1;c.beginPath();c.moveTo(0,top*z);c.lineTo(-7*z,(top-9)*z);c.moveTo(0,top*z);c.lineTo(7*z,(top-9)*z);c.stroke();c.fillStyle='#e07a32';c.beginPath();c.ellipse(0,(top-9)*z,8*z,4*z,0,Math.PI,0);c.fill();c.fillStyle='#f4f1e8';c.beginPath();c.ellipse(0,(top-9)*z,8*z,4*z,0,Math.PI*1.25,Math.PI*1.5);c.lineTo(0,(top-9)*z);c.fill()}
+  if(opts.flame>0){const ey=L/2*z,fl=(6+opts.flame*16)*(0.85+Math.random()*0.3)*z,fw=Wm*0.35*z;const g=c.createLinearGradient(0,ey,0,ey+fl);g.addColorStop(0,'rgba(255,250,220,.95)');g.addColorStop(0.3,'rgba(255,170,60,.85)');g.addColorStop(1,'rgba(255,80,20,0)');c.fillStyle=g;c.beginPath();c.moveTo(-fw,ey);c.quadraticCurveTo(-fw*1.4,ey+fl*0.5,0,ey+fl);c.quadraticCurveTo(fw*1.4,ey+fl*0.5,fw,ey);c.closePath();c.fill()}
+  parts.forEach((p,i)=>{const P=PT[p];if(P.k==='fins'||P.k==='legs'){const j=i-1;if(j<0)return;const y0=ys[j],h=PT[parts[j]].h,w=PT[parts[j]].w||2.4;c.fillStyle=P.k==='fins'?'#c94a3f':'#9aa0ad';c.strokeStyle='#9aa0ad';
+      if(P.k==='fins'){for(const s of [-1,1]){c.beginPath();c.moveTo(s*w/2*z,(y0+h*0.5)*z);c.lineTo(s*(w/2+1.4)*z,(y0+h+0.6)*z);c.lineTo(s*w/2*z,(y0+h)*z);c.closePath();c.fill()}}
+      else{c.lineWidth=Math.max(1,0.35*z);for(const s of [-1,1]){c.beginPath();c.moveTo(s*w/2*z,(y0+h*0.3)*z);c.lineTo(s*(w/2+1.6)*z,(y0+h+1.4)*z);c.lineTo(s*(w/2+2.3)*z,(y0+h+1.4)*z);c.stroke()}}return}
+    const f=P.fuel?(fuel?fuel[i]/P.fuel:1):0;partShape(c,p,ys[i],P.w,P.h,z,f,opts.flame>0)});
+  if(opts.heat>0.15){c.globalAlpha=Math.min(0.8,opts.heat);c.fillStyle='#ff6a2a';c.beginPath();c.ellipse(0,L/2*z,Wm*0.7*z,(1+opts.heat*3)*z,0,0,7);c.fill();c.globalAlpha=1}
+  c.restore()}
+function drawPath(c){if(!PRED.length)return;c.strokeStyle='rgba(90,210,255,.75)';c.lineWidth=1.6;c.setLineDash([]);c.beginPath();PRED.forEach(([x,y],i)=>i?c.lineTo(sx(x),sy(y)):c.moveTo(sx(x),sy(y)));c.stroke();
+  if(R&&!R.dead&&R.landed<0){const o=orbitOf(R,S.t),b=o.b,bp=bodyPos(b,S.t);const q=rel(R,S.t);// apoapsis / periapsis markers from the orbit shape
+    const mu=BODIES[b].mu,ex=((q.vx*q.vx+q.vy*q.vy-mu/o.r)*q.dx-(q.dx*q.vx+q.dy*q.vy)*q.vx)/mu,ey=((q.vx*q.vx+q.vy*q.vy-mu/o.r)*q.dy-(q.dx*q.vx+q.dy*q.vy)*q.vy)/mu,w=Math.atan2(ey,ex);
+    const mark=(r,a,t)=>{const X=sx(bp[0]+Math.cos(a)*r),Y=sy(bp[1]+Math.sin(a)*r);c.fillStyle='#5ad2ff';c.beginPath();c.arc(X,Y,4,0,7);c.fill();c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='left';c.fillStyle='#cdefff';c.fillText(t,X+7,Y-6)};
+    if(o.pe>-BODIES[b].R*0.9)mark(o.pe+BODIES[b].R,w,`Pe ${fmtKm(o.pe)}`);if(o.e<1&&o.ap<1e8)mark(o.ap+BODIES[b].R,w+Math.PI,`Ap ${fmtKm(o.ap)}`)}
+  if(PINFO.enc){const p=PRED[Math.min(PRED.length-1,Math.floor(PRED.length*0.5))];}}
+const fmtKm=m=>Math.abs(m)>=1e5?fmtN(m/1000,0)+' km':Math.abs(m)>=1e3?fmtN(m/1000,1)+' km':fmtN(m,0)+' m';
+function drawOrbitLine(c){const L=BODIES[1];c.strokeStyle='rgba(200,200,210,.18)';c.lineWidth=1;c.setLineDash([6,8]);c.beginPath();c.arc(sx(C0),sy(C0),L.orbit*cam.z,0,7);c.stroke();c.setLineDash([]);const mp=moonPos(S.t);if(L.soi*cam.z>8){c.strokeStyle='rgba(200,200,210,.12)';c.beginPath();c.arc(sx(mp[0]),sy(mp[1]),L.soi*cam.z,0,7);c.stroke()}}
+function drawLabels(c){c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='center';for(let i=0;i<2;i++){const p=bodyPos(i,S.t),Rp=BODIES[i].R*cam.z;if(Rp>3e4||Rp<2)continue;c.fillStyle='rgba(230,235,255,.8)';c.fillText(BODIES[i].nm,sx(p[0]),sy(p[1])+Rp+16)}}
+function render(c){drawSky(c);drawOrbitLine(c);drawBody(c,1);drawBody(c,0);drawLabels(c);drawPath(c);
+  for(const d of DEB)drawRocketAt(c,d.parts,d.fuel,sx(d.x),sy(d.y),d.a,cam.z,{debris:1});
+  if(MODE==='build'&&!R){const B0=BODIES[0],L=rocketLen(DESIGN),bx=C0+Math.cos(PAD_A)*(B0.R+L/2),by=C0+Math.sin(PAD_A)*(B0.R+L/2);drawRocketAt(c,DESIGN,null,sx(bx),sy(by),PAD_A,cam.z,{})}
+  if(R&&!R.dead){const fl=R.lit&&(engines(R).some(i=>PT[R.parts[i]].k==='srb'&&R.fuel[i]>0)||(R.thr>0&&liquid(R)>0&&engines(R).some(i=>PT[R.parts[i]].k==='eng')))?Math.max(R.thr,0.6):0;drawRocketAt(c,R.parts,R.fuel,sx(R.x),sy(R.y),R.a,cam.z,{flame:fl,chute:R.chute,heat:R.heat});
+    if(S.sel&&S.sel.rocket&&rocketLen(R.parts)*cam.z<6){c.strokeStyle='#ffe14a';c.lineWidth=1.5;c.beginPath();c.arc(sx(R.x),sy(R.y),10,0,7);c.stroke()}}
+  for(const p of PARTS){const a=Math.max(0,1-p.age);if(p.k==='fire'){c.fillStyle=`rgba(255,${Math.round(120+120*a)},40,${a})`;c.beginPath();c.arc(sx(p.x),sy(p.y),Math.max(2,p.s*cam.z*(1+p.age)),0,7);c.fill()}else if(p.k==='smoke'){c.fillStyle=`rgba(220,220,225,${a*0.35})`;c.beginPath();c.arc(sx(p.x),sy(p.y),Math.max(2,p.s*cam.z*(1+p.age*2)),0,7);c.fill()}
+    else if(p.k==='txt'){c.globalAlpha=a;c.font='800 20px Oxanium,sans-serif';c.textAlign='center';c.lineWidth=4;c.strokeStyle='rgba(0,0,0,.6)';c.fillStyle=p.col;const Y=sy(p.y)-40-p.age*30;c.strokeText(p.text,sx(p.x),Y);c.fillText(p.text,sx(p.x),Y);c.globalAlpha=1}}
+  if(R)drawHud(c)}
+function callout(text,x,y,col){PARTS.push({k:'txt',text,x,y,col:col||'#fff',age:0})}
+function drawHud(c){if(!R)return;const o=orbitOf(R,S.t),w=Math.min(560,W-32),x0=(W-w)/2,y0=H-(innerWidth<760?250:92);c.fillStyle='rgba(8,10,20,.82)';c.strokeStyle='rgba(140,170,255,.3)';c.lineWidth=1;c.beginPath();c.roundRect(x0,y0,w,58,10);c.fill();c.stroke();
+  const cells=[['ALTITUDE',fmtKm(o.alt)],['SPEED',fmtN(o.spd)+' m/s'],['APOAPSIS',o.ap===Infinity?'escape':fmtKm(o.ap)],['PERIAPSIS',fmtKm(o.pe)],['THROTTLE',Math.round(R.thr*100)+'%']];const cw=w/cells.length;
+  cells.forEach(([k,v],i)=>{c.textAlign='center';c.fillStyle='#8f9bb8';c.font='600 10px "IBM Plex Mono",monospace';c.fillText(k,x0+cw*(i+0.5),y0+20);c.fillStyle='#eef3ff';c.font='600 15px "IBM Plex Mono",monospace';c.fillText(v,x0+cw*(i+0.5),y0+42)});
+  c.fillStyle='rgba(255,170,60,.9)';c.fillRect(x0+cw*4+10,y0+50,(cw-20)*R.thr,3);if(R.heat>0.05){c.fillStyle=`rgba(255,${Math.round(160-R.heat*140)},40,.95)`;c.fillRect(x0,y0-6,w*Math.min(1,R.heat),3)}}
+
+/* ================= Apogee: launching, controls, autopilot, burn planner, panels ================= */
+let PLAN={at:'ap',dv:0},PLANP=[],PLANI={},SELI=-1,PREDT=0;
+const TOUCH=(()=>{try{return matchMedia('(pointer:coarse)').matches||'ontouchstart' in window}catch(e){return false}})();
+const fmtT=s=>{if(!isFinite(s))return'–';s=Math.max(0,s);const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),x=Math.floor(s%60);return d?`${d} d ${h} h`:h?`${h} h ${m} m`:m?`${m} m ${x} s`:`${x} s`};
+function orbitFrom(b,dx,dy,vx,vy){const B0=BODIES[b],rr=Math.hypot(dx,dy),v2=vx*vx+vy*vy,mu=B0.mu,eps=v2/2-mu/rr,h=dx*vy-dy*vx,e=Math.sqrt(Math.max(0,1+2*eps*h*h/(mu*mu))),a=-mu/(2*eps);const bd=eps<0;return{pe:(bd?a*(1-Math.min(e,1)):h*h/mu/(1+e))-B0.R,ap:bd?a*(1+Math.min(e,1))-B0.R:Infinity,e:bd?Math.min(e,0.99999):e}}
+/* ---------- launching and going back to the building ---------- */
+function padPos(parts){const B0=BODIES[0],L=rocketLen(parts);return[C0+Math.cos(PAD_A)*(B0.R+L/2+0.01),C0+Math.sin(PAD_A)*(B0.R+L/2+0.01)]}
+function launch(){if(!DESIGN.some(p=>PT[p].k==='pod'))return toast('Every rocket needs a capsule on top to steer it');const cost=designCost(DESIGN);if(CAR.mode==='career'){const lock=DESIGN.find(p=>!partOK(p));if(lock)return toast(`${PT[lock].nm} is not researched yet`);if(CAR.funds<cost)return toast(`This rocket costs ${cost.toLocaleString()}, but you have ${Math.floor(CAR.funds).toLocaleString()}`);CAR.funds-=cost}
+  const [x,y]=padPos(DESIGN);R=newRocket(DESIGN,x,y,0,0,PAD_A);R.data=[];R.landed=0;R.lx=x-C0;R.ly=y-C0;R.cost=cost;const seats=R.crew.length;const ready=CAR.crew.filter(c=>c.st==='ready');R.crew=ready.slice(0,seats).map(c=>{c.st='flying';return c.nm});CAR.flights++;carSave();
+  MODE='flight';MISSION={};DEB=[];PRED=[];S.t=0;R.t0=0;AP.mode='';showTab('flight');S.sel={rocket:1};S.follow=true;cam.z=clamp(H*0.45/rocketLen(R.parts),1,30);setTool('fly');ev('launch');chEv('launch',{mass:rMass(R),cost});if($('home').hidden)toast(`${R.crew.length?R.crew.join(', ')+' on board. ':''}Press Space (or STAGE) to light the engines!`,6000);syncPanel()}
+function toBuild(){MODE='build';R=null;DEB=[];PRED=[];PLANP=[];AP.mode='';showTab('build');setTool('select');camPad();syncPanel()}
+function revert(){if(!R)return;if(CAR.mode==='career'){CAR.funds+=R.cost||0;for(const c of CAR.crew)if(c.st==='flying')c.st='ready';CAR.flights--;carSave()}toast('Back on the pad, as if nothing happened');R=null;launch()}
+function lostCrew(){for(const c of CAR.crew)if(c.st==='flying')c.st=CAR.mode==='career'?'lost':'ready';carSave()}
+function camPad(){const [x,y]=padPos(DESIGN);cam.x=x;cam.y=y;cam.z=clamp(H*0.55/Math.max(8,rocketLen(DESIGN)),1,30);S.follow=false}
+function placeOrbit(parts,b,alt,ang,extra){const bp=bodyPos(b,S.t),bv=bodyVel(b,S.t),r=BODIES[b].R+alt,v=Math.sqrt(BODIES[b].mu/r)*(extra||1);const ro=newRocket(parts,bp[0]+Math.cos(ang)*r,bp[1]+Math.sin(ang)*r,bv[0]-Math.sin(ang)*v,bv[1]+Math.cos(ang)*v,ang+Math.PI/2);ro.data=[];ro.lit=true;ro.thr=0;ro.maxAlt=alt;ro.sas='pro';return ro}
+/* ---------- autopilot ---------- */
+function apStart(m){if(!R||R.dead)return;if(m==='home'&&rel(R,S.t).b===1)return toast('The autopilot can only bring you home from around Terra. From Luna, plan a burn back.');if(m==='burn'&&!PLAN.dv)return toast('Plan a burn first: set the speed change below');
+  AP.mode=m;AP.ph='';AP.tgt=null;AP.done=0;if(m==='burn')AP.node={...PLANI.node};if($('home').hidden)toast({orbit:'Autopilot: flying to orbit',home:'Autopilot: bringing you home',burn:'Autopilot: waiting for the planned burn'}[m]);ev('ap_'+m);chEv('ap',{m});syncPanel()}
+function apOff(msg){AP.mode='';AP.tgt=null;if(R)R.sasA=R.a;if(msg)toast(msg,5000);syncPanel()}
+function apSteer(){return null}
+function engOut(r){return r.lit&&engines(r).length&&!engines(r).some(i=>{const P=PT[r.parts[i]];return P.k==='srb'?r.fuel[i]>0:liquid(r)>0})}
+function apTick(dt){if(!AP.mode||!R||R.dead)return;const t=S.t,q=rel(R,t),o=orbitOf(R,t),ua=Math.atan2(q.dy,q.dx),pro=Math.atan2(q.vy,q.vx),B0=BODIES[q.b],acc=PT_thrust(R)/rMass(R);AP.t=(AP.t||0)+dt;
+  if(AP.mode==='orbit'){if(!R.lit||R.landed>=0&&!R.lit){stage(R);R.thr=1}if(engOut(R)&&sections(R.parts).length>1&&AP.t>0.6){AP.t=0;stage(R)}
+    if(!AP.ph)AP.ph='up';if(AP.ph==='up'){const p=Math.PI/2*Math.pow(clamp((o.alt-900)/62000,0,1),0.5);AP.tgt=ua+Math.min(p,ua!==null?Math.PI/2:p);R.thr=1;if(o.ap>84000){R.thr=0;AP.ph='coast'}}
+    else if(AP.ph==='coast'){AP.tgt=pro;if(o.ap<78000&&o.alt<B0.atm)AP.boost=1;if(o.ap>84000)AP.boost=0;R.thr=AP.boost?1:0;if(o.alt>B0.atm-2000){const g=B0.mu/(o.r*o.r),tAp=Math.max(0,o.vr)/g,rA=o.ap+B0.R,need=Math.sqrt(B0.mu/rA)-o.h/rA;if(tAp<need/Math.max(acc,0.5)/2+3)AP.ph='circ'}}
+    else if(AP.ph==='circ'){AP.tgt=ua+Math.PI/2+clamp(-o.vr/300,-0.3,0.3);R.thr=o.pe>45000?0.4:1;if(o.pe>70000||o.e>0.999){R.thr=0;R.sas='pro';apOff(o.pe>70000?'In orbit! Your capsule now falls around Terra forever without landing.':'')}}}
+  else if(AP.mode==='home'){if(AP.ph===''){AP.ph=o.alt>B0.atm?'deorbit':'drop'}
+    if(AP.ph==='deorbit'){AP.tgt=pro+Math.PI;const ok=Math.cos(R.a-AP.tgt)>0.97;R.thr=ok?1:0;if(engOut(R)&&sections(R.parts).length>1){stage(R)}if(o.pe<25000){R.thr=0;AP.ph='drop';AP.t=0}}
+    else if(AP.ph==='drop'){AP.tgt=pro+Math.PI;R.thr=0;if(sections(R.parts).length>1&&AP.t>1.2){AP.t=0;stage(R)}else if(sections(R.parts).length<=1){AP.ph='fall';if(has(R,'chute')&&R.chute<2)R.chute=1}}
+    else if(AP.ph==='fall'){AP.tgt=R.chute===2?ua:pro+Math.PI;R.thr=0}}
+  else if(AP.mode==='burn'){const nd=AP.node;if(!nd)return apOff('');const dir=nd.dv>0?pro:pro+Math.PI,bt=Math.abs(nd.dv)/Math.max(acc,0.05);AP.tgt=dir;
+    if(t<nd.t-bt/2){R.thr=0;if(nd.t-bt/2-t<25&&S.speedI>1){setSpeed(1)}if(nd.t-bt/2-t<6&&S.speedI>0)setSpeed(0)}else{if(!R.lit)stage(R);if(engOut(R)&&sections(R.parts).length>1)stage(R);R.thr=Math.cos(R.a-dir)>0.95?1:0;AP.done+=acc*R.thr*dt;if(AP.done>=Math.abs(nd.dv)){R.thr=0;PLAN.dv=0;apOff('Burn complete. Check your new path!')}}}}
+/* ---------- the burn planner ---------- */
+function planCompute(){PLANP=[];PLANI={};if(!R||R.dead||R.landed>=0||!PLAN.dv)return;const t0=S.t;let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0;const b=domBody(x,y,t0);
+  if(PLAN.at!=='now'){let lastVr=null;for(let i=0;i<4000;i++){const bp=bodyPos(b,t),bv=bodyVel(b,t),dx=x-bp[0],dy=y-bp[1],rvx=vx-bv[0],rvy=vy-bv[1],vr=dx*rvx+dy*rvy;
+      if(lastVr!=null&&((PLAN.at==='ap'&&lastVr>0&&vr<=0)||(PLAN.at==='pe'&&lastVr<0&&vr>=0)))break;lastVr=vr;const rr0=Math.hypot(dx,dy),dt=clamp(rr0/Math.hypot(rvx,rvy)*0.004,0.2,60);const g1=gravity(x,y,t);vx+=g1[0]*dt/2;vy+=g1[1]*dt/2;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt/2;vy+=g2[1]*dt/2;if(t-t0>4e5)break}}
+  const bv=bodyVel(b,t),rvx=vx-bv[0],rvy=vy-bv[1],sp=Math.hypot(rvx,rvy);vx+=rvx/sp*PLAN.dv;vy+=rvy/sp*PLAN.dv;PLANI.node={t,dv:PLAN.dv};const bp=bodyPos(b,t);PLANI.o=orbitFrom(b,x-bp[0],y-bp[1],vx-bv[0],vy-bv[1]);PLANI.in=t-t0;
+  const m0=moonPos(t0);let closest=1e18,enc=false;for(let i=0;i<1200&&t-t0<6e5;i++){const bb=domBody(x,y,t),bq=bodyPos(bb,t),r0=Math.hypot(x-bq[0],y-bq[1]),bv2=bodyVel(bb,t),dt=clamp(r0/Math.max(Math.hypot(vx-bv2[0],vy-bv2[1]),1)*0.012,0.5,200);
+    const g1=gravity(x,y,t);vx+=g1[0]*dt/2;vy+=g1[1]*dt/2;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt/2;vy+=g2[1]*dt/2;const mp=moonPos(t),dm=Math.hypot(x-mp[0],y-mp[1]);closest=Math.min(closest,dm);if(dm<BODIES[1].soi)enc=true;
+    PLANP.push(b===1?[x-mp[0]+m0[0],y-mp[1]+m0[1]]:[x,y]);if(r0<BODIES[bb].R)break}PLANI.enc=enc;PLANI.closest=closest-BODIES[1].R}
+/* ---------- keys: steer, throttle, stage ---------- */
+const flying=()=>MODE==='flight'&&R&&!R.dead&&$('home').hidden;
+addEventListener('keydown',e=>{if(!flying())return;const tg=e.target.tagName;if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA')return;const k=e.key.toLowerCase();
+  const map=['a','d','w','s','arrowleft','arrowright','arrowup','arrowdown',' ','z','x','shift','t','c','m','f','g'];if(!map.includes(k))return;e.preventDefault();e.stopImmediatePropagation();if(DRAG.keys.has(k))return;DRAG.keys.add(k);DRAG.idle=0;
+  if(k===' ')stage(R);else if(k==='z'){R.thr=1;ev('thr')}else if(k==='x'){R.thr=0;ev('thr')}else if(k==='t'){R.sas=R.sas?'':'hold';R.sasA=R.a;toast(R.sas?'Stability assist on':'Stability assist off')}else if(k==='c'){stage1chute()}else if(k==='m')mapView();else if(k==='f')followRocket();else if(k==='g'){if(R.landed===0)recover()}},true);
+addEventListener('keyup',e=>DRAG.keys.delete(e.key.toLowerCase()),true);addEventListener('blur',()=>DRAG.keys.clear());
+function stage1chute(){if(!R)return;if(!has(R,'chute'))return toast('No parachute on this rocket');const q=rel(R,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R;if(rho(q.b,alt)>0&&Math.hypot(q.vx,q.vy)<260)openChute(R);else{R.chute=1;toast('Parachute armed: it opens when you are low and slow enough')}}
+function keyTick(dt){const k=DRAG.keys;DRAG.rot=(k.has('a')||k.has('arrowleft')||DRAG.padL?-1:0)+(k.has('d')||k.has('arrowright')||DRAG.padR?1:0);if(DRAG.rot){ev('steer');if(AP.mode&&AP.mode!=='burn')apOff('Autopilot off: you have the controls')}
+  if(R&&!R.dead){const up=k.has('w')||k.has('arrowup')||k.has('shift')||DRAG.padU,dn=k.has('s')||k.has('arrowdown')||DRAG.padD;if(up)R.thr=Math.min(1,R.thr+dt*0.9);if(dn)R.thr=Math.max(0,R.thr-dt*0.9);if(up||dn)ev('thr')}}
+function mapView(){if(!R)return;const o=orbitOf(R,S.t),bp=bodyPos(o.b,S.t),span=o.e<1&&o.ap<5e7?o.ap+BODIES[o.b].R:Math.max(o.r,BODIES[o.b].R)*2.2;S.follow=false;cam.x=bp[0];cam.y=bp[1];cam.z=Math.min(W,H)*0.42/Math.max(span,BODIES[o.b].R*1.2);clampCam();ev('map');chEv('map',{})}
+function followRocket(){if(!R)return;S.sel={rocket:1};S.follow=true;cam.z=clamp(H*0.45/rocketLen(R.parts),1,30);ev('follow')}
+/* ---------- the simulator ---------- */
+const SIM={id:'apogee',name:'Apogee',defTool:'select',world:{w:WS,h:WS,wrapX:false,maxZ:60,followZ:6},home:'demo',freeScen:'pad',tutScen:'sandbox',defSpeed:0,homeSpeed:1,canFollow:true,
+  speeds:[['1×',1],['5×',5],['50×',50],['500×',500],['5000×',5000]],fmtRate:v=>`${v}× time`,
+  dateTxt:()=>MODE==='build'?(CAR.mode==='career'?`£${Math.floor(CAR.funds).toLocaleString()} · ${Math.floor(CAR.sci)} science`:'Sandbox'):`T+ ${fmtT(S.t)}`,
+  dateSub:()=>{if(MODE==='build')return`Building · ${designCost(DESIGN).toLocaleString()} · Δv ${fmtN(stats(DESIGN).reduce((s,x)=>s+x.dv,0))} m/s`;if(!R)return'';if(R.dead)return'Crashed: '+R.dead;const o=orbitOf(R,S.t);return`${BODIES[o.b].nm} · ${fmtKm(o.alt)} · ${fmtN(o.spd)} m/s${AP.mode?' · autopilot':''}`},
+  stepSize:()=>{if(!R||R.dead)return 0.05;if(R.landed>=0&&!R.lit)return 0.5;const o=orbitOf(R,S.t);if((R.lit&&R.thr>0)||o.alt<(BODIES[o.b].atm||0)+2000||o.alt<8000||AP.mode)return 0.02;return clamp(o.r/Math.max(o.spd,1)*0.003,0.05,20)},
+  tools:[['',[['select','👆','Look','Drag to look around. Scroll or pinch to zoom.'],['fly','🚀','Fly','Keys: A/D steer, W/S throttle, Z full, X cut, Space stage, T stability, C parachute, M map, F follow.']]]],
+  scens:[{id:'pad',name:'Space agency',desc:'Career: missions pay money, science unlocks new parts, look after your crew.'},{id:'sandbox',name:'Sandbox',desc:'Every part unlocked and unlimited money.'},{id:'orbit',name:'In orbit',desc:'Start circling Terra at 100 km with fuel to spare.'},{id:'moonready',name:'Ready for Luna',desc:'In orbit with a Moon lander. Plan a burn to reach Luna.'},{id:'lunaorbit',name:'Orbiting Luna',desc:'A lander circling Luna at 30 km. Go down and land!'},{id:'descent',name:'Moon landing',desc:'Falling towards Luna. Burn to slow down and touch down gently.'},{id:'reentry',name:'Coming home',desc:'A capsule falling back into Terra’s air. Keep the heat shield in front!'},{id:'demo',name:'Watch a launch',desc:'The autopilot flies an Orbiter to space.'}],
+  load(id){PARTS=[];DEB=[];PRED=[];PLANP=[];AP.mode='';MISSION={};PLAN={at:'ap',dv:0};S.t=0;R=null;MODE='build';
+    if(id==='sandbox')carNew('sandbox');else if(CAR.mode!=='career'||!carLoad())if(!carLoad())carNew('career');
+    if(id==='pad'||id==='sandbox'){if(!DESIGN.length)DESIGN=PRESETS.orbiter.parts.slice();return}
+    const fly=r=>{R=r;MODE='flight';S.sel={rocket:1};S.follow=true};
+    if(id==='orbit')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark'],0,100000,-Math.PI/2));
+    else if(id==='moonready')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark','legs','dec','tankL','tankL','tankL','lifter'],0,100000,BODIES[1].m0-1.98));
+    else if(id==='lunaorbit')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark','legs'],1,30000,-Math.PI/2));
+    else if(id==='descent'){const r=placeOrbit(['chute','pod1','shield','tankM','spark','legs'],1,6000,-Math.PI/2,0.15);r.a=-Math.PI/2+Math.PI;r.sas='retro';fly(r)}
+    else if(id==='reentry'){const r=placeOrbit(['chute','pod1','shield'],0,90000,-Math.PI*0.7,0.985);r.sas='retro';r.lit=false;r.chute=1;fly(r)}
+    else if(id==='demo'){DESIGN=PRESETS.orbiter.parts.slice();const [x,y]=padPos(DESIGN);R=newRocket(DESIGN,x,y,0,0,PAD_A);R.data=[];R.landed=0;R.lx=x-C0;R.ly=y-C0;MODE='flight';S.sel={rocket:1};S.follow=true;setTimeout(()=>{if(R&&!R.dead)apStart('orbit')},800)}
+    if(R)R.crew=crewNames(R.parts.reduce((s,p)=>s+(PT[p].crew||0),0))},
+  after(){if(MODE==='build')camPad();else{cam.z=clamp(H*0.45/rocketLen(R.parts),0.5,30);S.follow=true;if(['orbit','moonready'].includes(S.scen))cam.z=3}setTimeout(()=>{if($('home').hidden)showTab(MODE==='build'?'build':'flight')},0);syncPanel()},
+  init(){initPanels()},
+  step(dt){if(R){stepRocket(R,dt);apTick(dt);if(R.dead&&!R.lostDone){R.lostDone=1;lostCrew()}if(!R.dead&&R.landed<0){const o=orbitOf(R,S.t);if(o.b===0&&o.e<1&&o.pe>BODIES[0].atm&&!mv('orbit0')){ev('orbit0');sayT('Orbit! You are falling around Terra fast enough to never hit it.',6000);chEv('orbit',{b:0})}
+      if(o.b===1&&o.e<1&&o.pe>3000&&!mv('orbit1')){ev('orbit1');sayT('You are orbiting Luna!',6000);chEv('orbit',{b:1})}if(o.b===0&&o.e>=1&&o.alt>3e6&&!mv('escape')){ev('escape');toast('Escape! Terra can no longer pull you back.',6000);chEv('escape',{})}}}stepDebris(dt)},
+  frame(dt){keyTick(dt);for(const p of PARTS){p.age+=dt*(p.k==='txt'?0.45:1.2);if(p.vx){p.x+=p.vx*dt;p.y+=p.vy*dt}}PARTS=PARTS.filter(p=>p.age<1);
+    if(R&&!R.dead&&R.lit&&R.thr>0&&!S.paused){const q=rel(R,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R;if(rho(q.b,alt)>0.02&&Math.random()<0.6){const L=rocketLen(R.parts);PARTS.push({k:'smoke',x:R.x-Math.cos(R.a)*L*0.6,y:R.y-Math.sin(R.a)*L*0.6,age:0,s:rr(2,5)})}}
+    if(R&&!R.dead&&S.speedI>1){const o=orbitOf(R,S.t);if((R.lit&&R.thr>0)||(R.landed<0&&o.alt<(BODIES[o.b].atm||0))){setSpeed(1);toast('Time warp slows down while engines burn or you are in the air')}}
+    if(S.follow&&S.sel&&S.sel.rocket&&R){cam.x=R.x;cam.y=R.y}PREDT-=dt;if(PREDT<=0){PREDT=0.3;predict();planCompute()}padTick()},
+  render(c){render(c);if(PLANP.length){c.strokeStyle='rgba(255,170,60,.85)';c.setLineDash([6,5]);c.lineWidth=1.6;c.beginPath();PLANP.forEach(([x,y],i)=>i?c.lineTo(sx(x),sy(y)):c.moveTo(sx(x),sy(y)));c.stroke();c.setLineDash([])}},
+  stats:()=>{if(MODE==='build'){const st=stats(DESIGN);return[['Mass',fmtN(st.length?st[0].mass:0,1)+' t'],['Lift-off push',st.length?(st[0].twr).toFixed(2)+'×':'–'],['Δv',fmtN(st.reduce((s,x)=>s+x.dv,0))+' m/s']]}if(!R)return[];const o=orbitOf(R,S.t);return[['Apoapsis',o.ap===Infinity?'escape':fmtKm(o.ap)],['Periapsis',fmtKm(o.pe)],['Δv left',fmtN(stats(R.parts,R.fuel).reduce((s,x)=>s+x.dv,0))+' m/s']]},
+  hud(){syncPanel();if(R&&!R.dead)checkMissions()},
+  pick(wx,wy){if(R&&Math.hypot(R.x-wx,R.y-wy)<Math.max(rocketLen(R.parts),12/cam.z))return{rocket:1};return null},
+  selPos(s){return s.rocket&&R?[R.x,R.y]:null},
+  pointer(){},hover(wx,wy){HOVER=[wx,wy]},
+  find(q){const out=[],add=(label,sub,go)=>out.push({label,sub,go});for(let i=0;i<2;i++)if(BODIES[i].nm.toLowerCase().includes(q))add(BODIES[i].nm,'world',()=>{const p=bodyPos(i,S.t);S.follow=false;cam.x=p[0];cam.y=p[1];cam.z=Math.min(W,H)*0.3/BODIES[i].R});
+    for(const k of Object.keys(PT))if(PT[k].nm.toLowerCase().includes(q))add(PT[k].nm,'part',()=>{showTab('build')});for(const s of SIM.scens)if(s.name.toLowerCase().includes(q))add(s.name,s.desc,()=>loadScen(s.id));if('rocket ship'.includes(q))add('Your rocket','follow it',followRocket);return out},
+  tabShown(){syncPanel()},
+  saveState(){return null},
+};
+/* ---------- panels ---------- */
+function partBtn(id){const P=PT[id],lk=CAR.mode==='career'&&!partOK(id);return `<button class="btn pbtn" data-add="${id}" ${lk?'disabled title="Research it in the Agency tab"':''}><b>${P.nm}</b><small>${lk?'locked':(P.thr?P.thr+' kN · ':'')+(P.fuel?P.fuel+' t fuel · ':'')+(P.m)+' t'+(CAR.mode==='career'?' · '+COST[id].toLocaleString():'')}</small></button>`}
+function initPanels(){const sel=$('preset');sel.innerHTML='<option value="">Load a ready-made rocket…</option>'+Object.keys(PRESETS).map(k=>`<option value="${k}">${PRESETS[k].nm}</option>`).join('')+savedOpts();sel.onchange=()=>{const v=sel.value;if(!v)return;DESIGN=(v.startsWith('my:')?savedDesigns()[v.slice(3)]:PRESETS[v].parts).slice();sel.value='';ev('preset');chEv('preset',{});camPad();syncPanel()};
+  const groups=[['Capsules and top',['pod1','pod3','chute','cone','shield','sci']],['Fuel and engines',['tankS','tankM','tankL','spark','lifter','thunder','srb']],['Stages and extras',['dec','fins','legs']]];
+  $('parts').innerHTML=groups.map(([g,ids])=>`<span class="k">${g}</span><div class="pgrid">${ids.map(partBtn).join('')}</div>`).join('');
+  $('parts').onclick=e=>{const b=e.target.closest('[data-add]');if(!b||b.disabled)return;const id=b.dataset.add;if(DESIGN.length>=40)return toast('That is enough parts!');if(SELI>=0&&SELI<DESIGN.length)DESIGN.splice(SELI+1,0,id),SELI++;else DESIGN.push(id);ev('add');chEv('add',{id});camPad();syncPanel()};
+  $('stack').onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const i=+b.dataset.i,a=b.dataset.a;if(a==='up'&&i>0){[DESIGN[i-1],DESIGN[i]]=[DESIGN[i],DESIGN[i-1]];SELI=i-1}else if(a==='down'&&i<DESIGN.length-1){[DESIGN[i+1],DESIGN[i]]=[DESIGN[i],DESIGN[i+1]];SELI=i+1}else if(a==='del'){DESIGN.splice(i,1);SELI=-1;ev('remove');chEv('remove',{})}else SELI=SELI===i?-1:i;camPad();syncPanel()};
+  $('launchBtn').onclick=launch;$('saveBtn').onclick=()=>{const n=prompt('Name this rocket:','My rocket');if(!n)return;const d=savedDesigns();d[n.slice(0,30)]=DESIGN.slice();try{localStorage.setItem('apogee_designs',JSON.stringify(d))}catch(e){}$('preset').innerHTML=$('preset').innerHTML.split('<optgroup')[0]+savedOpts();toast('Saved')};
+  $('clearBtn').onclick=()=>{DESIGN=['pod1'];SELI=-1;camPad();syncPanel()};
+  $('thrS').oninput=e=>{if(R){R.thr=+e.target.value/100;ev('thr')}};
+  document.querySelectorAll('[data-fl]').forEach(b=>b.onclick=()=>{const k=b.dataset.fl;if(!R&&k!=='build')return;
+    ({stage:()=>stage(R),chute:stage1chute,map:mapView,follow:followRocket,revert,recover,build:()=>{if(R&&R.landed===0&&!R.dead)recover();else toBuild()},orbit:()=>apStart('orbit'),home:()=>apStart('home'),burn:()=>apStart('burn'),apoff:()=>apOff('Autopilot off'),
+      crew:()=>runExp('crew'),sense:()=>runExp('sense'),sample:()=>runExp('sample'),send:transmit})[k]();syncPanel()});
+  document.querySelectorAll('[data-sas]').forEach(b=>b.onclick=()=>{if(!R)return;R.sas=b.dataset.sas;R.sasA=R.a;if(AP.mode&&AP.mode!=='burn')apOff('');ev('sas_'+R.sas);chEv('sas',{m:R.sas});syncPanel()});
+  $('planAt').onchange=e=>{PLAN.at=e.target.value;planCompute();syncPanel()};$('planDv').oninput=e=>{PLAN.dv=+e.target.value;$('planDvV').textContent=(PLAN.dv>0?'+':'')+PLAN.dv+' m/s';ev('plan');planCompute();syncPanel()};
+  $('agency').onclick=e=>{const b=e.target.closest('[data-tech],[data-hire],[data-mode]');if(!b)return;if(b.dataset.tech)research(b.dataset.tech);else if(b.dataset.hire!=null)hire();else if(b.dataset.mode){if(b.dataset.mode==='career'&&!confirm('Start a brand-new space agency? Your current career progress will be replaced.'))return;loadScen(b.dataset.mode==='career'?'pad':'sandbox');if(b.dataset.mode==='career'){carNew('career');syncPanel()}}};
+  buildPad()}
+function savedDesigns(){try{return JSON.parse(localStorage.getItem('apogee_designs')||'{}')}catch(e){return{}}}
+function savedOpts(){const d=savedDesigns(),k=Object.keys(d);return k.length?'<optgroup label="Your rockets">'+k.map(n=>`<option value="my:${n.replace(/"/g,'&quot;')}">${n.replace(/</g,'&lt;')}</option>`).join('')+'</optgroup>':''}
+let LASTSYNC='';
+function syncPanel(){if(!$('stack'))return;const st=stats(DESIGN),tot=st.reduce((s,x)=>s+x.dv,0),cost=designCost(DESIGN);
+  const key=MODE+DESIGN.join()+SELI+CAR.mode+Math.floor(CAR.funds)+Math.floor(CAR.sci)+Object.keys(CAR.tech).length;if(key!==LASTSYNC){LASTSYNC=key;
+    $('stack').innerHTML=DESIGN.map((p,i)=>`<div class="srow${i===SELI?' on':''}" data-i="${i}"><span>${PT[p].nm}</span><button class="btn" data-i="${i}" data-a="up" title="Move up">↑</button><button class="btn" data-i="${i}" data-a="down" title="Move down">↓</button><button class="btn" data-i="${i}" data-a="del" title="Remove">✕</button></div>`).join('');
+    $('rstats').innerHTML=`<div class="kv">${[['Mass',fmtN(st.length?st[0].mass:0,1)+' t'],['Cost',CAR.mode==='career'?cost.toLocaleString():'free'],['Lift-off push',st.length?(st[0].twr).toFixed(2)+'× its weight':'–'],['Total Δv',fmtN(tot)+' m/s']].map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}</div>`+
+      `<div class="stg">${st.map((x,i)=>`<div><b>Stage ${i+1}</b><span>${fmtN(x.dv)} m/s · ${x.thr?x.twr.toFixed(2)+'× push':'no engine'}${x.burn?' · burns '+Math.round(x.burn)+' s':''}</span></div>`).join('')}</div>`+
+      `<p class="note">${!DESIGN.some(p=>PT[p].k==='pod')?'⚠ Add a capsule: it steers the rocket. ':''}${st.length&&st[0].twr<1.05?'⚠ The first stage is too weak to lift off (needs more than 1×). ':''}Rough guide: space needs about 1,500 m/s, orbit about 3,400 m/s, landing on Luna and coming home about 7,000 m/s.</p>`;
+    document.querySelectorAll('#parts [data-add]').forEach(b=>{const id=b.dataset.add,lk=CAR.mode==='career'&&!partOK(id);b.disabled=lk});renderAgency()}
+  $('launchBtn').textContent=CAR.mode==='career'?`🚀 Launch (${cost.toLocaleString()})`:'🚀 Launch';
+  const fl=$('flightInfo');if(fl){if(!R){fl.innerHTML='<p class="note">Build a rocket in the Rocket tab and press Launch.</p>'}else{const o=orbitOf(R,S.t),q=rel(R,S.t);const rows=[['Near',BODIES[o.b].nm],['Altitude',fmtKm(o.alt)],['Speed',fmtN(o.spd)+' m/s'],['Climbing',fmtN(o.vr)+' m/s'],['Apoapsis',o.ap===Infinity?'escaping':fmtKm(o.ap)],['Periapsis',fmtKm(o.pe)],['Orbit time',o.e<1?fmtT(o.period):'–'],['Heat',Math.round(R.heat*100)+'%'],['Fuel (this stage)',fmtN(liquid(R)+engines(R).reduce((s,i)=>s+(PT[R.parts[i]].k==='srb'?R.fuel[i]:0),0),2)+' t'],['Stages left',sections(R.parts).length]];
+      fl.innerHTML=(R.dead?`<p class="warn">Crashed: ${R.dead}.</p>`:R.landed>=0?`<p class="good">Landed on ${BODIES[R.landed].nm}.</p>`:'')+`<div class="kv">${rows.map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}</div>`+(PINFO.enc?`<p class="good">On this path you reach Luna in ${fmtT(PINFO.encT)}.</p>`:PINFO.impact&&R.landed<0?`<p class="warn">On this path you hit ${PINFO.impact} in ${fmtT(PINFO.impT)}.</p>`:o.b===0&&PINFO.closest<3e6?`<p class="note">Closest pass to Luna: ${fmtKm(PINFO.closest)}.</p>`:'')+(R.crew.length?`<p class="note">Crew: ${R.crew.join(', ')}</p>`:'')+(R.data&&R.data.length?`<p class="note">Science on board: ${R.data.map(d=>d.nm+' ('+d.val+')').join('; ')}</p>`:'')}}
+  if(R)$('thrS').value=Math.round(R.thr*100);document.querySelectorAll('[data-sas]').forEach(b=>b.setAttribute('aria-pressed',!!R&&R.sas===b.dataset.sas));const apb=$('apState');if(apb)apb.textContent=AP.mode?`Autopilot: ${{orbit:'flying to orbit',home:'bringing you home',burn:'doing the planned burn'}[AP.mode]} (${AP.ph||'starting'})`:'';
+  const pha=$('phase');if(pha&&R&&!R.dead){const q=rel(R,S.t),mp=moonPos(S.t);if(q.b===0){let d=Math.atan2(mp[1]-C0,mp[0]-C0)-Math.atan2(q.dy,q.dx);d=mod(d+Math.PI,Math.PI*2)-Math.PI;const deg=Math.round(d*180/Math.PI);pha.innerHTML=`Luna is <b>${deg}°</b> ${deg>=0?'ahead of':'behind'} you. From a low orbit, burn about +870 m/s when Luna is about 110° ahead.`}else pha.textContent=''}
+  const pi=$('planInfo');if(pi)pi.innerHTML=!PLAN.dv?'Set a speed change to see the new path (orange).':PLANI.o?`In ${fmtT(PLANI.in)}: new apoapsis ${PLANI.o.ap===Infinity?'escape':fmtKm(PLANI.o.ap)}, periapsis ${fmtKm(PLANI.o.pe)}${PLANI.enc?' · <b>reaches Luna!</b>':PLANI.closest<5e6?' · passes '+fmtKm(PLANI.closest)+' from Luna':''}`:'';
+  const recB=document.querySelector('[data-fl="recover"]');if(recB)recB.hidden=!(R&&R.landed===0&&!R.dead&&R.maxAlt>100)}
+function renderAgency(){const el=$('agency');if(!el)return;const car=CAR.mode==='career';
+  el.innerHTML=`<div class="kv"><div><span class="k">Mode</span><span class="v">${car?'Space agency':'Sandbox'}</span></div><div><span class="k">Money</span><span class="v">${car?Math.floor(CAR.funds).toLocaleString():'unlimited'}</span></div><div><span class="k">Science</span><span class="v">${Math.floor(CAR.sci)}</span></div><div><span class="k">Flights</span><span class="v">${CAR.flights}</span></div></div>`+
+   (car?`<span class="k">Missions</span><div class="mlist">${MISSIONS.map(m=>`<div class="${CAR.done[m.id]?'done':''}"><b>${CAR.done[m.id]?'✓ ':''}${m.nm}</b><span>${m.g}</span><small>${m.pay.toLocaleString()} · ${m.sci} science</small></div>`).join('')}</div>`:'')+
+   `<span class="k">Research</span><div class="mlist">${TECH.filter(t=>t.cost).map(t=>`<div class="${CAR.tech[t.id]?'done':''}"><b>${CAR.tech[t.id]?'✓ ':''}${t.nm}</b><span>${t.parts.map(p=>PT[p].nm).join(', ')}</span>${CAR.tech[t.id]?'':`<button class="btn" data-tech="${t.id}">Research (${t.cost} science)</button>`}</div>`).join('')}</div>`+
+   `<span class="k">Astronauts</span><div class="mlist">${CAR.crew.map(c=>`<div class="${c.st==='lost'?'lost':''}"><b>${c.nm}</b><span>${c.st==='lost'?'lost in an accident':c.st==='flying'?'flying now':'ready'} · ${c.xp} experience</span></div>`).join('')}</div>${car?'<button class="btn" data-hire="1">Hire an astronaut (20,000)</button>':''}`+
+   `<p class="note">Science: in flight, use Crew report, Sensor reading (needs a Science pod) and Surface sample (land first). Each place gives science once. Send it home for half, or land on Terra and recover for all of it.</p><div class="evs"><button class="btn" data-mode="career">New space agency</button><button class="btn" data-mode="sandbox">Sandbox</button></div>`}
+/* ---------- phone controls ---------- */
+function buildPad(){const p=document.createElement('div');p.id='apad';p.hidden=true;p.innerHTML='<div class="rot"><button data-p="L">◀</button><button data-p="R">▶</button></div><div class="thr"><button data-p="U">▲</button><button data-p="D">▼</button><button data-p="S" class="stg">STAGE</button></div>';document.body.appendChild(p);
+  p.querySelectorAll('[data-p]').forEach(b=>{const k=b.dataset.p;const on=v=>e=>{e.preventDefault();e.stopPropagation();if(k==='S'){if(v&&R)stage(R);return}DRAG['pad'+k]=v;DRAG.idle=0};b.addEventListener('pointerdown',on(true));b.addEventListener('pointerup',on(false));b.addEventListener('pointercancel',on(false));b.addEventListener('pointerleave',on(false))})}
+function padTick(){const p=$('apad');if(!p)return;const show=TOUCH&&flying()&&!document.body.classList.contains('dockOpen');if(p.hidden===show)p.hidden=!show;if(show){const rail=$('rail');let bot=20;if(rail&&innerWidth<=760){const r=rail.getBoundingClientRect();if(r.height&&r.top>innerHeight*0.5)bot=innerHeight-r.top+12}p.style.setProperty('--padB',bot+'px')}}
+
+/* ================= Apogee: challenges, tutorial, demo ================= */
+const sb=parts=>()=>{carNew('sandbox');DESIGN=parts.slice()};
+const evAny=f=>CH.events.some(f);
+CC(1,{t:'Lift-off',g:'Launch a rocket and fly higher than 1 km.',hint:'Press Launch, then Space to light the engine. Hold W for full throttle.',scen:'sandbox',setup:sb(PRESETS.hopper.parts),check:()=>{const a=R?R.maxAlt:0;return[a>1000,a/1000,`${fmtKm(a)} of 1 km`]},stars:byTime(30,90)});
+CC(1.1,{t:'Edge of space',g:'Climb above 60 km, where the air runs out.',hint:'Point straight up (Straight up button) and use full throttle.',scen:'sandbox',setup:sb(PRESETS.hopper.parts),check:()=>{const a=R?R.maxAlt:0;return[a>60000,a/60000,`${fmtKm(a)} of 60 km`]},stars:byTime(90,240)});
+CC(1.2,{t:'Safe return',g:'Go above 60 km and land safely back on Terra.',hint:'On the way down, the parachute opens by itself once you are low and slow (press C to arm it).',scen:'sandbox',setup:sb(PRESETS.hopper.parts),check:()=>[mv('returned')>0,mv('returned')?1:R&&R.maxAlt>60000?0.5:0,''],fail:()=>R&&R.dead?'The capsule crashed':'',stars:byTime(240,600)});
+CC(1.3,{t:'Rocket designer',g:'Change the rocket by adding a part, then fly it above 10 km.',hint:'In the Rocket tab, press any part to add it. Check the push is more than 1× before you launch.',scen:'sandbox',setup:sb(['chute','pod1','tankS','spark']),check:()=>{const ok=evN('add')>0,a=R?R.maxAlt:0;return[ok&&a>10000,(ok?0.3:0)+Math.min(0.7,a/10000*0.7),ok?`${fmtKm(a)} of 10 km`:'Add a part first']},stars:byTime(90,240)});
+CC(2,{t:'Orbit!',g:'Get into orbit around Terra: periapsis (lowest point) above 60 km.',hint:'Use the Orbiter. Lean over towards the right as you climb, then burn sideways at the highest point. Or press Fly to orbit.',scen:'sandbox',setup:sb(PRESETS.orbiter.parts),check:()=>{const o=R&&!R.dead?orbitOf(R,S.t):null;return[mv('orbit0')>0,o?clamp((o.pe+640000)/700000,0,1):0,o?`Periapsis ${fmtKm(o.pe)}`:'']},stars:byTime(400,900)});
+CC(2.1,{t:'Hands on',g:'Reach orbit without the autopilot.',hint:'Climb straight up to 10 km, then tilt slowly right. Cut the engine when the apoapsis passes 80 km, coast, then burn forward near the top.',scen:'sandbox',setup:sb(PRESETS.orbiter.parts),check:()=>[mv('orbit0')>0&&!mv('ap_orbit'),mv('orbit0')?1:0,mv('ap_orbit')?'No autopilot this time!':''],stars:byTime(500,1200)});
+CC(2.2,{t:'Coming home',g:'Bring the falling capsule down safely.',hint:'Keep the heat shield in front (Backward button). The parachute opens by itself low down.',scen:'reentry',check:()=>[mv('land0')>0,mv('land0')?1:0,''],fail:()=>R&&R.dead?'The capsule did not survive':'',stars:byTime(200,500)});
+CC(2.3,{t:'Space scientist',g:'Make a crew report while in space near Terra.',hint:'In orbit, open the Flight tab and press Crew report.',scen:'orbit',check:()=>{const ok=evAny(e=>e.k==='exp'&&e.b===0&&(e.s==='space'||e.s==='farspace'));return[ok,ok?1:0,'']},stars:byTime(30,90)});
+CC(2.4,{t:'To the Moon',g:'Reach Luna’s pull.',hint:'Wait until Luna is about 110° ahead (see Plan a burn), then burn forward about +870 m/s. The orange line shows your new path.',scen:'moonready',check:()=>[mv('soi1')>0,mv('soi1')?1:PINFO.enc?0.6:0,PINFO.enc?'You are on your way!':''],stars:byTime(300,900)});
+CC(2.5,{t:'Lunar orbit',g:'Get into orbit around Luna.',hint:'When you arrive near Luna, point Backward and burn at the lowest point until your path closes into a loop.',scen:'moonready',check:()=>[mv('orbit1')>0,mv('orbit1')?1:mv('soi1')?0.5:0,''],stars:byTime(600,1500)});
+CC(3,{t:'One small step',g:'Land on Luna without crashing (slower than 15 m/s with legs).',hint:'Point Backward and burn to kill your sideways speed, then let gravity pull you down. Burn gently near the ground.',scen:'lunaorbit',check:()=>[mv('land1')>0,mv('land1')?1:0,''],fail:()=>R&&R.dead?'Crashed into Luna':'',stars:byTime(300,800)});
+CC(3.1,{t:'Touchdown',g:'Land the falling lander softly on Luna.',hint:'Point Backward (it already is). Wait, then burn hard when you are a few kilometres up. Ease off as you slow down.',scen:'descent',check:()=>[mv('land1')>0,mv('land1')?1:0,''],fail:()=>R&&R.dead?'Crashed into Luna':'',stars:byTime(120,300)});
+CC(3.2,{t:'Moon rocks',g:'Land on Luna and take a surface sample.',hint:'After landing, open the Flight tab and press Surface sample.',scen:'descent',check:()=>{const ok=evAny(e=>e.k==='exp'&&e.k2!==1&&e.b===1&&e.s==='landed'&&e.kk!==1)&&evAny(e=>e.k==='exp'&&e.b===1);return[ok&&mv('land1')>0,(mv('land1')?0.5:0)+(ok?0.5:0),'']},fail:()=>R&&R.dead?'Crashed into Luna':'',stars:byTime(180,400)});
+CC(3.4,{t:'Escape',g:'Leave Terra’s pull for good.',hint:'From orbit, point Forward and burn about +1,000 m/s. Your path opens up and never comes back.',scen:'orbit',check:()=>[mv('escape')>0,mv('escape')?1:0,''],stars:byTime(400,1200)});
+CC(3.6,{t:'Space agency',g:'In your space agency, complete 2 missions in one go.',hint:'Start with the Hopper: First launch and Touch space are close together. Science from flights unlocks bigger parts.',scen:'pad',check:()=>{const n=evN('mission');return[n>=2,n/2,`${n} of 2 missions`]},stars:byTime(400,900)});
+TSTEPS.push(
+ ['Look around','Drag (or use two fingers) to move around. Scroll or pinch to zoom out and see the whole planet.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
+ ['A ready-made rocket','In the Rocket tab, use “Load a ready-made rocket” and pick the Orbiter.',r=>mv('preset')>r.n||evN('preset')>r.e,r=>{r.n=mv('preset');r.e=evN('preset')}],
+ ['Add a part','Click a part in the list (a parachute, a fuel tank…) to add it. Click a row first to add under it.',r=>evN('add')>r.n,r=>{r.n=evN('add')}],
+ ['Remove a part','Press ✕ on a row to remove that part.',r=>evN('remove')>r.n,r=>{r.n=evN('remove')}],
+ ['Launch','Check the push is more than 1× its weight, then press Launch.',r=>evN('launch')>r.n,r=>{r.n=evN('launch')}],
+ ['Light the engines','Press Space (or the STAGE button) to start the engines.',r=>mv('stage')>0],
+ ['Throttle','Hold W to go faster, S to slow down. Z is full power, X is off.',r=>mv('thr')>0],
+ ['Steer','Hold A or D to tilt the rocket. To reach orbit you climb, then tilt to the right.',r=>mv('steer')>0],
+ ['Drop a stage','When a stage runs dry, press Space again to drop it and light the next one.',r=>mv('stage')>1],
+ ['Map view','Press M (or Map) to zoom out and see your path. Ap is your highest point, Pe your lowest.',r=>mv('map')>0],
+ ['Point the rocket','Press Forward to keep the rocket pointing the way it is moving.',r=>mv('sas_pro')>0],
+ ['Autopilot','Press Fly to orbit and watch the autopilot. You can take over any time.',r=>mv('ap_orbit')+mv('ap_home')>0],
+ ['Time warp','Use the 50× or 500× buttons at the top to skip the boring bits (not while burning or in the air).',()=>S.speedI>=2],
+ ['Plan a burn','Move the Speed change slider. The orange line shows where that burn would take you.',r=>mv('plan')>0],
+ ['Science','Press Crew report to record what your astronaut sees. Each place gives science once.',r=>mv('exp')>0],
+ ['Your agency','Open the Agency tab: missions pay money, science unlocks parts, and you can hire astronauts.',r=>(CNT.tab_agency||0)>0],
+);
+DEMO.push(
+ ['demo','Lift-off','The autopilot flies the Orbiter: straight up, then a slow lean to the right.',()=>{setSpeed(1)}],
+ ['orbit','In orbit','At 2,300 m/s the capsule falls around Terra and keeps missing it.',()=>{setSpeed(2);setTimeout(mapView,300)}],
+ ['moonready','Ready for Luna','A burn here, with Luna about 110° ahead, would send this lander to the Moon.',()=>{PLAN={at:'now',dv:880};setTimeout(()=>{mapView();cam.z/=9;clampCam()},300)}],
+ ['descent','Landing on Luna','No air on Luna: only the engine can slow you down.',()=>{setSpeed(0)}],
+ ['reentry','Coming home','The heat shield takes the heat, then the parachute opens.',()=>{setSpeed(1)}],
+);
+
+(()=>{const f=document.getElementById('hFree');if(f&&!document.getElementById('hBary')){const a=document.createElement('a');a.className='hb';a.id='hBary';a.href='../';a.style.cssText='text-decoration:none;color:inherit';a.innerHTML='<span class="ht">Back to Barycenter</span><span class="hd">Planets, stars, gravity and black holes</span>';f.after(a)}})();
+
+/* ===== flat icons: every emoji in labels, buttons and messages is drawn as a flat one-colour silhouette instead of a colourful emoji ===== */
+(function(){
+  if(window.__noEmoji)return;window.__noEmoji=true;
+  const RE=/(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|⃣)?(?:‍(?:\p{Extended_Pictographic})(?:️)?)*|[\u{1F3FB}-\u{1F3FF}]/gu,HAS=/\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+  const KEEP=new Set([...'★☆✓✔✗✕✖×→←↑↓↔⤢⊗⊙▸◂−±°©®™']);
+  const strip=s=>s.replace(RE,m=>KEEP.has(m)?m:'').replace(/[️‍]/g,'').replace(/ {2,}/g,' ');
+  window.noEmoji=strip;
+  // emoji drawn on a square background turn into plain squares as silhouettes: swap them for ones that make good flat icons
+  const SWAP={'⚛️':'🧪','⚛':'🧪','☢️':'⚠️','☯️':'⭐','🔆':'☀️','🔅':'☀️','🔃':'⇄','🔀':'⇄','🌌':'✨','🚇':'🚈','🌉':'🏗️','🔄':'⇄','🔁':'⟳','🆕':'+','🌁':'🏗️','🌃':'🌙','🌄':'⛰️','🌅':'☀️','🏞️':'⛰️','🎑':'🌙','🖼️':'🎨'};
+  const PLAIN=new Set(['OPTION','TITLE','TEXTAREA','SCRIPT','STYLE','INPUT']);
+  // turn one text node into text + flat icon spans
+  function flatten(n){const p=n.parentElement;if(!p||p.classList.contains('fi')||p.closest('.fi'))return;
+    if(PLAIN.has(p.tagName)||p.closest('svg')){n.nodeValue=strip(n.nodeValue);return}
+    const s=n.nodeValue;RE.lastIndex=0;let m,last=0,parts=[];
+    while((m=RE.exec(s))){if(KEEP.has(m[0]))continue;if(m.index>last)parts.push(document.createTextNode(s.slice(last,m.index)));const sw=SWAP[m[0]]||SWAP[m[0].replace(/\uFE0F/g,'')];const g=sw||m[0];if(sw&&!HAS.test(sw)){parts.push(document.createTextNode(sw))}else{const sp=document.createElement('span');sp.className='fi';sp.setAttribute('aria-hidden','true');sp.textContent=g;parts.push(sp)}last=m.index+m[0].length}
+    if(!parts.length)return;if(last<s.length)parts.push(document.createTextNode(s.slice(last)));const f=document.createDocumentFragment();parts.forEach(x=>f.appendChild(x));p.replaceChild(f,n)}
+  function clean(root){if(!root)return;if(root.nodeType===3){if(HAS.test(root.nodeValue))flatten(root);return}
+    if(root.nodeType!==1||PLAIN.has(root.tagName)&&root.tagName!=='OPTION'&&root.tagName!=='TITLE')return;if(root.classList&&root.classList.contains('fi'))return;
+    for(const a of ['title','aria-label','placeholder','alt'])if(root.hasAttribute&&root.hasAttribute(a)&&HAS.test(root.getAttribute(a)))root.setAttribute(a,strip(root.getAttribute(a)).trim());
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);const texts=[];let n;
+    while((n=w.nextNode())){if(n.nodeType===1){for(const a of ['title','aria-label','placeholder','alt'])if(n.hasAttribute(a)&&HAS.test(n.getAttribute(a)))n.setAttribute(a,strip(n.getAttribute(a)).trim());continue}if(HAS.test(n.nodeValue))texts.push(n)}
+    texts.forEach(flatten)}
+  // canvas labels: emoji are left out there (the map draws its own shapes)
+  for(const P of [window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype,window.OffscreenCanvasRenderingContext2D&&OffscreenCanvasRenderingContext2D.prototype])if(P)for(const f of ['fillText','strokeText']){const o=P[f];P[f]=function(t,...a){if(typeof t==='string'&&HAS.test(t)){t=strip(t).trim();if(!t)return}return o.call(this,t,...a)}}
+  const css=document.createElement('style');
+  css.textContent='.fi{display:inline-block;line-height:1;font-style:normal;filter:brightness(0) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);opacity:.92;vertical-align:-.08em}.ne-lab{display:none}';
+  const go=()=>{document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
+    new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData'){if(m.target.parentElement&&!m.target.parentElement.classList.contains('fi'))clean(m.target)}else if(m.type==='attributes')clean(m.target);else for(const x of m.addedNodes)clean(x)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})};
+  if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
+})();
+
+/* ===== extras for every simulator: 📸 snapshot and ⛶ full screen ===== */
+var SNAPS=0;
+(function(){
+  const cv=document.getElementById('world')||document.getElementById('sky');if(!cv)return;
+  const name=(document.title||'simulation').replace(/\s+/g,'-').toLowerCase();
+  const say=m=>{try{if(typeof toast==='function')toast(m)}catch(e){}};
+  function snap(){try{const w=cv.width,h=cv.height,o=document.createElement('canvas');o.width=w;o.height=h;const c=o.getContext('2d');c.drawImage(cv,0,0);
+      const s=Math.max(1,w/1200),t=(document.title||'')+'  ·  '+new Date().toLocaleDateString();c.font=`600 ${Math.round(16*s)}px "IBM Plex Mono",monospace`;const tw=c.measureText(t).width;
+      c.fillStyle='rgba(0,0,0,.55)';c.fillRect(w-tw-28*s,h-38*s,tw+20*s,28*s);c.fillStyle='#fff';c.textBaseline='middle';c.fillText(t,w-tw-18*s,h-24*s);
+      const a=document.createElement('a');a.download=`${name}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.png`;a.href=o.toDataURL('image/png');document.body.appendChild(a);a.click();a.remove();
+      SNAPS++;try{if(typeof chEv==='function')chEv('snap',{})}catch(e){}say('Picture saved to your downloads')}catch(e){say('Could not save a picture here')}}
+  const canFull=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled);
+  function full(){const d=document,el=d.documentElement;if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d)}else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el)}}
+  const ICONS={cam:'<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 6h3l1.5-2h5L14 6h3v10H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="11" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',full:'<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'};const mk=(ic,tip,fn)=>{const b=document.createElement('button');if(ICONS[ic])b.innerHTML=ICONS[ic];else b.textContent=ic;b.title=tip;b.setAttribute('aria-label',tip);b.onclick=e=>{e.stopPropagation();fn()};return b};
+  const zb=document.querySelector('.zoomb');let box=zb;
+  if(!box){box=document.createElement('div');box.className='xtras';box.style.cssText='position:fixed;left:12px;bottom:12px;z-index:30;display:flex;gap:6px';document.body.appendChild(box);
+    const st=document.createElement('style');st.textContent='.xtras button{width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,14,26,.82);color:#fff;font-size:17px;cursor:pointer}.xtras button:hover{background:rgba(40,50,80,.9)}@media (max-width:760px){.xtras{left:auto!important;right:10px!important;bottom:auto!important;top:220px!important;flex-direction:column}}';document.head.appendChild(st)}
+  box.appendChild(mk('cam','Save a picture of the world',snap));if(canFull)box.appendChild(mk('full','Full screen',full));
+  window.SIM_SNAP=snap;
+  // a tutorial step and a challenge for the kit simulators
+  try{if(typeof CC==='function'&&typeof TSTEPS!=='undefined'){const kit=typeof SIM!=='undefined';const su=kit?undefined:typeof scen==='function'?scen('solar'):typeof scn==='function'?scn('meadow'):undefined;
+    const where=document.querySelector('.zoomb')?'next to the zoom buttons':'in the bottom-left corner';
+    TSTEPS.push(['Take a picture',`Press the camera button ${where} to save a picture of your world.`,r=>SNAPS>r.n,r=>{r.n=SNAPS}]);
+    const o={t:'Photographer',g:'Save a picture of the world with the camera button.',hint:`The camera button is ${where}.`,check:()=>{const ok=typeof evN==='function'?evN('snap')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='snap'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(10,30):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;else o.setup=su;CC(1.02,o)}}catch(e){}
+})();
+
+/* ==ASKQ== Ask Quasar: an AI helper inside every simulator. It reads what you are doing, so you never have to explain. */
+(function(){if(window.__askq)return;window.__askq=1;
+try{if(typeof CC==='function'&&typeof TSTEPS!=='undefined'){const kit=typeof SIM!=='undefined';
+  TSTEPS.push(['Ask Quasar','Press Ask Quasar at the top. Quasar can see your game, so ask it anything, like what to do next.',r=>(window.AQO||0)>r.n,r=>{r.n=window.AQO||0}]);
+  const o={t:'Curious mind',g:'Ask Quasar a question about your game (it needs the internet).',hint:'Press Ask Quasar at the top and tap one of the suggestions.',check:()=>{const ok=typeof evN==='function'?evN('askq')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='askq'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(30,90):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;CC(1.03,o)}}catch(e){}
+
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const tracking=()=>LS.get('quasar_track')!==false;
+const gameId=()=>{try{if(typeof SIM!=='undefined'&&SIM.id)return SIM.id}catch(e){}const p=location.pathname.toLowerCase();return p.includes('/life')?'biosphere':p.includes('barycenter')?'barycenter':(document.title||'game').toLowerCase().split(/\s/)[0]};
+const gameName=()=>{try{if(typeof SIM!=='undefined'&&SIM.name)return SIM.name}catch(e){}return(document.title||'Simulator').split(/[·|—-]/)[0].trim()};
+const vis=e=>e&&e.offsetParent!==null&&getComputedStyle(e).visibility!=='hidden';
+const txt=(el,n)=>vis(el)?el.innerText.replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim().slice(0,n||600):'';
+function progress(){const o={};try{if(typeof CHALS!=='undefined'&&typeof PROG!=='undefined'){const n=CHALS.length;let st=0,done=0,next=null;CHALS.forEach(c=>{const s=PROG.stars[c.t]||0;st+=s;if(s)done++;else if(!next)next=c});o.stars=st;o.maxStars=n*3;o.done=done;o.total=n;o.plays=PROG.plays||0;if(next)o.next=`${next.t}: ${next.g}`}}catch(e){}return o}
+function snapshot(){const o={game:gameName(),page:location.href.split('#')[0]};try{const home=document.getElementById('home');o.screen=home&&!home.hidden?'home menu':'playing'}catch(e){}
+  try{if(typeof SIM!=='undefined'&&typeof S!=='undefined'){const sc=(SIM.scens||[]).find(s=>s.id===S.scen);o.scenario=sc?sc.name:S.scen;if(SIM.dateTxt)o.clock=SIM.dateTxt();if(SIM.dateSub)o.status=SIM.dateSub();if(SIM.stats)o.stats=SIM.stats().map(([k,v])=>k+': '+v).join(', ');o.tool=S.tool;o.view=S.view;o.speed=S.paused?'paused':S.speed+'×'}}catch(e){}
+  try{if(typeof CH!=='undefined'&&CH.active)o.challenge=`${CH.active.t}: ${CH.active.g}. Progress: ${(document.getElementById('chProg')||{}).textContent||''}. Hint: ${CH.active.hint||'none'}`;if(typeof TUT!=='undefined'&&TUT.on&&typeof TSTEPS!=='undefined'){const st=TSTEPS[TUT.i];if(st)o.tutorial=`step ${TUT.i+1} of ${TSTEPS.length}: ${st[0]}: ${st[1]}`}}catch(e){}
+  if(!o.challenge&&!o.tutorial){const h=document.getElementById('chHud');const t=txt(h,300);if(t)o.challengeBox=t}
+  o.selected=txt(document.getElementById('inspBody'),600)||'';const pane=document.querySelector('#dock .pane:not([hidden])');if(pane&&vis(pane)){const cl=pane.cloneNode(true);cl.querySelectorAll('select,option,script,canvas,svg').forEach(e=>e.remove());cl.querySelectorAll('input[type=range]').forEach(e=>e.replaceWith(' ['+e.value+'] '));o.openPanel=cl.textContent.replace(/\s+/g,' ').trim().slice(0,700)}
+  if(!o.stats){o.screenText=[...document.querySelectorAll('.panel,.hud,#hud,header')].filter(e=>vis(e)&&!e.closest('#aqP')).map(e=>e.innerText.replace(/\s+/g,' ').trim()).filter(Boolean).join(' | ').slice(0,1200)}o.progress=progress();return o}
+function remember(){if(!tracking())return;try{const s=snapshot(),all=LS.get('quasar_activity')||{};const p=s.progress||{};all[gameId()]={name:s.game,url:s.page,when:Date.now(),stars:p.stars,maxStars:p.maxStars,done:p.done,total:p.total,next:p.next,doing:[s.scenario,s.challenge&&('challenge '+s.challenge.split('. Progress')[0]),s.tutorial&&'tutorial',s.clock].filter(Boolean).join(' · ').slice(0,240)};LS.set('quasar_activity',all)}catch(e){}}
+setInterval(()=>{if(document.visibilityState==='visible')remember()},15000);addEventListener('pagehide',remember);setTimeout(remember,4000);
+function siteProgress(){const all=LS.get('quasar_activity')||{};return Object.values(all).sort((a,b)=>b.when-a.when).slice(0,14).map(a=>`- ${a.name}: ${a.done!=null?`${a.done}/${a.total} challenges, ${a.stars}/${a.maxStars} stars`:'played'}${a.doing?`; last doing: ${a.doing}`:''}; ${Math.round((Date.now()-a.when)/60000)} min ago`).join('\n')}
+/* ---------- the chat panel ---------- */
+const css=`#aqBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;border:1px solid rgba(180,150,255,.55);background:rgba(14,12,26,.92);color:#efe8ff;font:600 13px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.45);cursor:pointer}
+#aqBtn svg{width:18px;height:18px}#aqBtn.aqIn{position:static;box-shadow:none;padding:6px 11px 6px 9px;background:rgba(60,40,120,.55);font-size:12.5px}@media (max-width:760px){#aqBtn.aqIn span{display:none}#aqBtn.aqIn{padding:6px 8px}}#aqBtn:hover{border-color:#b388ff}
+#aqP{position:fixed;right:12px;bottom:12px;z-index:80;width:min(390px,calc(100vw - 24px));height:min(560px,calc(100vh - 24px));display:flex;flex-direction:column;background:#0e0c1a;color:#ece8f6;isolation:isolate;border:1px solid rgba(180,150,255,.4);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.6);font:14px/1.45 system-ui,sans-serif;overflow:hidden}
+#aqP[hidden],#aqBtn[hidden]{display:none}#aqP header{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.08)}#aqP header b{font-size:15px}#aqP header small{color:#a99fc4;display:block;font-size:11.5px}
+#aqP header button{margin-left:auto;background:none;border:0;color:#cfc6e8;font-size:20px;cursor:pointer;padding:2px 8px}
+#aqM{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}.aqm{max-width:88%;padding:8px 11px;border-radius:12px;white-space:normal;word-wrap:break-word}.aqm.me{align-self:flex-end;background:#3b2f6b}.aqm.ai{align-self:flex-start;background:rgba(255,255,255,.06)}.aqm ul{margin:4px 0 4px 18px;padding:0}
+#aqC{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}#aqC button{border:1px solid rgba(180,150,255,.35);background:none;color:#d8ccff;border-radius:999px;padding:5px 10px;font:12.5px system-ui,sans-serif;cursor:pointer}
+#aqF{display:flex;gap:6px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08)}#aqF input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;padding:9px 11px;font:14px system-ui,sans-serif}#aqF button{border:0;border-radius:10px;background:#8b5cf6;color:#fff;padding:0 14px;font:600 14px system-ui,sans-serif;cursor:pointer}
+#aqT{padding:0 12px 9px;font-size:11.5px;color:#9a90b8}#aqT a{color:#c4b0ff;cursor:pointer;text-decoration:underline}
+@media (max-width:760px){#aqBtn{right:10px;bottom:auto;top:calc(var(--hudH,70px) + 14px);padding:8px 11px}#aqP{right:0;left:0;bottom:0;width:100vw;height:78vh;border-radius:16px 16px 0 0}}`;
+const icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(-25 12 12)"/><path d="M19 3.5v3M17.5 5h3"/></svg>';
+let hist=[];try{hist=JSON.parse(sessionStorage.getItem('aq_hist_'+gameId())||'[]')}catch(e){}
+const save=()=>{try{sessionStorage.setItem('aq_hist_'+gameId(),JSON.stringify(hist.slice(-20)))}catch(e){}};
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function md(s){const L=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n');let out='',ul=false;for(const l of L){const m=l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);if(m){if(!ul){out+='<ul>';ul=true}out+='<li>'+m[1]+'</li>'}else{if(ul){out+='</ul>';ul=false}out+=l?l+'<br>':'<br>'}}if(ul)out+='</ul>';return out.replace(/(<br>)+$/,'')}
+function add(role,text){const d=document.createElement('div');d.className='aqm '+(role==='user'?'me':'ai');d.innerHTML=md(text);document.getElementById('aqM').appendChild(d);d.scrollIntoView({block:'end'});return d}
+function system(){const s=snapshot();const live=tracking()?JSON.stringify(s,null,1).slice(0,3500):'(the player turned off progress tracking)';
+  return `You are Quasar, the friendly AI helper built into "${s.game}", one of the free browser simulators on the Our Simulations! website. Many players are kids, so use simple words, be encouraging, and keep answers short (under 120 words) unless they ask for more.
+You can SEE what the player is doing: the live game state below is read automatically every time they ask. Never ask them to describe what is on screen; use it. Refer to real buttons, tools, tabs and challenge names you can see. When they ask how to do something, give 2–5 clear steps.
+Live game state right now:
+${live}
+${tracking()?`The player's progress across the website (most recent first):\n${siteProgress()||'- nothing recorded yet'}`:''}`}
+let busy=false;
+async function ask(q){if(busy||!q.trim())return;busy=true;hist.push({role:'user',content:q});add('user',q);const box=add('ai','…');let out='';
+  if(!navigator.onLine){box.innerHTML='Quasar needs the internet to answer. Everything else in the simulator still works offline.';busy=false;hist.pop();return}
+  try{const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',stream:true,private:true,messages:[{role:'system',content:system()},...hist.slice(-10)]})});
+    if(!r.ok||!r.body)throw new Error('http '+r.status);const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+    for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')continue;try{const j=JSON.parse(d),t=j.choices&&j.choices[0]&&(j.choices[0].delta||{}).content;if(t){out+=t;box.innerHTML=md(out.replace(/<think>[\s\S]*?(<\/think>|$)/g,''));box.scrollIntoView({block:'end'})}}catch(e){}}}
+    if(!out.trim())throw new Error('empty')}
+  catch(e){try{const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(q)+'?private=true&model=openai&system='+encodeURIComponent(system().slice(0,3000)));out=await r.text();box.innerHTML=md(out)}catch(e2){out='';box.innerHTML='Sorry, I could not reach Quasar just now. Try again in a moment.'}}
+  out=out.replace(/<think>[\s\S]*?<\/think>/g,'').trim();if(out){hist.push({role:'assistant',content:out});save()}else hist.pop();busy=false;try{if(typeof chEv==='function')chEv('askq',{});window.AQN=(window.AQN||0)+1}catch(e){}}
+function build(){if(document.getElementById('aqBtn'))return;const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+  const b=document.createElement('button');b.id='aqBtn';b.type='button';b.innerHTML=icon+'<span>Ask Quasar</span>';b.title='Ask Quasar, the AI helper. It can see what you are doing.';const host=document.querySelector('.hud-top .right')||(document.getElementById('homeBtn')||{}).parentElement;if(host&&host!==document.body){b.className='btn aqIn';host.insertBefore(b,host.querySelector('#homeBtn')||null)}else document.body.appendChild(b);
+  const p=document.createElement('div');p.id='aqP';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','Ask Quasar');
+  p.innerHTML=`<header>${icon.replace('<svg','<svg width="22" height="22" style="color:#b388ff"')}<div><b>Quasar</b><small>Sees your game and progress, so just ask</small></div><button id="aqX" aria-label="Close">×</button></header><div id="aqM"></div><div id="aqC"></div><div id="aqT"></div><form id="aqF"><input id="aqI" placeholder="Ask anything about this game…" autocomplete="off"><button>Send</button></form>`;document.body.appendChild(p);
+  const chips=['What should I do next?','Explain what I am looking at','Help me with this challenge','How am I doing overall?'];const C=document.getElementById('aqC');for(const c of chips){const x=document.createElement('button');x.type='button';x.textContent=c;x.onclick=()=>ask(c);C.appendChild(x)}
+  const T=document.getElementById('aqT');const tr=()=>{T.innerHTML=tracking()?'Quasar can see this game and your progress. <a id="aqOff">Turn off</a>':'Progress tracking is off. <a id="aqOff">Turn on</a>';document.getElementById('aqOff').onclick=()=>{LS.set('quasar_track',!tracking());if(!tracking())try{localStorage.removeItem('quasar_activity')}catch(e){}tr()}};tr();
+  if(hist.length)hist.forEach(h=>add(h.role,h.content));else add('assistant',`Hi! I'm Quasar. I can see what you're doing in ${gameName()}, so just ask, like "what should I do next?"`);
+  const open=v=>{p.hidden=!v;b.hidden=v;if(v){remember();setTimeout(()=>document.getElementById('aqI').focus(),50);try{window.AQO=(window.AQO||0)+1;if(typeof chEv==='function')chEv('askqopen',{})}catch(e){}}};
+  b.onclick=()=>open(true);document.getElementById('aqX').onclick=()=>open(false);
+  document.getElementById('aqF').onsubmit=e=>{e.preventDefault();const i=document.getElementById('aqI');const q=i.value;i.value='';ask(q)};
+  p.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')open(false)});p.addEventListener('pointerdown',e=>e.stopPropagation())}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
+window.askQuasar=q=>{const b=document.getElementById('aqBtn');if(b)b.click();if(q)ask(q)};
+})();
+/* ==/ASKQ== */
+
+/* ===== simulator kit: UI, home, accounts, challenges, tutorial, demo, main loop ===== */
+const cv=$('world'),ctx=cv.getContext('2d');
+function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);measureHud();if(SIM.resize)SIM.resize()}
+function measureHud(){const h=document.querySelector('.hud-top');if(h)document.documentElement.style.setProperty('--hudH',Math.round(h.getBoundingClientRect().height)+'px')}
+const sx=wx=>(wx-cam.x)*cam.z+W/2+cam.ox,sy=wy=>(wy-cam.y)*cam.z+H/2;
+const wxOf=px=>(px-W/2-cam.ox)/cam.z+cam.x,wyOf=py=>(py-H/2)/cam.z+cam.y;
+function freeRect(){let l=0,r=W,t=0,b=H;if(!$('home').hidden)return{l,r,t,b};const vis=e=>e&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().width>0;const hud=document.querySelector('.hud-top'),rail=$('rail'),dock=$('dock');
+  if(vis(hud))t=hud.getBoundingClientRect().bottom+8;if(innerWidth>760){if(vis(rail))l=rail.getBoundingClientRect().right+8;if(vis(dock))r=dock.getBoundingClientRect().left-8;b=H-50}else{if(vis(rail))b=rail.getBoundingClientRect().top-8;if(vis(dock)&&document.body.classList.contains('dockOpen'))b=Math.min(b,dock.getBoundingClientRect().top-8)}
+  if(r-l<200){l=0;r=W}if(b-t<150){t=0;b=H}return{l,r,t,b}}
+function fitWorld(){const w=SIM.world.w,h=SIM.world.h;if(SIM.world.wrapX){cam.z=Math.max(W/w,H/h);cam.x=w/2;cam.y=h/2;clampCam();return}const f=freeRect(),fw=f.r-f.l,fh=f.b-f.t;cam.z=Math.min(fw/w,fh/h)*0.96;if(W<760&&fh>fw*1.05)cam.z=Math.min(Math.max(fw/w,fh/h),cam.z*1.7);cam.x=w/2-((f.l+f.r)/2-W/2-cam.ox)/cam.z;cam.y=h/2-((f.t+f.b)/2-H/2)/cam.z;clampCam()}
+function minZoom(){const w=SIM.world.w,h=SIM.world.h;return SIM.world.wrapX?H/h:Math.min(W/w,H/h)*0.5}
+function clampCam(){const h=SIM.world.h,w=SIM.world.w;cam.z=clamp(cam.z,minZoom(),SIM.world.maxZ||40);if(SIM.world.wrapX){const hy=H/2/cam.z;cam.y=clamp(cam.y,Math.min(h/2,hy),Math.max(h/2,h-hy))}else cam.y=clamp(cam.y,-h*0.5,h*1.5);if(SIM.world.wrapX)cam.x=mod(cam.x,w);else cam.x=clamp(cam.x,-w*0.5,w*1.5)}
+function zoomAt(f,px,py){const wx=wxOf(px),wy=wyOf(py);cam.z*=f;clampCam();cam.x+=wx-wxOf(px);cam.y+=wy-wyOf(py);clampCam();bump('zoomed')}
+function flyToW(x,y,z){S.follow=false;cam.x=x;cam.y=y;if(z)cam.z=Math.max(cam.z,z);clampCam()}
+
+/* speeds */
+function buildSpeeds(){const b=$('spds');b.textContent='';SIM.speeds.forEach(([l,v],i)=>{const e=document.createElement('button');e.className='spd';e.textContent=l;e.onclick=()=>{setSpeed(i);setPaused(false)};b.appendChild(e)})}
+function setSpeed(i){i=clamp(i,0,SIM.speeds.length-1);S.speedI=i;S.speed=SIM.speeds[i][1];[...$('spds').children].forEach((e,k)=>e.setAttribute('aria-pressed',k===i));updateRate()}
+function setPaused(p){S.paused=p;$('pauseBtn').innerHTML=p?'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.2l10 5.8-10 5.8z" fill="currentColor"/></svg>':'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></svg>';$('pauseBtn').setAttribute('aria-label',p?'Resume':'Pause');updateRate()}
+function updateRate(){$('rateTxt').textContent=S.paused?'Paused':SIM.fmtRate(S.speed)+(S.achieved<S.speed*0.8&&!S.paused?` (running ${SIM.fmtRate(Math.max(S.achieved,S.speed*0.01))})`:'')}
+$('pauseBtn').onclick=()=>setPaused(!S.paused);
+
+/* tools */
+function buildRail(){const r=$('rail');r.textContent='';for(const [g,items] of SIM.tools){if(g){const h=document.createElement('h3');h.textContent=g;r.appendChild(h)}
+  for(const [id,ico,name] of items){const b=document.createElement('button');b.className='tool';b.dataset.tool=id;b.innerHTML='<span class="ico"></span><span></span>';b.children[0].textContent=ico;b.children[1].textContent=name;b.onclick=()=>setTool(id);r.appendChild(b)}}}
+function toolInfo(id){for(const [,items] of SIM.tools)for(const t of items)if(t[0]===id)return t;return null}
+function setTool(id){S.tool=id;document.querySelectorAll('.tool').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===id));const t=toolInfo(id);
+  $('placeopts').hidden=id==='select'||!t;$('toolNote').textContent=t&&t[3]||'';$('brush').parentElement.hidden=!(t&&t[4]);cv.classList.toggle('place',id!=='select');if(id!=='select')bump('tool');if(SIM.toolChanged)SIM.toolChanged(id)}
+$('brush').oninput=e=>{S.brush=+e.target.value;$('brushV').textContent=S.brush};
+
+/* dock tabs */
+function showTab(id){document.body.classList.remove('dockHidden');document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===id));document.querySelectorAll('#dock .pane').forEach(p=>p.hidden=p.id!=='pane-'+id);bump('tab_'+id);if(SIM.tabShown)SIM.tabShown(id)}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
+$('dockBtn').onclick=()=>{if(document.body.classList.contains('dockHidden')){document.body.classList.remove('dockHidden');document.body.classList.add('dockOpen')}else document.body.classList.toggle('dockOpen');setTimeout(()=>{if(!SIM.world.wrapX)fitWorld()},30)};
+$('dockClose').onclick=()=>{document.body.classList.add('dockHidden');document.body.classList.remove('dockOpen');bump('dockclose');setTimeout(()=>{if(!SIM.world.wrapX)fitWorld()},30)};
+function setView(v){S.view=v;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));bump('view');if(SIM.viewChanged)SIM.viewChanged(v)}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+function setLegend(title,grad,ticks){const L=$('legend');if(!title){L.hidden=true;return}L.hidden=false;L.children[0].textContent=title;L.children[1].style.background=grad;[...L.children[2].children].forEach((s,i)=>s.textContent=ticks[i]||'')}
+
+/* scenarios */
+function buildScen(){const g=$('scgrid');g.textContent='';for(const s of SIM.scens){const b=document.createElement('button');b.className='scb';b.innerHTML='<b></b><span></span>';b.children[0].textContent=s.name;b.children[1].textContent=s.desc;b.onclick=()=>{$('scen').hidden=true;loadScen(s.id);bump('scen');toast(s.name)};g.appendChild(b)}}
+function loadScen(id){S.t=0;S.sel=null;S.follow=false;SIM.load(id);S.scen=id;fitWorld();if(SIM.after)SIM.after()}
+$('scenBtn').onclick=()=>$('scen').hidden=!$('scen').hidden;$('scenClose').onclick=()=>$('scen').hidden=true;
+
+/* find */
+let findItems=[],findI=0;
+function renderFind(){const L=$('findList'),q=$('find').value.trim();findItems=q?SIM.find(q.toLowerCase()).slice(0,10):[];findI=0;L.hidden=!findItems.length;L.textContent='';
+  findItems.forEach((it,i)=>{const b=document.createElement('button');b.className=i===findI?'on':'';b.innerHTML='<span></span><small></small>';b.children[0].textContent=it.label;b.children[1].textContent=it.sub||'';b.onmousedown=e=>{e.preventDefault();doFind(i)};L.appendChild(b)})}
+function doFind(i){const it=findItems[i];if(!it)return;$('find').value='';$('findList').hidden=true;$('find').blur();it.go();bump('find')}
+$('find').oninput=renderFind;$('find').onblur=()=>setTimeout(()=>$('findList').hidden=true,120);
+$('find').onkeydown=e=>{if(e.key==='Enter'){doFind(findI)}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){findI=clamp(findI+(e.key==='ArrowDown'?1:-1),0,findItems.length-1);[...$('findList').children].forEach((b,k)=>b.className=k===findI?'on':'');e.preventDefault()}else if(e.key==='Escape'){$('find').blur()}};
+
+/* pointer input */
+const ptrs=new Map();let drag=null,pinch=null;
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:cam.z};if(drag&&drag.tool)SIM.pointer('up',wxOf(e.clientX),wyOf(e.clientY),e);drag=null;return}
+  const pan=S.tool==='select'||e.button===1||e.button===2;
+  drag={x0:e.clientX,y0:e.clientY,lx:e.clientX,ly:e.clientY,moved:0,pan,tool:!pan};
+  if(!pan)SIM.pointer('down',wxOf(e.clientX),wyOf(e.clientY),e)});
+cv.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(p){p.x=e.clientX;p.y=e.clientY}
+  if(pinch&&ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;const f=pinch.z*d/pinch.d/cam.z;zoomAt(f,mx,my);if(pinch.mx!=null){S.follow=false;cam.x-=(mx-pinch.mx)/cam.z;cam.y-=(my-pinch.my)/cam.z;clampCam();CNT.moved+=Math.abs(mx-pinch.mx)+Math.abs(my-pinch.my)}pinch.mx=mx;pinch.my=my;return}
+  if(!drag){if(SIM.hover)SIM.hover(wxOf(e.clientX),wyOf(e.clientY));return}
+  const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
+  if(drag.pan){S.follow=false;cam.x-=dx/cam.z;cam.y-=dy/cam.z;clampCam();CNT.moved+=Math.abs(dx)+Math.abs(dy)}else SIM.pointer('drag',wxOf(e.clientX),wyOf(e.clientY),e)});
+function endPtr(e){ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!drag)return;const d=drag;drag=null;
+  if(d.tool)SIM.pointer('up',wxOf(e.clientX),wyOf(e.clientY),e);else if(d.moved<6&&e.button!==2){S.follow=false;S.sel=SIM.pick(wxOf(e.clientX),wyOf(e.clientY))||null;if(S.sel&&SIM.inspectTab){showTab(SIM.inspectTab);document.body.classList.add('dockOpen')}if(SIM.selChanged)SIM.selChanged();deselBtn()}}
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('dblclick',e=>{if(S.sel&&S.tool==='select'&&SIM.canFollow){S.follow=true;cam.z=Math.max(cam.z,SIM.world.followZ||cam.z)}});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*0.0015),e.clientX,e.clientY)},{passive:false});
+$('zIn').onclick=()=>zoomAt(1.4,W/2+cam.ox,H/2);$('zOut').onclick=()=>zoomAt(1/1.4,W/2+cam.ox,H/2);$('zFit').onclick=()=>{fitWorld();bump('zoomed')};
+const keys=new Set();
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;const k=e.key.toLowerCase();
+  if(k===' '){e.preventDefault();setPaused(!S.paused)}else if(k==='escape'){if(S.tool!=='select')setTool('select');else{S.sel=null;S.follow=false;if(SIM.selChanged)SIM.selChanged()}}
+  else if(k==='+'||k==='=')zoomAt(1.25,W/2+cam.ox,H/2);else if(k==='-')zoomAt(0.8,W/2+cam.ox,H/2);else keys.add(k)});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+function camKeys(dt){let dx=0,dy=0;if(keys.has('a')||keys.has('arrowleft'))dx--;if(keys.has('d')||keys.has('arrowright'))dx++;if(keys.has('w')||keys.has('arrowup'))dy--;if(keys.has('s')||keys.has('arrowdown'))dy++;
+  if(dx||dy){S.follow=false;const sp=600*dt/cam.z;cam.x+=dx*sp;cam.y+=dy*sp;clampCam();CNT.moved+=600*dt}}
+
+/* accounts (shared by every simulator on the site) */
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const ACC_KEY='barycenter.accounts',PROG_KEY=SIM.id+'.progress';
+let ACC=lsGet(ACC_KEY);if(!ACC||!Array.isArray(ACC.list))ACC={list:[],cur:'guest',devicePlays:0};if(ACC.cur!=='guest'&&!ACC.list.some(a=>a.id===ACC.cur))ACC.cur='guest';
+let ACCN=0;
+const progKey=id=>id==='guest'?PROG_KEY:PROG_KEY+'.'+id;
+const blankProg=()=>({stars:{},plays:0,secs:0});
+let PROG=blankProg();
+function loadProg(){const v=lsGet(progKey(ACC.cur));PROG=Object.assign(blankProg(),v&&typeof v.stars==='object'?v:{})}
+function saveProg(){lsSet(progKey(ACC.cur),PROG)}
+function saveAcc(){const cur=lsGet(ACC_KEY);if(cur&&Array.isArray(cur.list)){for(const a of ACC.list){const o=cur.list.find(x=>x.id===a.id);if(o)Object.keys(o).forEach(k=>{if(!(k in a))a[k]=o[k]})}for(const o of cur.list)if(!ACC.list.some(a=>a.id===o.id))ACC.list.push(o);if(cur.devicePlays>ACC.devicePlays)ACC.devicePlays=cur.devicePlays}lsSet(ACC_KEY,ACC)}
+const curAcc=()=>ACC.list.find(a=>a.id===ACC.cur);
+const accName=()=>(curAcc()||{name:'Guest'}).name;
+const pinHash=p=>{let h=5381;for(const c of 'bary:'+p)h=((h*33)^c.charCodeAt(0))>>>0;return h.toString(36)};
+const GCOUNT='https://abacus.jasoncameron.dev',GPATH='barycenter-sandbox/'+SIM.id+'-plays';let GLOBAL=null;
+function gCount(op){try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),6000);fetch(`${GCOUNT}/${op}/${GPATH}`,{signal:ctl.signal,cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&Number.isFinite(+j.value)){GLOBAL=Math.max(GLOBAL||0,+j.value);updateAcctUI()}}).catch(()=>{})}catch(e){}}
+function countPlay(){PROG.plays++;ACC.devicePlays=(ACC.devicePlays||0)+1;saveProg();saveAcc();if(GLOBAL!=null)GLOBAL++;updateAcctUI();gCount('hit')}
+function updateAcctUI(){$('hAcctName').textContent=curAcc()?accName():'Guest · make an account';$('hPlaysN').textContent=(GLOBAL!=null?GLOBAL:PROG.plays).toLocaleString();$('hPlaysL').textContent=GLOBAL!=null?'plays by everyone':'plays';$('acctBtn').title=`Account: ${accName()} (saved on this device)`}
+function switchAcc(id,quiet){if(id===ACC.cur)return;saveProg();ACC.cur=id;saveAcc();loadProg();ACCN++;updateAcctUI();if(!$('home').hidden)homeView($('hChalView').hidden?'hMain':'hChalView');if(!quiet)toast(`Signed in as ${accName()}`);renderAcct()}
+let acctPend=null;
+function renderAcct(msg){const L=$('acctList');L.textContent='';$('acctMsg').textContent=msg||'';
+  for(const a of [{id:'guest',name:'Guest',guest:1},...ACC.list]){const pr=a.id===ACC.cur?PROG:(lsGet(progKey(a.id))||{stars:{},plays:0}),cur=a.id===ACC.cur,r=document.createElement('div');r.className='arow'+(cur?' cur':'');
+    const nm=document.createElement('div');nm.className='an';nm.innerHTML='<div></div><div class="as"></div>';nm.children[0].textContent=(a.pin?'🔒 ':'')+a.name+(cur?' (signed in)':'');nm.children[1].textContent=`★ ${Object.values(pr.stars||{}).reduce((x,y)=>x+y,0)} in ${SIM.name} · ${pr.plays||0} plays`;r.appendChild(nm);
+    if(!cur){if(acctPend===a.id){const inp=document.createElement('input');inp.placeholder='PIN';inp.maxLength=4;const go=document.createElement('button');go.className='btn primary';go.textContent='OK';const t=()=>{if(pinHash(inp.value)===a.pin){acctPend=null;switchAcc(a.id)}else renderAcct('Wrong PIN')};go.onclick=t;inp.onkeydown=e=>{if(e.key==='Enter')t()};r.append(inp,go);setTimeout(()=>inp.focus(),0)}
+      else{const b=document.createElement('button');b.className='btn';b.textContent=a.guest?'Use guest':'Sign in';b.onclick=()=>{if(a.pin){acctPend=a.id;renderAcct()}else switchAcc(a.id)};r.appendChild(b)}}
+    else if(!a.guest){const so=document.createElement('button');so.className='btn';so.textContent='Sign out';so.onclick=()=>switchAcc('guest');r.appendChild(so)}
+    L.appendChild(r)}}
+function openAcct(){acctPend=null;$('acct').hidden=false;renderAcct()}
+$('acctForm').addEventListener('submit',e=>{e.preventDefault();const name=$('acctNew').value.trim().replace(/\s+/g,' ').slice(0,20),pin=$('acctPin').value.trim();
+  if(!name)return renderAcct('Type a name first');if(/^guest$/i.test(name)||ACC.list.some(a=>a.name.toLowerCase()===name.toLowerCase()))return renderAcct('That name is taken on this device');if(pin&&!/^\d{4}$/.test(pin))return renderAcct('A PIN is 4 digits (or leave it empty)');
+  const fromGuest=ACC.cur==='guest'&&(PROG.plays||Object.keys(PROG.stars).length);const a={id:'a'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),name,created:Date.now()};if(pin)a.pin=pinHash(pin);
+  if(fromGuest){lsSet(progKey(a.id),PROG);lsSet(PROG_KEY,blankProg())}ACC.list.push(a);saveAcc();$('acctNew').value='';$('acctPin').value='';switchAcc(a.id,true);toast(`Account ${name} created`);renderAcct(fromGuest?'Your guest progress moved into this account.':'')});
+$('hAcctBtn').onclick=openAcct;$('acctBtn').onclick=openAcct;$('acctClose').onclick=()=>$('acct').hidden=true;$('acct').addEventListener('click',e=>{if(e.target.id==='acct')$('acct').hidden=true});
+$('hPlays').onclick=()=>{gCount('get');toast(GLOBAL!=null?`${GLOBAL.toLocaleString()} plays by everyone · ${PROG.plays} by you`:`${PROG.plays} plays by you on this device`)};
+
+/* challenges */
+CHALS.sort((a,b)=>a.diff-b.diff);loadProg();
+const NCH=CHALS.length;
+const starsOf=i=>(CHALS[i]&&PROG.stars[CHALS[i].t])||0;
+const unlocked=i=>{if(i===0||starsOf(i-1)||starsOf(i))return true;for(let j=i+1;j<NCH;j++)if(starsOf(j))return true;return false};
+function totalStars(){let n=0;for(let i=0;i<NCH;i++)n+=starsOf(i);return n}
+const doneCount=()=>CHALS.filter((c,i)=>starsOf(i)>0).length;
+function setMode(m){document.body.classList.toggle('mHome',m==='home');document.body.classList.toggle('mDemo',m==='demo')}
+function homeView(v){for(const id of ['hMain','hChalView','hDemoView'])$(id).hidden=id!==v;if(v==='hChalView')renderGrid();const d=doneCount();$('hChalSub').textContent=d?`${d} of ${NCH} complete · ${totalStars()} of ${NCH*3} stars`:`${NCH} goals, from easy to fiendish`;updateAcctUI()}
+function showHome(){stopDemo(true);if(CH.active)endChallenge();if(TUT.on)endTutorial();$('chDone').hidden=true;$('scen').hidden=true;
+  CH.loading=true;loadScen(SIM.home);CH.loading=false;setSpeed(SIM.homeSpeed??SIM.defSpeed);setPaused(false);setTool('select');setView('normal');
+  cam.ox=innerWidth>900?innerWidth*0.2:0;setMode('home');$('home').hidden=false;homeView('hMain')}
+function leaveHome(){cam.ox=0;$('home').hidden=true;setMode('');fitWorld()}
+$('homeBtn').onclick=showHome;document.querySelectorAll('.hback').forEach(b=>b.onclick=()=>homeView('hMain'));
+$('hChal').onclick=()=>homeView('hChalView');$('hDemo').onclick=()=>homeView('hDemoView');
+function startFree(){leaveHome();loadScen(SIM.freeScen||SIM.home);setSpeed(SIM.defSpeed);countPlay()}
+$('hFree').onclick=startFree;
+function renderGrid(){const g=$('hGrid');g.textContent='';let next=-1;
+  CHALS.forEach((c,i)=>{const st=starsOf(i),un=unlocked(i);if(un&&!st&&next<0)next=i;const b=document.createElement('button');b.className='ct'+(i===next?' next':'');b.disabled=!un;b.title=un?`${c.t}: ${c.g}`:'Finish the previous challenge to unlock';
+    b.innerHTML='<span class="cn"></span><span class="ctt"></span><span class="cs"></span>';b.children[0].textContent=`#${i+1}`;b.children[1].textContent=un?c.t:'Locked';b.children[2].textContent=un?(st?'★'.repeat(st)+'☆'.repeat(3-st):'☆☆☆'):'🔒';b.onclick=()=>startChallenge(i);g.appendChild(b)});
+  $('hStars').textContent=`★ ${totalStars()} / ${NCH*3}`;if(next>=0)setTimeout(()=>{const el=g.children[next];if(el)el.scrollIntoView({block:'nearest'})},30)}
+function startChallenge(i){const c=CHALS[i];if(!c||!unlocked(i))return;leaveHome();countPlay();$('chDone').hidden=true;
+  CH.active=c;CH.idx=i;CH.events=[];CH.hold={};CH.ref={};CH.done=false;CH.failed='';CH.loading=true;try{loadScen(c.scen||SIM.home);setSpeed(c.speed??SIM.defSpeed);if(c.setup)c.setup()}finally{CH.loading=false}
+  CH.t0=S.t;CH.real0=performance.now();setPaused(false);setTool(SIM.defTool||'select');
+  $('chHud').hidden=false;$('chNum').textContent=`Challenge ${i+1} of ${NCH}`;$('chTitle').textContent=c.t;$('chGoal').textContent=c.g;$('chProg').textContent='';$('chBar').style.width='0%';$('chHint').hidden=!c.hint;$('chRestart').textContent='Restart'}
+function endChallenge(){CH.active=null;$('chHud').hidden=true}
+function chTick(){if(TUT.on)tutTick();if(!CH.active||CH.done)return;const c=CH.active;let r;try{r=c.check()}catch(e){console.warn(e);r=[false,0,'']}
+  const [done,p,txt]=r;$('chProg').textContent=txt||'';$('chBar').style.width=Math.round(clamp(p||0,0,1)*100)+'%';const t=realSecs();$('chTime').textContent=`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+  if(done){CH.done=true;const st=clamp((c.stars||byTime(60,150))(),1,3),prev=starsOf(CH.idx);if(st>prev)PROG.stars[c.t]=st;saveProg();
+    $('dStars').innerHTML='★'.repeat(st)+'<span class="off">'+'★'.repeat(3-st)+'</span>';$('dTitle').textContent=`Challenge ${CH.idx+1} complete!`;$('dText').textContent=`${c.t} · ${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}${st<3?' · Faster solutions earn more stars.':' · Perfect!'}${prev>st?` Your best is still ${prev} ★.`:''}`;
+    $('dNext').hidden=CH.idx>=NCH-1;$('dNext').textContent='Next challenge';$('dRetry').hidden=false;$('dList').textContent='All challenges';$('chDone').hidden=false;$('chHud').hidden=true;return}
+  const f=c.fail&&c.fail();if(f){CH.done=true;$('dStars').innerHTML='<span class="off">★★★</span>';$('dTitle').textContent='Not this time';$('dText').textContent=f+'. Try again?';$('dNext').hidden=true;$('dRetry').hidden=false;$('dList').textContent='All challenges';$('chDone').hidden=false;$('chHud').hidden=true}}
+$('chRestart').addEventListener('click',()=>{if(TUT.on){TUT.i++;tutStep();return}startChallenge(CH.idx)});
+$('chExit').addEventListener('click',()=>{if(TUT.on){endTutorial();showHome();homeView('hDemoView');return}endChallenge();showHome();homeView('hChalView')});
+$('chHint').onclick=()=>{if(CH.active)toast('Hint: '+CH.active.hint,6000)};
+$('dNext').onclick=()=>{if(TUT.finished){TUT.finished=false;showHome();homeView('hChalView');return}startChallenge(CH.idx+1)};
+$('dRetry').onclick=()=>{if(TUT.finished){TUT.finished=false;startTutorial();return}startChallenge(CH.idx)};
+$('dList').onclick=()=>{if(TUT.finished){TUT.finished=false;$('chDone').hidden=true;startFree();return}endChallenge();showHome();homeView('hChalView')};
+
+/* tutorial */
+const TUT={on:false,i:0,ref:{},finished:false};
+function startTutorial(){leaveHome();countPlay();$('chDone').hidden=true;CH.loading=true;loadScen(SIM.tutScen||SIM.home);CH.loading=false;setSpeed(SIM.defSpeed);setPaused(false);setTool(SIM.defTool||'select');TUT.on=true;TUT.i=0;TUT.finished=false;tutStep()}
+function tutStep(){const st=TSTEPS[TUT.i];if(!st){TUT.on=false;TUT.finished=true;$('chHud').hidden=true;$('dStars').innerHTML='★★★';$('dTitle').textContent='Tutorial complete!';$('dText').textContent='You know all the controls. Try the challenges, or build anything in free play.';$('dNext').hidden=false;$('dNext').textContent='Challenges';$('dRetry').hidden=false;$('dList').textContent='Free play';$('chDone').hidden=false;$('chRestart').textContent='Restart';return}
+  TUT.ref={};if(st[3])st[3](TUT.ref);$('chHud').hidden=false;$('chNum').textContent=`Tutorial · step ${TUT.i+1} of ${TSTEPS.length}`;$('chTitle').textContent=st[0];$('chGoal').textContent=st[1];$('chProg').textContent='';$('chTime').textContent='';$('chBar').style.width=Math.round(TUT.i/TSTEPS.length*100)+'%';$('chHint').hidden=true;$('chRestart').textContent='Skip step'}
+function tutTick(){const st=TSTEPS[TUT.i];let ok=false;try{ok=st&&st[2](TUT.ref)}catch(e){}if(ok){TUT.i++;toast('✓ '+st[0]);tutStep()}}
+function endTutorial(){TUT.on=false;$('chHud').hidden=true;$('chRestart').textContent='Restart'}
+$('hTut').onclick=startTutorial;
+
+/* demo */
+let demoI=-1,demoTimer=0;
+function startDemo(){leaveHome();countPlay();setMode('demo');$('demoCap').hidden=false;demoI=-1;nextDemo()}
+function nextDemo(){clearTimeout(demoTimer);demoI=(demoI+1)%DEMO.length;const [id,t,x,f]=DEMO[demoI];CH.loading=true;loadScen(id);CH.loading=false;setView('normal');setPaused(false);if(f)f();
+  $('demoStep').textContent=`Demo · ${demoI+1} of ${DEMO.length}`;$('demoTitle').textContent=t;$('demoText').textContent=x;demoTimer=setTimeout(nextDemo,12000)}
+function stopDemo(quiet){clearTimeout(demoTimer);if(demoI<0&&quiet)return;demoI=-1;$('demoCap').hidden=true;setMode('');if(!quiet)showHome()}
+$('hWatch').onclick=startDemo;$('demoExit').onclick=()=>stopDemo();$('demoNext').onclick=nextDemo;
+
+/* main loop */
+let last=performance.now(),uiT=0,achAcc=0,achT=0,renderMs=4,stepMs=1;S.achieved=1;
+function frame(now){const dtR=Math.min(0.1,(now-last)/1000);last=now;camKeys(dtR);
+  try{
+    if(!S.paused){const want=S.speed*dtR,step=SIM.stepSize(S.speed),t0=performance.now(),budget=clamp((SIM.budget||12.5)-renderMs,2,9);let done=0;
+      while(done<want-1e-12){const el=performance.now()-t0;if(el+stepMs*0.9>budget&&done>0)break;const s0=performance.now(),d=Math.min(step,want-done);SIM.step(d);S.t+=d;done+=d;stepMs=stepMs*0.8+(performance.now()-s0)*0.2}
+      achAcc+=done}
+    achT+=dtR;if(achT>=0.5){S.achieved=achAcc/achT;achAcc=0;achT=0}
+    if(SIM.frame)SIM.frame(dtR);
+    if(S.follow&&S.sel&&SIM.selPos){const p=SIM.selPos(S.sel);if(p){cam.x=lerp(cam.x,p[0],Math.min(1,dtR*6));cam.y=lerp(cam.y,p[1],Math.min(1,dtR*6));clampCam()}}
+    const r0=performance.now();ctx.setTransform(DPR,0,0,DPR,0,0);SIM.render(ctx,now);renderMs=renderMs*0.85+(performance.now()-r0)*0.15;
+    uiT+=dtR;if(uiT>0.25){uiT=0;updateHud()}
+  }catch(err){console.error('['+SIM.name+']',err)}
+  requestAnimationFrame(frame)}
+function deselect(){S.sel=null;S.follow=false;if(SIM.selChanged)SIM.selChanged()}
+function deselBtn(){const p=$('pane-insp');if(!p)return;let b=$('kitDesel');if(!b){b=document.createElement('button');b.id='kitDesel';b.className='btn';b.textContent='✕ Stop inspecting';b.onclick=deselect;p.insertBefore(b,p.firstChild)}b.hidden=!S.sel}
+function updateHud(){deselBtn();measureHud();const st=SIM.stats(),box=$('stats');if(box.children.length!==st.length){box.textContent='';for(const [k] of st){const d=document.createElement('div');d.className='stat';d.innerHTML='<span class="k"></span><span class="v"></span>';d.children[0].textContent=k;box.appendChild(d)}}
+  st.forEach(([k,v],i)=>{box.children[i].children[1].textContent=v});$('dateTxt').textContent=SIM.dateTxt();$('dateSub').textContent=SIM.dateSub?SIM.dateSub():'';updateRate();SIM.hud();chTick();
+  if(document.visibilityState==='visible'&&$('home').hidden)PROG.secs=(PROG.secs||0)+0.25}
+addEventListener('resize',resize);addEventListener('pagehide',saveProg);
+resize();buildRail();buildSpeeds();buildScen();if(SIM.init)SIM.init();setSpeed(SIM.defSpeed);setTool('select');updateAcctUI();gCount('get');showHome();requestAnimationFrame(frame);
+
+/* ===== Your worlds: Free play keeps a list of saved worlds. Create world, carry on later, Save & exit while playing. =====
+   A world is saved by walking every piece of the game's state (listed at build time in __STATE_NAMES), keeping shared
+   references, typed arrays, Sets and Maps, then squeezing it with gzip into the browser's IndexedDB. */
+(function(){
+  const GAME=SIM.id,NAMES=(typeof __STATE_NAMES!=='undefined'?__STATE_NAMES:[]).filter(n=>!/^(SIM|TB|SCENS|SCENLIST|LC|SC|SC3|TEX|LCL|LCS|CL|VIEW|JOB|DETS|DET|PARTS|FX|HOVER|DRAG|DRAGR|TOOLD|INSPK|BPATH|ACTX|MODE|off|ox|img|vOff|vx|vImg|bOff|bx|bImg|sig|SEAG|SPC|BPREV)$/.test(n));
+  const geval=eval;const get=n=>{try{return geval(n)}catch(e){return undefined}};
+  /* ---------- turning the world into data and back ---------- */
+  const TA={Float32Array,Float64Array,Int8Array,Int16Array,Int32Array,Uint8Array,Uint16Array,Uint32Array,Uint8ClampedArray};
+  const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)};
+  const unb64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+  function pack(roots){const ids=new Map(),objs=[];const bad=v=>typeof v==='function'||(typeof Node!=='undefined'&&v instanceof Node)||(typeof CanvasRenderingContext2D!=='undefined'&&v instanceof CanvasRenderingContext2D)||(typeof ImageData!=='undefined'&&v instanceof ImageData)||(typeof AudioContext!=='undefined'&&v instanceof AudioContext);
+    function enc(v){if(v===null||typeof v==='boolean'||typeof v==='string')return v;if(typeof v==='number')return Number.isFinite(v)?v:{$n:String(v)};if(v===undefined)return{$u:1};if(bad(v))return{$u:1};if(typeof v!=='object')return{$u:1};
+      if(ids.has(v))return{$r:ids.get(v)};const id=objs.length;ids.set(v,id);objs.push(null);let o;
+      const tn=Object.keys(TA).find(k=>v instanceof TA[k]);
+      if(tn)o={$t:tn,d:b64(new Uint8Array(v.buffer,v.byteOffset,v.byteLength))};
+      else if(Array.isArray(v))o={$a:v.map(enc)};else if(v instanceof Set)o={$s:[...v].map(enc)};else if(v instanceof Map)o={$m:[...v].map(([k,x])=>[enc(k),enc(x)])};
+      else{const p={};for(const k of Object.keys(v)){if(bad(v[k]))continue;p[k]=enc(v[k])}o={$o:p}}objs[id]=o;return{$r:id}}
+    const out={};for(const n of Object.keys(roots))out[n]=enc(roots[n]);return{objs,roots:out}}
+  function unpack(P){const live=new Array(P.objs.length);
+    function make(i){if(live[i]!==undefined)return live[i];const o=P.objs[i];let v;
+      if(o.$t){const u=unb64(o.d);v=new TA[o.$t](u.buffer,0,u.byteLength/TA[o.$t].BYTES_PER_ELEMENT);live[i]=v;return v}
+      if(o.$a){v=[];live[i]=v;for(const x of o.$a)v.push(dec(x));return v}if(o.$s){v=new Set();live[i]=v;for(const x of o.$s)v.add(dec(x));return v}
+      if(o.$m){v=new Map();live[i]=v;for(const [k,x] of o.$m)v.set(dec(k),dec(x));return v}v={};live[i]=v;for(const k of Object.keys(o.$o))v[k]=dec(o.$o[k]);return v}
+    function dec(x){if(x===null||typeof x!=='object')return x;if(x.$u)return undefined;if(x.$n)return Number(x.$n);if(x.$r!==undefined)return make(x.$r);return x}
+    const r={};for(const n of Object.keys(P.roots))r[n]=dec(P.roots[n]);return r}
+  // put a saved value back: reassign `let` variables; for `const` ones, refill the existing object in place
+  function restoreInto(name,val){const cur=get(name);if(cur===undefined&&val===undefined)return;
+    window.__wv=val;try{geval(name+'=window.__wv');return}catch(e){}
+    if(cur&&val&&typeof cur==='object'){const tn=Object.keys(TA).find(k=>cur instanceof TA[k]);
+      if(tn){if(val.length===cur.length)cur.set(val);return}if(Array.isArray(cur)&&Array.isArray(val)){cur.length=0;for(const x of val)cur.push(x);return}
+      if(cur instanceof Set&&val instanceof Set){cur.clear();val.forEach(x=>cur.add(x));return}if(cur instanceof Map&&val instanceof Map){cur.clear();val.forEach((x,k)=>cur.set(k,x));return}
+      for(const k of Object.keys(val)){const c=cur[k];if(c&&typeof c==='object'&&Object.keys(TA).some(t=>c instanceof TA[t])&&val[k]&&val[k].length===c.length)c.set(val[k]);else if(typeof c!=='function')try{cur[k]=val[k]}catch(e){}}}}
+  async function gz(str){try{const s=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));return 'gz:'+b64(new Uint8Array(await new Response(s).arrayBuffer()))}catch(e){return str}}
+  async function ungz(s){if(!s.startsWith('gz:'))return s;const st=new Blob([unb64(s.slice(3))]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(st).text()}
+  function snapshot(){const roots={};for(const n of NAMES){const v=get(n);if(v!==undefined&&typeof v!=='function')roots[n]=v}
+    roots.__S={t:S.t,scen:S.scen,view:S.view,speedI:S.speedI,status:S.status,brush:S.brush};roots.__cam={x:cam.x,y:cam.y,z:cam.z};return pack(roots)}
+  function apply(P){const r=unpack(P);for(const n of Object.keys(r)){if(n==='__S'||n==='__cam')continue;restoreInto(n,r[n])}
+    const s=r.__S||{};S.t=s.t||0;S.scen=s.scen;if(s.status)S.status=s.status;if(s.brush)S.brush=s.brush;S.sel=null;S.follow=false;
+    // rebuild anything drawn from the world
+    for(const f of ['dirtyImg','dirtyClim','DIRTY','VDIRTY','BDIRTY'])try{geval(f+'=true')}catch(e){}
+    try{if(typeof VIEW!=='undefined'&&VIEW){VIEW.key='';VIEW.ready=null;VIEW.job=null}}catch(e){}
+    try{if(typeof SEAG!=='undefined'){geval('SEAG=null;SPC=new Map()')}}catch(e){}
+    for(const f of ['routes','syncPanel','syncWorldUI','computeStats','countPlates'])try{const fn=get(f);if(typeof fn==='function')fn()}catch(e){}
+    if(typeof SIM.afterRestore==='function')try{SIM.afterRestore()}catch(e){}
+    if(s.view)try{setView(s.view)}catch(e){}if(s.speedI!=null)setSpeed(s.speedI);if(r.__cam){cam.x=r.__cam.x;cam.y=r.__cam.y;cam.z=r.__cam.z;try{clampCam()}catch(e){}}}
+  /* ---------- storage: IndexedDB on this device (localStorage if that is unavailable) ---------- */
+  let dbp=null;const db=()=>dbp||(dbp=new Promise((ok,no)=>{try{const r=indexedDB.open('sim_worlds',1);r.onupgradeneeded=()=>{const s=r.result.createObjectStore('worlds',{keyPath:'id'});s.createIndex('game','game')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}));
+  const tx=async(mode,fn)=>{const d=await db();return new Promise((ok,no)=>{const t=d.transaction('worlds',mode),st=t.objectStore('worlds');const q=fn(st);t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)})};
+  const LSK='sim_worlds_'+GAME;const lsAll=()=>{try{return JSON.parse(localStorage.getItem(LSK)||'[]')}catch(e){return[]}};const lsPut=a=>{try{localStorage.setItem(LSK,JSON.stringify(a));return true}catch(e){return false}};
+  async function listWorlds(){try{const all=await tx('readonly',st=>st.index('game').getAll(GAME));return(all||[]).map(({data,...m})=>m).sort((a,b)=>b.updated-a.updated)}catch(e){return lsAll().map(({data,...m})=>m).sort((a,b)=>b.updated-a.updated)}}
+  async function getWorld(id){try{return await tx('readonly',st=>st.get(id))}catch(e){return lsAll().find(w=>w.id===id)}}
+  async function putWorld(w){try{await tx('readwrite',st=>st.put(w));return true}catch(e){const a=lsAll().filter(x=>x.id!==w.id);a.push(w);return lsPut(a)}}
+  async function delWorld(id){try{await tx('readwrite',st=>st.delete(id))}catch(e){lsPut(lsAll().filter(w=>w.id!==id))}}
+  /* ---------- the current world ---------- */
+  let CUR=null,saving=false,lastSave=0;window.WORLDSAVES=0;
+  function thumb(){try{const c=document.getElementById('world')||document.getElementById('sky'),t=document.createElement('canvas'),k=240/Math.max(c.width,c.height);t.width=Math.round(c.width*k);t.height=Math.round(c.height*k);t.getContext('2d').drawImage(c,0,0,t.width,t.height);return t.toDataURL('image/jpeg',.7)}catch(e){return''}}
+  async function saveNow(quietly){if(!CUR||saving)return;saving=true;try{const data=await gz(SIM.saveState?SIM.saveState():JSON.stringify(snapshot()));CUR.data=data;CUR.updated=Date.now();CUR.scen=S.scen;CUR.thumb=thumb();CUR.t=S.t;
+      const ok=await putWorld(CUR);lastSave=Date.now();WORLDSAVES++;if(!ok&&!quietly)toast('Could not save: this browser is out of storage space');else if(!quietly)toast('World saved')}catch(e){if(!quietly)toast('Could not save this world')}saving=false}
+  setInterval(()=>{if(CUR&&$('home').hidden&&!document.body.classList.contains('mDemo')&&Date.now()-lastSave>(SIM.saveEvery||30000))saveNow(true)},5000);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&CUR)saveNow(true)});addEventListener('pagehide',()=>{if(CUR)saveNow(true)});
+  /* ---------- screens ---------- */
+  const css=document.createElement('style');css.textContent=`#hWorldsView .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .wcard{display:flex;flex-direction:column;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}.wcard .wth{aspect-ratio:16/10;background:#000 center/cover no-repeat;cursor:pointer}
+  .wcard .wb{padding:9px 10px;display:flex;flex-direction:column;gap:3px}.wcard b{font-family:var(--f-display);font-weight:500;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wcard small{color:var(--dim);font-size:12px}
+  .wcard .wa{display:flex;gap:4px;padding:0 8px 8px}.wcard .wa .btn{flex:1;padding:5px 4px;font-size:12px}.wnew{display:grid;place-items:center;min-height:150px;border:2px dashed var(--line-strong);border-radius:12px;cursor:pointer;color:var(--ink);background:none;font:600 15px var(--f-body)}.wnew:hover{border-color:var(--cool)}
+  .wform{display:grid;gap:10px;margin-top:10px}.wform input{font:16px var(--f-body);color:var(--ink);background:rgba(0,0,0,.3);border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px}.wscens{display:grid;gap:6px}.wscens button{text-align:left;padding:9px 11px}.wscens button[aria-pressed="true"]{border-color:var(--cool);background:rgba(var(--accRGB),.14)}
+  #exitWorld{display:none}body.inWorld #exitWorld{display:inline-flex}.wxs{display:none}@media (max-width:760px){.wxl{display:none}.wxs{display:inline}}.wempty{color:var(--dim);font-size:14px;margin:4px 0 10px}`;document.head.appendChild(css);
+  const home=$('home'),view=document.createElement('div');view.id='hWorldsView';view.className='hview';view.hidden=true;
+  view.innerHTML=`<div class="hbar"><button class="btn ghost hback" id="wBack">← Back</button><h2>Your worlds</h2></div><p class="wempty" id="wEmpty"></p><div class="wgrid" id="wGrid"></div><div id="wCreate" hidden></div>`;
+  const chal=$('hChalView');chal.parentElement.insertBefore(view,chal);
+  const ohv=homeView;homeView=function(v){view.hidden=v!=='hWorldsView';if(v==='hWorldsView'){for(const id of ['hMain','hChalView','hDemoView'])$(id).hidden=true;renderWorlds();return}ohv(v)};
+  $('wBack').onclick=()=>homeView('hMain');
+  const ago=t=>{const s=(Date.now()-t)/1000;return s<60?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':new Date(t).toLocaleDateString()};
+  const scenName=id=>{const s=(SIM.scens||[]).find(x=>x.id===id);return s?s.name:''};
+  async function renderWorlds(){$('wCreate').hidden=true;const g=$('wGrid');g.hidden=false;g.textContent='';const ws=await listWorlds();
+    $('wEmpty').textContent=ws.length?'Pick up where you left off, or start something new.':'You have no worlds yet. Create your first one!';
+    const nb=document.createElement('button');nb.className='wnew';nb.id='wNew';nb.textContent='+ Create world';nb.onclick=showCreate;g.appendChild(nb);
+    for(const w of ws){const c=document.createElement('div');c.className='wcard';c.innerHTML='<div class="wth"></div><div class="wb"><b></b><small></small></div><div class="wa"><button class="btn primary">Play</button><button class="btn">Rename</button><button class="btn">Delete</button></div>';
+      if(w.thumb)c.querySelector('.wth').style.backgroundImage=`url(${w.thumb})`;c.querySelector('b').textContent=w.name;c.querySelector('small').textContent=`${scenName(w.scen)} · ${ago(w.updated)}`;
+      const [pl,rn,dl]=c.querySelectorAll('.wa .btn');c.querySelector('.wth').onclick=pl.onclick=()=>playWorld(w.id);
+      rn.onclick=async()=>{const n=prompt('New name for this world:',w.name);if(n&&n.trim()){const full=await getWorld(w.id);full.name=n.trim().slice(0,40);await putWorld(full);renderWorlds()}};
+      dl.onclick=async()=>{if(confirm(`Delete "${w.name}"? This cannot be undone.`)){await delWorld(w.id);renderWorlds()}};g.appendChild(c)}}
+  function showCreate(){const f=$('wCreate');$('wGrid').hidden=true;f.hidden=false;let pick=SIM.freeScen||SIM.home;
+    f.innerHTML=`<div class="wform"><label class="k">World name</label><input id="wName" maxlength="40" value="My ${SIM.name} world"><label class="k">Start from</label><div class="wscens" id="wScens"></div><div class="actions"><button class="btn primary" id="wGo">Create world</button><button class="btn" id="wCancel">Cancel</button></div></div>`;
+    const L=$('wScens');for(const s of SIM.scens||[]){const b=document.createElement('button');b.className='btn';b.setAttribute('aria-pressed',s.id===pick);b.innerHTML='<b></b><br><small></small>';b.querySelector('b').textContent=s.name;b.querySelector('small').textContent=s.desc||'';b.onclick=()=>{pick=s.id;L.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))};L.appendChild(b)}
+    $('wCancel').onclick=renderWorlds;$('wGo').onclick=()=>{const name=($('wName').value||'').trim()||`My ${SIM.name} world`;createWorld(name,pick)};$('wName').select()}
+  async function createWorld(name,scen){CUR={id:GAME+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),game:GAME,name:name.slice(0,40),scen,created:Date.now(),updated:Date.now()};
+    __startFree(scen);document.body.classList.add('inWorld');await saveNow(true);chEv('worldnew',{});toast(`Created "${CUR.name}"`)}
+  async function playWorld(id){const w=await getWorld(id);if(!w)return;toast('Loading…');__startFree(w.scen);try{const txt=await ungz(w.data);if(SIM.loadState){if(SIM.loadState(txt)===false)throw new Error('load')}else apply(JSON.parse(txt));CUR=w;document.body.classList.add('inWorld');lastSave=Date.now();toast(`Welcome back to "${w.name}"`)}catch(e){CUR=w;document.body.classList.add('inWorld');toast('Could not load the saved state, so this world starts fresh')}}
+  // Free play opens Your worlds
+  const __startFree=scen=>{if(SIM.start){SIM.start(scen||SIM.freeScen||SIM.home);return}if(typeof MODE!=='undefined')try{geval("MODE='free'")}catch(e){}leaveHome();loadScen(scen||SIM.freeScen||SIM.home);setSpeed(SIM.defSpeed);countPlay()};
+  const hf0=$('hFree'),hf=hf0.cloneNode(true);hf0.replaceWith(hf);hf.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();if(typeof MODE!=='undefined')try{geval("MODE='free'")}catch(x){}homeView('hWorldsView')};
+  const hd=hf.querySelector('.hd');if(hd&&!/saved/i.test(hd.textContent))hd.textContent=hd.textContent.replace(/\.?\s*$/,'')+'. Your worlds are saved, so you can carry on later.';
+  // Save & exit while playing a world; Home also saves first
+  const ex=document.createElement('button');ex.id='exitWorld';ex.className='btn';ex.title='Save this world and go back to Your worlds';ex.innerHTML='<span class="wxl">Save &amp; e</span><span class="wxs">E</span>xit';
+  const hb=$('homeBtn');hb.parentElement.insertBefore(ex,hb);
+  ex.onclick=async()=>{await saveNow(true);const keep=CUR;CUR=null;document.body.classList.remove('inWorld');showHome();homeView('hWorldsView');if(keep)toast(`Saved "${keep.name}"`)};
+  const osh=showHome;showHome=function(){if(CUR){saveNow(true);CUR=null;document.body.classList.remove('inWorld')}osh()};
+  hb.onclick=()=>showHome();
+  // a changed town/sea/world inside a saved world keeps saving into the same world
+  {const m=location.hash.match(/^#world=([\w-]+)/);if(m){setTimeout(()=>{history.replaceState(null,'',location.pathname+location.search);playWorld(m[1])},400)}}
+  window.WORLD={save:saveNow,list:listWorlds,current:()=>CUR,fp:()=>SIM.saveState?SIM.saveState().length:snapshot().objs.length};
+  TSTEPS.push(['Your worlds','Free play keeps your worlds: press Free play on the home page to see them, or Create world to start a new one. While playing a world, Save & exit (next to Home) keeps it for later.',r=>Date.now()-r.t0>6000,r=>{r.t0=Date.now()}]);
+})();
+
+/* ===== account helpers shared by every simulator: a sign-out button on the home page while signed in ===== */
+{const h=$('hAcctBtn');if(h&&!$('hOut')){const b=document.createElement('button');b.className='chip';b.id='hOut';b.textContent='↩ Sign out';b.title='Sign out (back to guest)';b.onclick=()=>switchAcc('guest');h.after(b)}
+  setInterval(()=>{const b=$('hOut');if(b)b.hidden=!curAcc()},500)}
+
+</script>
+</body>
+</html>

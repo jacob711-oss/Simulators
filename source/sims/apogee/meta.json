@@ -1,0 +1,10 @@
+{"id":"apogee","icon":"🚀","name":"Apogee","tag":"Build rockets, run a space agency, reach orbit and land on the Moon","url":"https://jacob711-oss.github.io/Simulators/barycenter/rockets/","color":"#7fb2ff","nohub":1,
+ "title":"Apogee",
+ "theme":"--voidRGB:3,4,11;--deepRGB:8,10,22;--accRGB:127,178,255;--lineRGB:160,190,255;--panel:rgba(8,10,22,.9);--ink:#eef3ff;--ink2:#cfdaf2;--dim:#8a98b8;",
+ "tabs":[["build","Rocket"],["flight","Flight"],["agency","Agency"]],
+ "js":["sim.js","career.js","draw.js","main.js","content.js"],
+ "text":{"NAME_A":"Apo","NAME_B":"gee","SUB":"A rocket and space agency simulator, part of Barycenter","TAG":"Build rockets from parts, run your own space agency, fly to orbit with real gravity, plan burns, visit Luna and bring your crew home",
+  "FREE":"Your space agency: build, launch, earn money and science, unlock parts",
+  "WATCH":"The autopilot flies a rocket from the launch pad to orbit",
+  "FOOT":"An orbit is falling around a world so fast that you keep missing the ground.",
+  "FIND":"Find a part, world or start…","SCEN_LABEL":"Starts","SCEN_ONE":"start","DATE_K":"Mission","HINT":"Space stages · W/S throttle · A/D steer · M map","CANVAS_LABEL":"Space around Terra and Luna"}}
