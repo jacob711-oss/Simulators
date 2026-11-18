@@ -100,8 +100,11 @@ import subprocess
 subprocess.run(['node','-e',"const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();for(const s of [192,512]){const p=await b.newPage({viewport:{width:s,height:s}});await p.goto('file://"+OG+"/logo.svg');await p.setViewportSize({width:s,height:s});await p.evaluate(s=>{const v=document.querySelector('svg');v.setAttribute('width',s);v.setAttribute('height',s);document.documentElement.style.margin=0},s);await p.screenshot({path:'"+OG+"/icon'+s+'.png',omitBackground:true});await p.close()}await b.close()})()"],check=True)
 json.dump({"name":"Our Simulations!","short_name":"Simulators","start_url":"./","scope":"./","display":"standalone","background_color":"#06080f","theme_color":"#06080f",
   "description":"Free simulators that run in your browser.","icons":[{"src":"simulations/og/icon192.png","sizes":"192x192","type":"image/png"},{"src":"simulations/og/icon512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]},open(os.path.join(SITE,'manifest.webmanifest'),'w'),indent=1)
+TAB_ICON=("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' width='64' height='64'><rect x='2' y='2' width='60' height='60' rx='14' fill='#1f2026'/>"
+  "<g transform='rotate(-28 32 32)' fill='none' stroke='#ec6a3c' stroke-width='3.6' stroke-linecap='round'><path d='M10 32a22 7 0 0 1 44 0'/>"
+  "<circle cx='32' cy='32' r='12.5' fill='#1f2026'/><path d='M54 32a22 7 0 0 1-44 0'/></g></svg>")
 def favicon(letter,colour):
-    svg=logo_svg(colour)
+    svg=TAB_ICON
     return 'data:image/svg+xml,'+svg.replace('#','%23').replace('<','%3C').replace('>','%3E').replace('"',"'")
 SHARE_JS="""<script>(()=>{const go=()=>{if(document.getElementById('shareBtn'))return;const at=document.getElementById('hSims')||document.querySelector('.chips');if(!at)return;
 const b=document.createElement(at.id==='hSims'?'button':'a');b.id='shareBtn';b.className=at.id==='hSims'?'chip':'count';b.href='javascript:void 0';b.type='button';b.innerHTML='<svg width="13" height="13" viewBox="0 0 20 20" style="display:inline-block;vertical-align:-2px;margin-right:5px"><circle cx="15" cy="4.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="15" cy="15.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7.2 8.8l5.6-3M7.2 11.2l5.6 3" stroke="currentColor" stroke-width="1.7"/></svg>Share';
