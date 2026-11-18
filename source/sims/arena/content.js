@@ -19,6 +19,8 @@ CC(2.5,{t:'Love game',g:'Win a game of tennis.',hint:'Move with the arrows or by
 CC(2.6,{t:'Shuttle run',g:'Win 5 points in badminton.',hint:'Stay near the middle of your court; tap the back corners to aim.',scen:'badminton',setup:()=>{play();G.sk=[85,55]},check:need('pt0',5,'points'),stars:byTime(90,240)});
 CC(2.7,{t:'Ping pong',g:'Win 3 points in table tennis.',hint:'Stand back from the table. Space hits harder but riskier.',scen:'tabletennis',setup:()=>{play();G.sk=[85,55]},check:need('pt0',3,'points'),stars:byTime(60,180)});
 CC(2.8,{t:'Spike it',g:'Your volleyball team wins 5 points.',hint:'Tap the far court to choose where your spikes land.',scen:'volleyball',setup:()=>{play();G.sk=[80,60]},check:need('pt0',5,'points'),stars:byTime(90,240)});
+CC(1.25,{t:'Your club',g:'Rename your team, then score a goal with it.',hint:'Type a name in the Rename box in the Match tab and press Rename. Then go and score!',scen:'football',setup:()=>{play();G.sk=[90,40]},check:()=>{const r=evc('rename')>0,g=evc('youGoal')>0;return[r&&g,(r?0.5:0)+(g?0.5:0),r?(g?'Done':'Named: now score'):'Rename your team first']},stars:byTime(90,240)});
+CC(2.95,{t:'Hat-trick',g:'Score 3 football goals yourself in one match.',hint:'Stay as your striker (do not switch) and shoot from close range, aiming away from the keeper.',scen:'football',setup:()=>{play();G.sk=[95,35]},check:need('youGoal',3,'goals'),fail:()=>M.over&&evc('youGoal')<3?'The final whistle went':'',stars:byTime(240,480)});
 CC(3,{t:'Par for the course',g:'Make par or better on a golf hole.',hint:'Drag back from your ball and let go. Watch the yellow circle: that is where it lands.',scen:'golf',setup:()=>{play();G.sk=[85,70]},check:need('parOrBetter0',1,'holes'),stars:byTime(120,300)});
 CC(3.1,{t:'Birdie',g:'Finish a golf hole one under par.',hint:'Par 3 holes are your best chance. Mind the wind arrow by the tee.',scen:'golf',setup:()=>{play();G.sk=[90,70]},check:()=>{const v=evc('birdie0');return[v>=1,v,`${v} of 1 birdies`]},stars:byTime(180,420)});
 CC(3.2,{t:'Fastest in the heat',g:'Win a 100 m sprint.',hint:'Wait for the gun (tapping early is a false start), then tap or press keys as fast as you can.',scen:'sprint',setup:()=>{play()},check:need('youWin',1,'wins'),stars:byTime(30,90)});
@@ -34,6 +36,8 @@ const TUTAT={};
 TSTEPS.push(
  ['Look around','Right-drag (or two fingers) to move around the stadium. Scroll or pinch to zoom.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
  ['Join the game','Pick 🎮 Play. The player with the yellow ring is you.',()=>S.tool==='ctrl'&&G.ctrl],
+ ['Your team','In the Match tab, pick a club for your team (or the other team). Every club has its own kit.',did('kit'),base('kit')],
+ ['Phone controls','On a phone or tablet, use the joystick to run and the Shoot, Pass and Switch buttons. (On a computer this step finishes by itself.)',r=>!TOUCH||evc('padUse')>r.n,base('padUse')],
  ['Run','Hold or drag on the pitch to run there, or use the arrow keys or WASD.',r=>DRAG.taps>r.n+2,r=>{r.n=DRAG.taps}],
  ['Pass','When you have the ball, tap a teammate or press E to pass.',did('youPass'),base('youPass')],
  ['Switch player','You stay as the same player until you choose. Press 🔁 Switch player (or Q) to become the teammate nearest the ball.',did('switched'),base('switched')],
@@ -45,6 +49,8 @@ TSTEPS.push(
  ['Kick the ball','Pick 🦶 Kick ball and drag across the pitch: the ball flies that way.',did('kicked'),base('kicked')],
  ['Heat map','Switch to the Heat map view to see where each team has been.',()=>S.view==='heat'],
  ['Stats','Open the Stats tab for possession, shots and every player.',r=>(CNT.tab_stats||0)>r.n,r=>{r.n=CNT.tab_stats||0}],
+ ['Commentary','Read the live commentary in the Match tab. Wait for the commentator to call the next big moment.',did('comm'),base('comm')],
+ ['Sound','Press Sound in the Match tab to turn the crowd, whistles and ball sounds off, then on again.',r=>evc('sound')>r.n+1,base('sound')],
  ['Basketball','Now basketball. Dribble towards the hoop on the right, then press Space or tap the hoop to shoot.',did('youShot'),goSp('basketball','youShot')],
  ['Ice hockey','The puck slides on the ice and bounces off the boards. Take a shot at the net on the right.',did('youShot'),goSp('hockey','youShot')],
  ['Handball','Only the keepers may go into the orange goal areas. Pass the ball to a teammate.',did('youPass'),goSp('handball','youPass')],

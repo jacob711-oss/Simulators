@@ -6,7 +6,7 @@ const NM2=['Hart','Vale','Stone','Brook','Fox','Reed','Lake','Frost','Moss','Ker
 let SP='football',P=[],PID=0,CTRL=-1;
 let B={x:CX,y:CY,z:0,vx:0,vy:0,vz:0,own:-1,lt:0,lp:-1,kt:0,bn:0,fly:null,sv:-1,shot:0};
 let M={sc:[0,0]};
-let TEAMS=[{nm:'Red Comets',sh:'RED',col:'#ff5a4e',dk:'#6e1a14'},{nm:'Blue Harbour',sh:'BLU',col:'#3fa2ff',dk:'#0f3a66'}];
+let TEAMS=[{nm:'Red Comets',sh:'RED',col:'#ff5a4e',dk:'#6e1a14',tr:'#ffffff'},{nm:'Blue Harbour',sh:'BLU',col:'#3fa2ff',dk:'#0f3a66',tr:'#ffffff'}];
 const G={autoSw:false,sk:[70,70],tac:1,ctrl:true,loft:false,overs:3,wind:0,club:'auto',gcam:true,auto:true};
 let EVC={};
 let HEAT=[new Float32Array(56*37),new Float32Array(56*37)],HIST=[];
@@ -21,7 +21,7 @@ const gauss=()=>{let u=0;for(let i=0;i<4;i++)u+=Math.random();return (u-2)*1.2};
 const SC={};const ENG={};
 function setRect(){const s=sc();FR={x0:CX-s.L/2,x1:CX+s.L/2,y0:CY-s.Wd/2,y1:CY+s.Wd/2}}
 function mkPlayer(t,role,x,y,o){const s=sc(),sk=clamp(G.sk[t]/100+rr(-.08,.08),.15,1);
-  return Object.assign({id:PID++,t,role,n:0,nm:pick(NM1)+' '+pick(NM2),x,y,vx:0,vy:0,fx:t?-1:1,fy:0,tx:x,ty:y,mul:0,sk,spd:(s.spd||8)*(0.88+0.2*sk)*rr(.96,1.04),st:1,dist:0,tch:0,pts:0,pas:0,tk:0,down:0,cd:rr(0,.3),h:s.ph||2,sw:0},o||{})}
+  return Object.assign({id:PID++,t,role,n:0,nm:pick(NM1)+' '+pick(NM2),skin:pick(['#f3cfb3','#e3b28a','#c68e5e','#9a6440','#6b4428']),hair:pick(['#2a1d14','#5a3a1e','#c9a15a','#1a1a1a','#8a4a22']),x,y,vx:0,vy:0,fx:t?-1:1,fy:0,tx:x,ty:y,mul:0,sk,spd:(s.spd||8)*(0.88+0.2*sk)*rr(.96,1.04),st:1,dist:0,tch:0,pts:0,pas:0,tk:0,down:0,cd:rr(0,.3),h:s.ph||2,sw:0},o||{})}
 function newMatch(){return{sc:[0,0],clk:0,per:1,state:'play',dt:0,rs:null,poss:[0,0],shots:[0,0],pas:[0,0],tk:[0,0],msg:'',over:false,overT:0}}
 function addScore(t,n,label,p,x,y){M.sc[t]+=n;if(p){p.pts+=n}callout(label,x??B.x,y??B.y-4,TEAMS[t].col);burst(x??B.x,y??B.y,TEAMS[t].col);
   ev('score'+t,n);if(t===0&&isYou(p))ev('youScore',n);chEv('score',{t,n,sp:SP,you:isYou(p)});HIST.push({t:S.t,a:M.sc[0],b:M.sc[1]})}
@@ -44,7 +44,7 @@ addEventListener('keydown',e=>{if(!ctrlOn())return;const t=e.target.tagName;if(t
   if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d',' ','e','l','q'].includes(k)){e.preventDefault();e.stopImmediatePropagation();if(!DRAG.keys.has(k)){DRAG.keys.add(k);DRAG.idle=0;DRAG.taps++;if(k===' ')DRAG.act=1;else if(k==='e')DRAG.act=2;else if(k==='l')toggleLoft();else if(k==='q')DRAG.act=3}}},true);
 addEventListener('keyup',e=>DRAG.keys.delete(e.key.toLowerCase()),true);
 addEventListener('blur',()=>DRAG.keys.clear());
-function ctrlMove(){const k=DRAG.keys;let dx=0,dy=0;if(k.has('a')||k.has('arrowleft'))dx--;if(k.has('d')||k.has('arrowright'))dx++;if(k.has('w')||k.has('arrowup'))dy--;if(k.has('s')||k.has('arrowdown'))dy++;
+function ctrlMove(){if(DRAG.joy&&Math.hypot(DRAG.joy.dx,DRAG.joy.dy)>0.2){const d=Math.hypot(DRAG.joy.dx,DRAG.joy.dy);return{dx:DRAG.joy.dx/d,dy:DRAG.joy.dy/d}}const k=DRAG.keys;let dx=0,dy=0;if(k.has('a')||k.has('arrowleft'))dx--;if(k.has('d')||k.has('arrowright'))dx++;if(k.has('w')||k.has('arrowup'))dy--;if(k.has('s')||k.has('arrowdown'))dy++;
   if(dx||dy){const d=Math.hypot(dx,dy);return{dx:dx/d,dy:dy/d}}if(DRAG.ptr&&DRAG.ptr.hold)return{to:[DRAG.ptr.x,DRAG.ptr.y]};return null}
 function toggleLoft(){G.loft=!G.loft;toast(G.loft?'Lofted shots: the ball goes up in the air':'Ground shots: the ball stays low');syncPanel()}
 /* ---------- loading a sport ---------- */
@@ -67,15 +67,6 @@ function fillR(c,x0,y0,x1,y1,col){c.fillStyle=col;c.fillRect(sx(x0),sy(y0),(x1-x
 function stripes(c,col1,col2,n,vertical){const w=(FR.x1-FR.x0)/n;for(let i=0;i<n;i++)fillR(c,FR.x0+i*w,FR.y0,FR.x0+(i+1)*w,FR.y1,i%2?col1:col2)}
 function drawBall(c,x,y,z,r,col){const X=sx(x),Y=sy(y),R=Math.max(2,r*Z()*(1+z*0.015));c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.ellipse(X+lift(z)*0.25,Y,R*1.05,R*0.6,0,0,7);c.fill();
   const Yb=Y-lift(z);c.fillStyle=col||'#fff';c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1;c.beginPath();c.arc(X,Yb,R,0,7);c.fill();c.stroke();return[X,Yb]}
-function drawPlayer(c,p){const s=sc(),T=TEAMS[p.t],X=sx(p.x),Y=sy(p.y),R=Math.max(3,(s.pr||1.3)*Z());if(p.off)return;
-  c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(X+R*0.25,Y+R*0.35,R*1.05,R*0.65,0,0,7);c.fill();
-  if(p.down>0){c.fillStyle=T.col;c.beginPath();c.ellipse(X,Y,R*1.3,R*0.6,Math.atan2(p.fy,p.fx),0,7);c.fill();return}
-  if(s.tool){c.strokeStyle=s.tool;c.lineWidth=Math.max(1.5,R*0.25);c.beginPath();c.moveTo(X+p.fx*R*0.6-p.fy*R*0.7,Y+p.fy*R*0.6+p.fx*R*0.7);c.lineTo(X+p.fx*R*1.9-p.fy*R*0.9,Y+p.fy*R*1.9+p.fx*R*0.9);c.stroke()}
-  c.fillStyle=p.role==='GK'||p.role==='WK'||p.role==='CAT'?T.dk:T.col;c.strokeStyle=p.id===CTRL&&G.ctrl?'#ffe14a':'rgba(0,0,0,.65)';c.lineWidth=p.id===CTRL&&G.ctrl?Math.max(2,R*0.28):1.2;
-  c.beginPath();c.arc(X,Y,R,0,7);c.fill();c.stroke();c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.arc(X+p.fx*R*0.55,Y+p.fy*R*0.55,R*0.28,0,7);c.fill();
-  if(R>9){c.fillStyle='#fff';c.font=`700 ${Math.round(R*0.9)}px "IBM Plex Mono",monospace`;c.textAlign='center';c.textBaseline='middle';c.fillText(p.n,X,Y+1);c.textBaseline='alphabetic'}
-  if(p.id===CTRL&&G.ctrl){c.fillStyle='#ffe14a';c.beginPath();c.moveTo(X,Y-R-3);c.lineTo(X-5,Y-R-11);c.lineTo(X+5,Y-R-11);c.fill()}
-  if(S.sel&&S.sel.p===p.id){c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.arc(X,Y,R+5,0,7);c.stroke()}}
 function drawParts(c){for(const p of PARTS){const a=Math.max(0,1-p.age/ (p.k==='txt'?2.2:1));c.globalAlpha=a;
     if(p.k==='txt'){c.fillStyle=p.col;c.strokeStyle='rgba(0,0,0,.7)';c.lineWidth=4;c.font=`800 ${Math.round(clamp(Z()*3.2,18,44))}px Oxanium,sans-serif`;c.textAlign='center';const Y=sy(p.y)-p.age*30;c.strokeText(p.text,sx(p.x),Y);c.fillText(p.text,sx(p.x),Y)}
     else{c.strokeStyle=p.col;c.lineWidth=3;c.beginPath();c.arc(sx(p.x),sy(p.y),(1+p.age*8)*Z(),0,7);c.stroke()}}c.globalAlpha=1}
@@ -86,13 +77,13 @@ function drawHeat(c){if(!HEATC){HEATC=document.createElement('canvas');HEATC.wid
 function render(c,now){c.fillStyle='#0b0d12';c.fillRect(0,0,W,H);const E=ENG[sc().eng];crowd(c);if(E.field)E.field(c);else if(sc().field)sc().field(c);
   if(S.view==='heat')drawHeat(c);
   if(S.view==='tactics'){c.setLineDash([4,4]);for(const p of P){if(p.off)continue;line(c,[[p.x,p.y],[p.tx,p.ty]],TEAMS[p.t].col,0.12)}c.setLineDash([])}
-  E.draw(c,now);drawParts(c);
+  drawTrail(c);E.draw(c,now);drawParts(c);
   if(DRAG.mv&&DRAG.mv.kick){const k=DRAG.mv;c.setLineDash([6,5]);line(c,[[k.x0,k.y0],[k.x1,k.y1]],'#ffe14a',0.18);c.setLineDash([])}}
 /* ---------- panel ---------- */
 const SPORTLIST=()=>Object.keys(SC).map(id=>({id,name:SC[id].nm,desc:SC[id].desc}));
 function buildSportOpts(){const box=$('spOpts');if(!box)return;box.innerHTML=(ENG[sc().eng].opts||(()=>''))();box.querySelectorAll('[data-opt]').forEach(el=>{const f=()=>{ENG[sc().eng].opt(el.dataset.opt,el);syncPanel()};el.oninput=f;if(el.tagName==='BUTTON')el.onclick=f})}
 function syncPanel(){if(!$('sb'))return;const E=ENG[sc().eng];$('sb').innerHTML=E.sb();$('sk0V').textContent=G.sk[0];$('sk1V').textContent=G.sk[1];$('sk0L').textContent=TEAMS[0].nm+' skill';$('sk1L').textContent=TEAMS[1].nm+' skill';
-  $('ctrlBtn').textContent=G.ctrl?'On':'Off';if($('autoSwBtn')){$('autoSwBtn').textContent=G.autoSw?'On':'Off';$('autoSwBtn').setAttribute('aria-pressed',G.autoSw);$('swRow').hidden=sc().eng!=='inv'}$('ctrlBtn').setAttribute('aria-pressed',G.ctrl);$('ctrlL').textContent='You play for '+TEAMS[0].nm;
+  $('ctrlBtn').textContent=G.ctrl?'On':'Off';if($('autoSwBtn')){$('autoSwBtn').textContent=G.autoSw?'On':'Off';$('autoSwBtn').setAttribute('aria-pressed',G.autoSw);$('swRow').hidden=sc().eng!=='inv'}$('ctrlBtn').setAttribute('aria-pressed',G.ctrl);$('ctrlL').textContent='You play for '+TEAMS[0].nm;if($('kit0')){$('kit0').value=KITS.findIndex(k=>k.col===TEAMS[0].col);$('kit1').value=KITS.findIndex(k=>k.col===TEAMS[1].col);$('sndBtn').textContent=SND.on?'On':'Off';$('sndBtn').setAttribute('aria-pressed',SND.on)}
   document.querySelectorAll('[data-tac]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.tac===G.tac));$('spSel').value=SP;$('msg').textContent=M.msg||'';$('tacRow').hidden=!E.tactics;
   if(E.sync)E.sync()}
 function initPanel(){const sel=$('spSel');sel.innerHTML=Object.keys(SC).map(id=>`<option value="${id}">${SC[id].nm}</option>`).join('');sel.onchange=()=>{loadScen(sel.value);chEv('sport',{sp:sel.value});toast(SC[sel.value].nm)};
