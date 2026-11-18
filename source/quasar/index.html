@@ -11,7 +11,9 @@ body{background:radial-gradient(900px 500px at 50% -10%,#24164a 0%,transparent 6
 svg{display:block}
 /* sidebar of saved chats */
 aside{width:260px;flex:0 0 260px;background:rgba(8,10,20,.92);border-right:1px solid var(--line);display:flex;flex-direction:column;transition:transform .2s ease}
-aside .top{display:flex;gap:8px;padding:14px}aside .list{flex:1;overflow:auto;padding:0 8px 12px;display:flex;flex-direction:column;gap:2px}
+aside .top{display:flex;gap:8px;padding:14px}aside .chatq{margin:0 14px 10px;font:14px 'IBM Plex Sans',sans-serif;color:var(--ink);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.chatrow .ren,.chatrow .dl{opacity:0;background:none;border:0;color:var(--dim);cursor:pointer;padding:8px 4px;border-radius:8px}.chatrow:hover .ren,.chatrow:hover .dl,.chatrow.on .ren,.chatrow.on .dl{opacity:1}.chatrow .ren:hover,.chatrow .dl:hover{color:var(--ink)}
+aside .list{flex:1;overflow:auto;padding:0 8px 12px;display:flex;flex-direction:column;gap:2px}
 .chatrow{display:flex;align-items:center;gap:6px;border-radius:10px;padding:2px 2px 2px 10px}.chatrow:hover,.chatrow.on{background:rgba(155,123,255,.14)}
 .chatrow button.t{flex:1;min-width:0;text-align:left;background:none;border:0;color:var(--ink);font:14px 'IBM Plex Sans',sans-serif;padding:9px 0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chatrow .del{opacity:.0;background:none;border:0;color:var(--dim);cursor:pointer;padding:8px;border-radius:8px}.chatrow:hover .del,.chatrow.on .del{opacity:1}.chatrow .del:hover{color:#ff8a8a}
@@ -39,7 +41,9 @@ main{flex:1;overflow:auto;padding:20px 16px 8px;scroll-behavior:smooth}
 .bub pre{position:relative;background:#05070f;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto}.bub pre code{background:none;padding:0}
 .bub pre .cp{position:absolute;top:6px;right:6px;font:500 11px 'IBM Plex Mono',monospace;color:var(--dim);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 7px;cursor:pointer}
 .bub h3,.bub h4{margin:.7em 0 .3em;font-family:'Oxanium',sans-serif}.bub table{border-collapse:collapse;margin:.5em 0;font-size:14px}.bub td,.bub th{border:1px solid var(--line);padding:5px 8px}
+.mx{font-family:'IBM Plex Mono',monospace}.mxd{display:block;text-align:center;margin:.5em 0;overflow-x:auto}.bub pre code.hljs{background:none;padding:0}
 .caret::after{content:'';display:inline-block;width:8px;height:15px;margin-left:2px;vertical-align:-2px;background:var(--b);animation:bl 1s steps(2) infinite}
+.ued{align-self:flex-end;display:inline-flex;gap:5px;align-items:center;font:500 12px 'IBM Plex Mono',monospace;color:var(--dim);background:none;border:0;cursor:pointer;opacity:0;padding:3px 4px}.msg.me:hover .ued,.ued:focus{opacity:1}@media (hover:none){.ued{opacity:.7}}
 .tools{display:flex;gap:4px;flex-wrap:wrap}.tools button{display:inline-flex;align-items:center;gap:5px;font:500 12px 'IBM Plex Mono',monospace;color:var(--dim);background:none;border:1px solid transparent;border-radius:8px;padding:4px 7px;cursor:pointer}.tools button:hover{color:var(--ink);border-color:var(--line)}
 .follow{display:flex;gap:6px;flex-wrap:wrap}.follow button{font:13px 'IBM Plex Sans',sans-serif;color:var(--ink);background:rgba(155,123,255,.1);border:1px solid rgba(155,123,255,.35);border-radius:99px;padding:6px 12px;cursor:pointer}.follow button:hover{background:rgba(155,123,255,.2)}
 .media{margin-top:10px;display:grid;gap:10px}.media.grid4{grid-template-columns:1fr 1fr}
@@ -76,17 +80,27 @@ textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(
 .mic{background:rgba(255,255,255,.06);border:1px solid var(--line)}.mic.on{background:#c0455a;animation:pulse 1.2s infinite}@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(192,69,90,.25)}}
 .srcs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.srcs .lnk{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hint{max-width:860px;margin:6px auto 0;color:var(--dim);font-size:12px;text-align:center}
+.msel{font:500 13px 'IBM Plex Mono',monospace;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:6px 10px;margin-left:6px}
+.dlg{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(0,0,0,.55)}.dlg[hidden]{display:none}.dcard{width:min(520px,calc(100% - 28px));background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.dcard h3{margin:0;font-family:'Oxanium',sans-serif;font-size:20px}.dcard label{display:grid;gap:6px;font-size:13.5px;color:var(--dim)}.dcard textarea{font:15px 'IBM Plex Sans',sans-serif;color:var(--ink);background:#080b15;border:1px solid var(--line);border-radius:10px;padding:9px 11px;resize:vertical}
+.dcard .chk{display:flex;gap:8px;align-items:center;color:var(--ink)}.dact{display:flex;gap:8px;justify-content:flex-end}.hbtn.pri{background:linear-gradient(135deg,#7b5cff,#2fb7e6);border-color:transparent;color:#fff}
 .scrim{display:none}
 @media (max-width:820px){aside{position:fixed;inset:0 auto 0 0;z-index:20;transform:translateX(-102%)}body.side aside{transform:none}body.side .scrim{display:block;position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.5)}#menuBtn{display:grid}.hbtn.wide{display:none}}
 @media (max-width:560px){header{padding:10px 12px}h1{font-size:17px}.body{max-width:92%}.bub{font-size:15px}.hero{padding-top:16px}.hero h2{font-size:24px}.mode button span{display:none}.media.grid4{grid-template-columns:1fr 1fr}}
 </style></head>
 <body>
-<aside id="side"><div class="top"><button class="hbtn" id="newChat" style="flex:1;justify-content:center">+ New chat</button></div><div class="list" id="chats"></div>
+<aside id="side"><div class="top"><button class="hbtn" id="newChat" style="flex:1;justify-content:center">+ New chat</button></div><input id="chatQ" class="chatq" type="search" placeholder="Search chats…" aria-label="Search chats"><div class="list" id="chats"></div>
 <div class="foot">Chats are saved on this device only. <a href="https://jacob711-oss.github.io/Simulators/">All our simulators</a></div></aside>
-<div class="scrim" id="scrim"></div><div class="drop">Drop photos or files here</div>
+<div class="scrim" id="scrim"></div>
+<div class="dlg" id="setDlg" hidden><div class="dcard"><h3>Settings and memory</h3>
+<label>What should Quasar know about you?<textarea id="pAbout" rows="3" maxlength="800" placeholder="For example: I love space and coding. I'm learning about volcanoes."></textarea></label>
+<label>How should Quasar reply?<textarea id="pStyle2" rows="2" maxlength="400" placeholder="For example: short answers, with examples. Explain things simply."></textarea></label>
+<label class="chk"><input type="checkbox" id="pSpeak"> Read every answer aloud automatically</label>
+<p class="capt">Saved on this device only. Quasar uses it in every chat.</p>
+<div class="dact"><button class="hbtn" id="pClear" type="button">Clear memory</button><button class="hbtn pri" id="pSave" type="button">Save</button></div></div></div><div class="drop">Drop photos or files here</div>
 <div class="col">
 <header><button class="ibtn" id="menuBtn" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-<div class="logo" aria-hidden="true"></div><h1>QUASAR</h1><span class="hsp"></span>
+<div class="logo" aria-hidden="true"></div><h1>QUASAR</h1><select id="model" class="msel" aria-label="AI model" title="AI model"><option value="openai">Fast</option><option value="openai-large">Smart</option><option value="deepseek-reasoning">Deep thinking</option></select><span class="hsp"></span><button class="ibtn" id="setBtn" title="Settings and memory" aria-label="Settings and memory"><svg width="17" height="17" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
 <a class="hbtn wide" href="https://jacob711-oss.github.io/Simulators/">Simulators</a></header>
 <main id="main"><div class="wrap" id="log"></div></main>
 <footer>
@@ -117,6 +131,8 @@ const IC={copy:'<svg width="14" height="14" viewBox="0 0 20 20"><rect x="7" y="7
   trash:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M4 6h12M8 6V4h4v2M6 6l1 11h6l1-11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
   stop:'<svg width="15" height="15" viewBox="0 0 20 20"><rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor"/></svg>',
   send:'<svg width="17" height="17" viewBox="0 0 20 20"><path d="M3 10l14-6-5 14-2.5-5.5z" fill="currentColor"/></svg>',
+  edit:'<svg width="13" height="13" viewBox="0 0 20 20"><path d="M4 16l1-4 8-8 3 3-8 8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+  down:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   play:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6z" fill="currentColor"/></svg>'};
 /* ---------- saved chats (on this device) ---------- */
 const LS='quasar_chats_v2';let chats=[],cur=null;
@@ -124,14 +140,18 @@ try{chats=JSON.parse(localStorage.getItem(LS)||'[]')||[]}catch(e){chats=[]}
 try{const old=JSON.parse(localStorage.getItem('quasar_chat')||'null');if(old&&old.length&&!chats.length){chats=[{id:'c'+Date.now(),title:(old.find(m=>m.role==='user')||{content:'Chat'}).content.slice(0,40),msgs:old,t:Date.now()}];localStorage.removeItem('quasar_chat')}}catch(e){}
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(chats.slice(0,40).map(c=>({...c,msgs:c.msgs.slice(-60)}))))}catch(e){}};
 const hist=()=>cur?cur.msgs:[];
-function listChats(){const L=$('chats');L.textContent='';for(const c of chats){const r=document.createElement('div');r.className='chatrow'+(c===cur?' on':'');r.innerHTML=`<button class="t"></button><button class="del" title="Delete chat" aria-label="Delete chat">${IC.trash}</button>`;r.querySelector('.t').textContent=c.title||'New chat';
+function listChats(){const L=$('chats'),cq=($('chatQ').value||'').trim().toLowerCase();L.textContent='';for(const c of chats){if(cq&&!((c.title||'')+' '+c.msgs.map(m=>m.shown||m.content||'').join(' ')).toLowerCase().includes(cq))continue;const r=document.createElement('div');r.className='chatrow'+(c===cur?' on':'');r.innerHTML=`<button class="t"></button><button class="ren" title="Rename chat" aria-label="Rename chat">${IC.edit}</button><button class="dl" title="Download chat" aria-label="Download chat">${IC.down}</button><button class="del" title="Delete chat" aria-label="Delete chat">${IC.trash}</button>`;r.querySelector('.ren').onclick=()=>{const n=prompt('Rename this chat:',c.title||'');if(n&&n.trim()){c.title=n.trim().slice(0,60);save();listChats()}};r.querySelector('.dl').onclick=()=>downloadChat(c);r.querySelector('.t').textContent=c.title||'New chat';
     r.querySelector('.t').onclick=()=>{openChat(c);document.body.classList.remove('side')};r.querySelector('.del').onclick=()=>{chats=chats.filter(x=>x!==c);if(cur===c)cur=null;save();cur?listChats():newChat()};L.appendChild(r)}}
+function downloadChat(c){const txt=`${c.title||'Chat'}\n${new Date(c.t||Date.now()).toLocaleString()}\n\n`+c.msgs.map(m=>(m.role==='user'?'You: ':'Quasar: ')+(m.shown||m.content||'')+(m.img?`\n[Picture: ${m.img}]`:'')+(m.vid?`\n[Videos: ${m.vid}]`:'')).join('\n\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download=(c.title||'chat').replace(/[^\w\- ]+/g,'').slice(0,40)+'.txt';document.body.appendChild(a);a.click();a.remove()}
 function newChat(){cur=null;log.textContent='';log.appendChild(heroEl());listChats();inp.focus()}
-function openChat(c){cur=c;log.textContent='';for(let i=0;i<c.msgs.length;i++){const m=c.msgs[i];if(m.role==='user')addUser(m.shown!=null?m.shown:m.content,m.att);else renderAI(addAI(),m,false)}listChats();scroll()}
+function openChat(c){cur=c;log.textContent='';for(let i=0;i<c.msgs.length;i++){const m=c.msgs[i];if(m.role==='user')addUser(m.shown!=null?m.shown:m.content,m.att,i);else renderAI(addAI(),m,false)}listChats();scroll()}
 function ensureChat(first){if(!cur){cur={id:'c'+Date.now(),title:first.slice(0,48),msgs:[],t:Date.now()};chats.unshift(cur)}cur.t=Date.now();listChats()}
 /* ---------- markdown ---------- */
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function md(src){const blocks=[];let s=esc(src).replace(/```[a-zA-Z0-9]*\n?([\s\S]*?)(```|$)/g,(_,c)=>{blocks.push(c);return`\u0000${blocks.length-1}\u0000`});
+function md(src){const blocks=[],maths=[];src=String(src).replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|(?<![\w$])\$([^$\n]{1,120}?)\$(?![\w$])/g,(m,a,b,c,d)=>{if(d!=null&&!/[\\^_=]/.test(d))return m;maths.push({t:a||b||c||d,d:!!(a||b)});return`\u0001${maths.length-1}\u0001`});
+  const out=md0(src,blocks);return out.replace(/\u0001(\d+)\u0001/g,(_,i)=>{const x=maths[+i];return`<span class="mx${x.d?' mxd':''}" data-tex="${esc(x.t)}">${esc(x.t)}</span>`})}
+function md0(src,blocks){let s=esc(src).replace(/```[a-zA-Z0-9]*\n?([\s\S]*?)(```|$)/g,(_,c)=>{blocks.push(c);return`\u0000${blocks.length-1}\u0000`});
   s=s.replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/(^|[^*\w])\*([^*\n]+)\*/g,'$1<i>$2</i>')
    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g,(_,t,u)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`);
   const out=[];let list=null,table=null;for(const line of s.split('\n')){const ul=line.match(/^\s*[-*•]\s+(.*)/),ol=line.match(/^\s*\d+[.)]\s+(.*)/),h=line.match(/^#{1,4}\s+(.*)/),tr=line.match(/^\s*\|(.+)\|\s*$/);
@@ -151,11 +171,18 @@ function heroEl(){const d=document.createElement('div');d.className='hero';d.id=
 <button data-q="Help me write a short story about a robot who wants to be an astronaut.">Write a short story<small>Get creative</small></button>
 <button data-attach="1">Ask about a photo or file<small>Add photos and files</small></button></div>`;
   d.querySelectorAll('.sugg button').forEach(b=>b.onclick=()=>b.dataset.attach?$('fileIn').click():send(b.dataset.q,b.dataset.m));return d}
-function addUser(text,att){const h=$('hero');if(h)h.remove();const m=document.createElement('div');m.className='msg me';m.innerHTML='<div class="body" style="align-items:flex-end"><div class="uatt"></div><div class="bub"></div></div>';
+function addUser(text,att,hi){const h=$('hero');if(h)h.remove();const m=document.createElement('div');m.className='msg me';if(hi!=null)m.dataset.hi=hi;m.innerHTML='<div class="body" style="align-items:flex-end"><div class="uatt"></div><div class="bub"></div></div>';
   const ua=m.querySelector('.uatt');for(const a of att||[]){if(a.kind==='img'){const i=document.createElement('img');i.src=a.thumb;i.alt=a.name;ua.appendChild(i)}else{const f=document.createElement('span');f.className='fchip';f.textContent=a.name;ua.appendChild(f)}}if(!ua.children.length)ua.remove();
-  const b=m.querySelector('.bub');if(text)b.innerHTML=md(text);else b.remove();log.appendChild(m);scroll()}
+  const b=m.querySelector('.bub');if(text)b.innerHTML=md(text);else b.remove();
+  if(text){const e=document.createElement('button');e.type='button';e.className='ued';e.innerHTML=IC.edit+'Edit';e.onclick=()=>editMsg(m,text);m.querySelector('.body').appendChild(e)}log.appendChild(m);scroll()}
+function editMsg(m,text){if(ctrl)return;const H=hist();let i=m.dataset.hi!=null?+m.dataset.hi:H.map(x=>x.role).lastIndexOf('user');if(i<0||!H[i])return;H.splice(i);save();openChat(cur);inp.value=text;inp.dispatchEvent(new Event('input'));inp.focus()}
 function addAI(){const h=$('hero');if(h)h.remove();const m=document.createElement('div');m.className='msg ai';m.innerHTML='<div class="av"></div><div class="body"><div class="bub"><div class="dots"><i></i><i></i><i></i></div></div></div>';log.appendChild(m);scroll();return m.querySelector('.body')}
-function wireCode(b){b.querySelectorAll('pre .cp').forEach(btn=>btn.onclick=()=>{const t=btn.parentElement.querySelector('code').textContent;navigator.clipboard&&navigator.clipboard.writeText(t);btn.textContent='Copied'})}
+let KX=null,HL=null;const lib=(js,css)=>new Promise((ok,no)=>{if(css){const l=document.createElement('link');l.rel='stylesheet';l.href=css;document.head.appendChild(l)}const s=document.createElement('script');s.src=js;s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+function pretty(b){if(b.querySelector('.mx:not([data-done])')){KX=KX||lib('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js','https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css');
+    KX.then(()=>b.querySelectorAll('.mx:not([data-done])').forEach(e=>{try{katex.render(e.dataset.tex,e,{displayMode:e.classList.contains('mxd'),throwOnError:false})}catch(x){}e.dataset.done=1})).catch(()=>{KX=null})}
+  if(b.querySelector('pre code:not([data-hl])')){HL=HL||lib('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js','https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css');
+    HL.then(()=>b.querySelectorAll('pre code:not([data-hl])').forEach(e=>{try{hljs.highlightElement(e)}catch(x){}e.dataset.hl=1})).catch(()=>{HL=null})}}
+function wireCode(b){pretty(b);b.querySelectorAll('pre .cp').forEach(btn=>btn.onclick=()=>{const t=btn.parentElement.querySelector('code').textContent;navigator.clipboard&&navigator.clipboard.writeText(t);btn.textContent='Copied'})}
 // draw an AI message: text, then pictures/videos, then buttons and follow-ups
 function renderAI(body,m,live){const bub=body.querySelector('.bub');bub.innerHTML=md(m.content||'');wireCode(bub);
   if(m.img||m.vid){const md2=document.createElement('div');md2.className='media'+(m.img&&m.count>1?' grid4':'');bub.appendChild(md2);if(m.img)pictures(md2,m.img,m.count||1,m.size||'1024x1024',m.seed);if(m.vid)videos(md2,m.vid)}
@@ -222,24 +249,24 @@ async function reply(q,forced){const H=hist();const body=addAI(),bub=body.queryS
   try{if(mode==='image'){const style=STYLE();const p=picPrompt(q)+(style?', '+style:'');m={role:'assistant',content:COUNT()>1?'Here are 4 versions:':'Here is your picture!',img:p,count:COUNT(),size:SIZE(),seed:Math.floor(Math.random()*1e9)}}
     else if(mode==='video'){const v=vidQuery(q);m={role:'assistant',content:`Here are some videos of **${v}**:`,vid:v}}
     else{const msgs=H.slice(-14).map(x=>({role:x.role,content:x.content}));const na=NEXTATT;NEXTATT=null;
-      if(na&&msgs.length){msgs[msgs.length-1]={role:'user',content:na.imgs.length?[{type:'text',text:na.text},...na.imgs.map(u=>({type:'image_url',image_url:{url:u}}))]:na.text}}let system=SYSTEM,sources=null;
+      if(na&&msgs.length){msgs[msgs.length-1]={role:'user',content:na.imgs.length?[{type:'text',text:na.text},...na.imgs.map(u=>({type:'image_url',image_url:{url:u}}))]:na.text}}let system=SYSTEM+(PREFS.about?`\n\nWhat the user has told you about themselves (use it when helpful): ${PREFS.about}`:'')+(PREFS.style?`\n\nHow the user wants you to reply: ${PREFS.style}`:''),sources=null;
       if(SEARCH||wantsSearch(q)){bub.innerHTML='<p class="capt">Searching the web…</p>';sources=await webSearch(q.replace(/\b(search( the web)?( for)?|look up|google)\b/gi,'').trim()||q,ctrl.signal);
-        if(sources.length)system=SYSTEM+`\n\nToday is ${new Date().toDateString()}. Web search results for the user's question (use them, and cite them like [1], [2]; if they don't answer it, say what you know and that it may be out of date):\n`+sources.map((s,i)=>`[${i+1}] ${s.title} (${s.url}): ${s.text}`).join('\n');
+        if(sources.length)system=system+`\n\nToday is ${new Date().toDateString()}. Web search results for the user's question (use them, and cite them like [1], [2]; if they don't answer it, say what you know and that it may be out of date):\n`+sources.map((s,i)=>`[${i+1}] ${s.title} (${s.url}): ${s.text}`).join('\n');
         else bub.innerHTML='<p class="capt">No web results found, answering from what I know…</p>'}
-      const strip=t=>t.replace(/\[IMAGE:\s*([^\]]*)\]?/i,'').replace(/\[VIDEO:\s*([^\]]*)\]?/i,'').trim();let last=0;
+      const strip=t=>t.replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').replace(/\[IMAGE:\s*([^\]]*)\]?/i,'').replace(/\[VIDEO:\s*([^\]]*)\]?/i,'').trim();let last=0;
       const live=t=>{const now=performance.now();if(now-last<40)return;last=now;bub.innerHTML=md(strip(t));bub.classList.add('caret');scroll()};
-      let t;try{t=await askStream(msgs,ctrl.signal,live,null,system)}catch(e){if(ctrl.signal.aborted)throw e;bub.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';t=await askAI(msgs,ctrl.signal,null,system);await typeOut(bub,strip(t),ctrl.signal)}
-      bub.classList.remove('caret');let img=null,vid=null;
+      const MOD=$('model').value;let t;try{t=await askStream(msgs,ctrl.signal,live,MOD,system)}catch(e){if(ctrl.signal.aborted)throw e;try{if(MOD==='openai')throw e;bub.innerHTML='<p class="capt">That model is busy, switching to Fast…</p>';t=await askStream(msgs,ctrl.signal,live,'openai',system)}catch(e2){if(ctrl.signal.aborted)throw e2;bub.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';t=await askAI(msgs,ctrl.signal,null,system);await typeOut(bub,strip(t),ctrl.signal)}}
+      bub.classList.remove('caret');t=t.replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').trim();let img=null,vid=null;
       const clean=t.replace(/\[IMAGE:\s*([^\]]+)\]/i,(_,p)=>{img=p.trim();return''}).replace(/\[VIDEO:\s*([^\]]+)\]/i,(_,v)=>{vid=v.trim();return''}).trim();
       m={role:'assistant',content:clean,img:img||undefined,vid:vid||undefined,count:1,size:SIZE(),seed:Math.floor(Math.random()*1e9),sources:sources&&sources.length?sources.map(s=>({title:s.title,url:s.url})):undefined}}
-    m.follow=followUps(q,m);H.push(m);save();renderAI(body,m,true)}
+    m.follow=followUps(q,m);H.push(m);save();renderAI(body,m,true);if(PREFS.speak&&m.content&&'speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(m.content.replace(/[#*`|>\[\]()]/g,' ').replace(/https?:\S+/g,'')))}}
   catch(e){if(ctrl.signal.aborted){bub.innerHTML='<p class="capt">Stopped.</p>'}else{bub.innerHTML=navigator.onLine===false?'<p class="err">You are offline. Quasar needs the internet to answer, make pictures and find videos. Your saved chats still work, and the simulators all work offline.</p>':'<p class="err">Quasar is busy right now. Please try again in a few seconds.</p>';const t=document.createElement('div');t.className='tools';const b=document.createElement('button');b.type='button';b.innerHTML=IC.again+'Try again';b.onclick=()=>{body.parentElement.remove();reply(q,forced)};t.appendChild(b);body.appendChild(t)}}
   ctrl=null;setBusy(false);listChats()}
 function send(text,forced){text=(text||'').trim();const att=ATT.splice(0);tray();if((!text&&!att.length)||ctrl)return;
   if(!text)text=att.some(a=>a.kind==='img')?'What is in this picture?':'Please summarise this file.';
   // what the AI reads: the message plus the text of any files
   const files=att.filter(a=>a.kind==='file').map(a=>`\n\nFile "${a.name}":\n\`\`\`\n${a.text}\n\`\`\``).join('');
-  ensureChat(text);addUser(text,att);hist().push({role:'user',content:text+(files?files.slice(0,8000):''),shown:text,att:att.map(a=>a.kind==='img'?{kind:'img',name:a.name,thumb:a.thumb}:{kind:'file',name:a.name})});save();
+  ensureChat(text);addUser(text,att,hist().length);hist().push({role:'user',content:text+(files?files.slice(0,8000):''),shown:text,att:att.map(a=>a.kind==='img'?{kind:'img',name:a.name,thumb:a.thumb}:{kind:'file',name:a.name})});save();
   if(att.length&&!forced)forced='chat';NEXTATT={text:text+files,imgs:att.filter(a=>a.kind==='img').map(a=>a.data)};
   document.querySelectorAll('.follow').forEach(f=>f.remove());document.querySelectorAll('.tools button').forEach(b=>{if(/Regenerate/.test(b.textContent))b.remove()});reply(text,forced)}
 let NEXTATT=null;
@@ -266,6 +293,13 @@ let dragN=0;addEventListener('dragenter',e=>{if([...(e.dataTransfer&&e.dataTrans
 addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();dragN=0;document.body.classList.remove('dragging');const fs=[...(e.dataTransfer&&e.dataTransfer.files||[])];if(fs.length)addFiles(fs)});
 /* ---------- input ---------- */
 let MODE='chat',SEARCH=false;
+const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},lsw=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let PREFS=ls('quasar_prefs',{about:'',style:'',speak:false});
+$('model').value=ls('quasar_model','openai');$('model').onchange=()=>lsw('quasar_model',$('model').value);
+$('setBtn').onclick=()=>{$('pAbout').value=PREFS.about||'';$('pStyle2').value=PREFS.style||'';$('pSpeak').checked=!!PREFS.speak;$('setDlg').hidden=false;$('pAbout').focus()};
+$('setDlg').onclick=e=>{if(e.target.id==='setDlg')$('setDlg').hidden=true};
+$('pSave').onclick=()=>{PREFS={about:$('pAbout').value.trim(),style:$('pStyle2').value.trim(),speak:$('pSpeak').checked};lsw('quasar_prefs',PREFS);$('setDlg').hidden=true};
+$('pClear').onclick=()=>{$('pAbout').value='';$('pStyle2').value=''};
 // the + menu: create an image, find a video, search the web (shown as removable chips, like other AI chats)
 const menu=$('toolMenu'),plus=$('plusBtn');const closeMenu=()=>{menu.hidden=true;plus.setAttribute('aria-expanded','false')};
 plus.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;plus.setAttribute('aria-expanded',!menu.hidden)};document.addEventListener('click',e=>{if(!menu.contains(e.target))closeMenu()});
@@ -278,6 +312,7 @@ inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDef
 inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(180,inp.scrollHeight)+'px'});
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{MODE=MODE===b.dataset.mode?'chat':b.dataset.mode;closeMenu();chips();inp.focus()});
 for(const id of ['pShape','pCount'])$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+$('chatQ').addEventListener('input',listChats);
 $('newChat').onclick=()=>{newChat();document.body.classList.remove('side')};$('menuBtn').onclick=()=>document.body.classList.toggle('side');$('scrim').onclick=()=>document.body.classList.remove('side');
 // talk instead of typing
 {const SR=window.SpeechRecognition||window.webkitSpeechRecognition,mic=$('mic');if(SR){mic.hidden=false;let rec=null;mic.onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=true;const base=inp.value;
