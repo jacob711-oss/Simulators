@@ -112,10 +112,10 @@ function stepRocket(r,dt){if(r.dead)return;const t=S.t,q=rel(r,t),B0=BODIES[q.b]
   if(dt>0.08){r.om=0;if(tgt!=null)r.a=tgt}else{r.om+=(cmd*(aC+(LF?LF.ctrl:0))+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt}
   // forces
   const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);r.thrAcc=F/m;let ax=F*dx/m,ay=F*dy/m,dragA=0;if(LF&&vs>0.5){ax+=LF.ax-vrx/vs*LF.drag;ay+=LF.ay-vry/vs*LF.drag}
-  if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?450:0),Fd=0.5*den*vs*vs*cda*machCd(r.mach)/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;dragA=Fd/m;
+  if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?chuteArea(q.b):0),Fd=0.5*den*vs*vs*cda*machCd(r.mach)/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;dragA=Fd/m;
     const heat=den*vs*vs*vs*2.6e-10*(has(r,'shield')&&Math.cos(Math.atan2(vry,vrx)-r.a)<-0.7?0.08:1);r.heat=Math.max(0,r.heat+(heat-0.06)*dt);if(r.heat>1){boom(r,'burned up coming back into the air');return}}else r.heat=Math.max(0,r.heat-0.08*dt);
-  if(r.chute===1&&G.autoChute&&den>0&&alt<5000&&vs<260&&q.vx*ux+q.vy*uy<0)openChute(r);
-  if(r.chute===2&&vs>320&&den>0.05){r.chute=-1;callout('The parachute ripped!',r.x,r.y,'#ffb347')}
+  if(r.chute===1&&G.autoChute&&den>0&&alt<Math.max(5000,(B0.atm||0)*0.25)&&0.5*den*vs*vs<40000&&q.vx*ux+q.vy*uy<0)openChute(r);
+  if(r.chute===2&&0.5*den*vs*vs>60000){r.chute=-1;callout('The parachute ripped!',r.x,r.y,'#ffb347')}
   if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){if(BODIES[r.landed].rot){const w=BODIES[r.landed].rot,c=Math.cos(w*dt),s=Math.sin(w*dt),lx=r.lx*c-r.ly*s;r.ly=r.lx*s+r.ly*c;r.lx=lx}const sv=airVel(r.landed,r.lx,r.ly);r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0]+sv[0];r.vy=bv[1]+sv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
     r.landed=-1;callout('Lift-off!',r.x,r.y,'#9fd0ff');ev('liftoff');chEv('liftoff',{b:q.b})}
   r.gf=r.landed>=0?1:Math.hypot(ax,ay)/G0;r.maxG=Math.max(r.maxG||0,r.gf);if(ax===0&&ay===0&&r.landed<0&&den===0&&alt>2000){const st={x:r.x,y:r.y,vx:r.vx,vy:r.vy,t};railStep(st,dt);r.x=st.x;r.y=st.y;r.vx=st.vx;r.vy=st.vy}else{const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt}if(typeof wheels==='function'){wheels(r,dt);if(r.dead)return;if(r.onWheels){r.maxAlt=Math.max(r.maxAlt,0);return}}
@@ -127,11 +127,13 @@ function stepRocket(r,dt){if(r.dead)return;const t=S.t,q=rel(r,t),B0=BODIES[q.b]
     if(wasFlight){const nm=BODIES[q2.b].nm;callout(`Landed on ${nm}!`,r.x,r.y,'#8fe39a');toast(`Touchdown on ${nm} at ${vimp.toFixed(1)} m/s. ${r.crew.length?'The crew are safe!':''}`,6000);ev('land'+q2.b);if(r.maxAlt>BODIES[0].atm&&q2.b===0)ev('returned');if(mv('land1')&&q2.b===0)ev('moonReturn');chEv('land',{b:q2.b,v:vimp});if(AP.mode==='home'||AP.mode==='land')apOff('Landed safely')}}
   r.maxAlt=Math.max(r.maxAlt,alt);if(q.b===1&&!mv('soi1')){ev('soi1');toast('You are in Luna’s pull now: its gravity takes over',5000);chEv('soi',{})}}
 function PT_thrust(r){let f=0;for(const i of engines(r))f+=PT[r.parts[i]].thr;return f}
+// thin air needs a much bigger canopy: Rust's air is 15 times thinner than Terra's
+function chuteArea(b){const r0=BODIES[b].rho0||1.2;return 450*Math.pow(clamp(1.2/r0,1,15),0.75)}
 function openChute(r){if(!has(r,'chute')||r.chute===2)return;r.chute=2;callout('Parachute open',r.x,r.y,'#ffd28a');ev('chute');chEv('chute',{})}
 function boom(r,why){if(r.dead)return;r.dead=why;r.lit=false;r.thr=0;for(let i=0;i<14;i++)PARTS.push({k:'fire',x:r.x+rr(-8,8),y:r.y+rr(-8,8),vx:rr(-15,15),vy:rr(-15,15),age:rr(0,0.3),s:rr(4,12)});callout('BOOM',r.x,r.y,'#ff6a3a');toast(`Your rocket ${why}. Press Revert to try again.`,6000);ev('crash');chEv('crash',{why});if(AP.mode)apOff('')}
 /* ---------- staging ---------- */
 function stage(r){if(!r||r.dead)return;if(!r.lit){r.lit=true;if(r.thr===0)r.thr=1;r.staged++;callout('Ignition!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{});if(r.landed>=0&&PT_thrust(r)===0)toast('There are no engines in this stage');return}
-  const S0=sections(r.parts);if(S0.length<=1){if(has(r,'chute')&&r.chute<2){const q=rel(r,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R,vs=Math.hypot(q.vx,q.vy);if(rho(q.b,alt)>0&&vs<260)openChute(r);else{r.chute=1;toast('Parachute armed: it opens by itself when it is safe (low and slow)')}}return}
+  const S0=sections(r.parts);if(S0.length<=1){if(has(r,'chute')&&r.chute<2){const q=rel(r,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R,vs=Math.hypot(q.vx,q.vy);if(rho(q.b,alt)>0&&0.5*rho(q.b,alt)*vs*vs<40000)openChute(r);else{r.chute=1;toast('Parachute armed: it opens by itself when it is safe (low and slow)')}}return}
   const drop=S0[S0.length-1],keep=S0.slice(0,-1).flat(),dropParts=drop.map(i=>r.parts[i]),dropFuel=drop.map(i=>r.fuel[i]);const L=rocketLen(r.parts),Lk=keep.reduce((s,i)=>s+PT[r.parts[i]].h,0),dx=Math.cos(r.a),dy=Math.sin(r.a);
   const dcy=(L/2)-Lk-(L-Lk)/2;DEB.push({parts:dropParts,fuel:dropFuel,x:r.x-dx*(L/2-(L-Lk)/2),y:r.y-dy*(L/2-(L-Lk)/2),vx:r.vx-dx*3,vy:r.vy-dy*3,a:r.a,om:rr(-0.2,0.2),age:0});if(DEB.length>12)DEB.shift();
   r.parts=keep.map(i=>r.parts[i]);r.fuel=keep.map(i=>r.fuel[i]);r.x+=dx*(L-Lk)/2;r.y+=dy*(L-Lk)/2;r.staged++;r.lit=true;callout('Stage!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{})}

@@ -1,7 +1,7 @@
 # Builds the "Our Simulations!" page from sims.json: one card per simulator (preview, name, short description), plus a review form.
 import json,html,os
 SITE='/home/user/barycenter-site';SIMS=json.load(open(os.path.join(SITE,'sims.json')))
-CATS={'barycenter': 'Space', 'biosphere': 'Life', 'abyssal': 'Life', 'hivemind': 'Life', 'lithosphere': 'Earth', 'troposphere': 'Earth', 'catalyst': 'Science', 'flux': 'Science', 'interchange': 'Transport', 'gridlock': 'Transport', 'seaway': 'Transport', 'contrail': 'Transport', 'sports': 'Sport', 'quasar': 'AI'}
+CATS={'barycenter': 'Space', 'apogee': 'Space', 'biosphere': 'Life', 'abyssal': 'Life', 'hivemind': 'Life', 'lithosphere': 'Earth', 'troposphere': 'Earth', 'catalyst': 'Science', 'flux': 'Science', 'interchange': 'Transport', 'gridlock': 'Transport', 'seaway': 'Transport', 'contrail': 'Transport', 'sports': 'Sport', 'quasar': 'AI'}
 cards=[]
 for s in sorted(SIMS,key=lambda x:x['id']!='quasar'):
     img=f"img/{s['id']}.jpg"
