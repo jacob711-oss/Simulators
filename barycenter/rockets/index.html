@@ -760,9 +760,10 @@ function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.w
   const cam=GL.cam;cam.position.copy(dir).multiplyScalar(dist);if(GL.mode!=='map'){const cw=V3(cam.position.x+fx-bp[0],cam.position.y,cam.position.z+fy-bp[1]);const rr0=cw.length();if(rr0<BODIES[b].R+2){cw.multiplyScalar((BODIES[b].R+2)/rr0);cam.position.set(cw.x-fx+bp[0],cw.y,cw.z-fy+bp[1])}}
   cam.up.copy(U);cam.lookAt(0,0,0);cam.aspect=W/H;cam.near=Math.max(0.1,dist*0.002);cam.far=Math.max(4e9,dist*80);cam.updateProjectionMatrix();
   // the star lights everything from where it really is
-  const sunP=bodyPos(SUN,t);GL.sunDir.set(sunP[0]-fx,0,sunP[1]-fy).normalize();GL.sun.position.copy(GL.sunDir);
+  const sunP=bodyPos(SUN,t);// always day: light comes from behind the camera and from above, so whatever you look at is lit
+  GL.sunDir.copy(cam.position).normalize().multiplyScalar(0.75).addScaledVector(U,0.65).normalize();GL.sun.position.copy(GL.sunDir);
   // sky colour from the air around the camera
-  const cwx=fx+cam.position.x,cwz=fy+cam.position.z,cb=domBody(cwx,cwz,t),cbp=bodyPos(cb,t),cdx=cwx-cbp[0],cdz=cwz-cbp[1],cr=Math.hypot(cdx,cdz,cam.position.y),CB=BODIES[cb],alt=cr-CB.R,air=CB.atm&&SKYCOL[CB.kind]?clamp(1-alt/(CB.atm*0.75),0,1)*Math.min(1,CB.rho0):0,sunUp=CB.kind==='star'?1:clamp((cdx*GL.sunDir.x+cam.position.y*GL.sunDir.y+cdz*GL.sunDir.z)/cr*3+0.3,0,1),sk=SKYCOL[CB.kind]||[0,0,0];
+  const cwx=fx+cam.position.x,cwz=fy+cam.position.z,cb=domBody(cwx,cwz,t),cbp=bodyPos(cb,t),cdx=cwx-cbp[0],cdz=cwz-cbp[1],cr=Math.hypot(cdx,cdz,cam.position.y),CB=BODIES[cb],alt=cr-CB.R,air=CB.atm&&SKYCOL[CB.kind]?clamp(1-alt/(CB.atm*0.75),0,1)*Math.min(1,CB.rho0):0,sunUp=1,sk=SKYCOL[CB.kind]||[0,0,0];
   const skyC=new THREE.Color().setRGB(lerp(0.004,sk[0],air*sunUp),lerp(0.006,sk[1],air*sunUp),lerp(0.02,sk[2],air*sunUp));GL.scene.background=skyC;GL.stars.material.opacity=0.85*(1-air*sunUp);GL.stars.position.copy(cam.position);
   if(air>0.02){if(!GL.scene.fog)GL.scene.fog=new THREE.FogExp2(skyC,1e-5);GL.scene.fog.color.copy(skyC).lerp(new THREE.Color(1,1,1),0.15);GL.scene.fog.density=1.6e-5*air*air*(CB.kind==='veil'?3:1)}else GL.scene.fog=null;
   const sd=Math.hypot(sunP[0]-fx,sunP[1]-fy);GL.sunSpr.position.set(sunP[0]-fx,0,sunP[1]-fy);GL.sunSpr.scale.setScalar(Math.max(BODIES[SUN].R*9,sd*0.06));
