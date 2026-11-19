@@ -88,7 +88,7 @@ function rMass(r){let m=0;r.parts.forEach((p,i)=>m+=PT[p].m+r.fuel[i]);return m}
 function bottomSec(r){const s=sections(r.parts);return s[s.length-1]}
 function engines(r){return bottomSec(r).filter(i=>PT[r.parts[i]].k==='eng'||PT[r.parts[i]].k==='srb')}
 function liquid(r){let f=0;for(const i of bottomSec(r))if(PT[r.parts[i]].k==='tank')f+=r.fuel[i];return f}
-const has=(r,k)=>r.parts.some(p=>PT[p].k===k);
+const has=(r,k)=>r.parts.some(p=>PT[p].k===k)||(r.side||[]).some(s=>PT[s.id]&&PT[s.id].k===k);
 /* ---------- where am I? ---------- */
 function rel(r,t){const b=domBody(r.x,r.y,t),bp=bodyPos(b,t),bv=bodyVel(b,t);return{b,dx:r.x-bp[0],dy:r.y-bp[1],vx:r.vx-bv[0],vy:r.vy-bv[1]}}
 function orbitOf(r,t){const q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy),v2=q.vx*q.vx+q.vy*q.vy,mu=B0.mu,eps=v2/2-mu/rr,h=q.dx*q.vy-q.dy*q.vx,a=-mu/(2*eps);let e=Math.sqrt(Math.max(0,1+2*eps*h*h/(mu*mu)));
@@ -108,16 +108,17 @@ function stepRocket(r,dt){if(r.dead)return;const t=S.t,q=rel(r,t),B0=BODIES[q.b]
   else if(cmd)r.sasA=r.a;
   let aero=0;const den=rho(q.b,alt),av=airVel(q.b,q.dx,q.dy),vrx=q.vx-av[0],vry=q.vy-av[1],vs=Math.hypot(vrx,vry);r.mach=den>0?vs/soundSpeed(alt):0;r.q=0.5*den*vs*vs;r.maxQ=Math.max(r.maxQ||0,r.q);
   if(den>0&&vs>30&&r.landed<0){const aoa=Math.atan2(Math.sin(Math.atan2(vry,vrx)-r.a),Math.cos(Math.atan2(vry,vrx)-r.a)),qd=0.5*den*vs*vs;aero=(has(r,'fins')?1:-0.35)*Math.sin(aoa)*qd/1000/Math.max(1,m)*0.6;if(qd>32000&&Math.abs(aoa)>0.5&&r.landed<0){boom(r,'broke apart: it turned sideways while flying fast through thick air');return}}
-  if(dt>0.08){r.om=0;if(tgt!=null)r.a=tgt}else{r.om+=(cmd*aC+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt}
+  const LF=typeof liftForces==='function'&&r.landed<0?liftForces(r,den,vrx,vry,vs,dt,m):null;if(LF){aero=LF.alpha-LF.damp*r.om;r.aoa=LF.aoa;if(LF.stalled&&vs>40&&!r.stallT){r.stallT=1;callout('Stall!',r.x,r.y,'#ffb347')}if(!LF.stalled)r.stallT=0}
+  if(dt>0.08){r.om=0;if(tgt!=null)r.a=tgt}else{r.om+=(cmd*(aC+(LF?LF.ctrl:0))+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt}
   // forces
-  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);r.thrAcc=F/m;let ax=F*dx/m,ay=F*dy/m,dragA=0;
+  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);r.thrAcc=F/m;let ax=F*dx/m,ay=F*dy/m,dragA=0;if(LF&&vs>0.5){ax+=LF.ax-vrx/vs*LF.drag;ay+=LF.ay-vry/vs*LF.drag}
   if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?450:0),Fd=0.5*den*vs*vs*cda*machCd(r.mach)/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;dragA=Fd/m;
     const heat=den*vs*vs*vs*2.6e-10*(has(r,'shield')&&Math.cos(Math.atan2(vry,vrx)-r.a)<-0.7?0.08:1);r.heat=Math.max(0,r.heat+(heat-0.06)*dt);if(r.heat>1){boom(r,'burned up coming back into the air');return}}else r.heat=Math.max(0,r.heat-0.08*dt);
   if(r.chute===1&&G.autoChute&&den>0&&alt<5000&&vs<260&&q.vx*ux+q.vy*uy<0)openChute(r);
   if(r.chute===2&&vs>320&&den>0.05){r.chute=-1;callout('The parachute ripped!',r.x,r.y,'#ffb347')}
   if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){if(BODIES[r.landed].rot){const w=BODIES[r.landed].rot,c=Math.cos(w*dt),s=Math.sin(w*dt),lx=r.lx*c-r.ly*s;r.ly=r.lx*s+r.ly*c;r.lx=lx}const sv=airVel(r.landed,r.lx,r.ly);r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0]+sv[0];r.vy=bv[1]+sv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
     r.landed=-1;callout('Lift-off!',r.x,r.y,'#9fd0ff');ev('liftoff');chEv('liftoff',{b:q.b})}
-  r.gf=r.landed>=0?1:Math.hypot(ax,ay)/G0;r.maxG=Math.max(r.maxG||0,r.gf);if(ax===0&&ay===0&&r.landed<0&&den===0&&alt>2000){const st={x:r.x,y:r.y,vx:r.vx,vy:r.vy,t};railStep(st,dt);r.x=st.x;r.y=st.y;r.vx=st.vx;r.vy=st.vy}else{const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt}
+  r.gf=r.landed>=0?1:Math.hypot(ax,ay)/G0;r.maxG=Math.max(r.maxG||0,r.gf);if(ax===0&&ay===0&&r.landed<0&&den===0&&alt>2000){const st={x:r.x,y:r.y,vx:r.vx,vy:r.vy,t};railStep(st,dt);r.x=st.x;r.y=st.y;r.vx=st.vx;r.vy=st.vy}else{const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt}if(typeof wheels==='function'){wheels(r,dt);if(r.dead)return;if(r.onWheels){r.maxAlt=Math.max(r.maxAlt,0);return}}
   // the ground
   const q2=rel(r,t+dt),rr2=Math.hypot(q2.dx,q2.dy),half=rocketLen(r.parts)/2,bottom=rr2-BODIES[q2.b].R-Math.max(0,half*Math.cos(r.a-Math.atan2(q2.dy,q2.dx)));
   if(bottom<=0&&BODIES[q2.b].kind==='star')return boom(r,'flew into Aster and melted');if(bottom<=0&&BODIES[q2.b].kind==='gas')return boom(r,'sank into the crushing clouds of Goliath');if(bottom<=0){const sv2=airVel(q2.b,q2.dx,q2.dy),vimp=Math.hypot(q2.vx-sv2[0],q2.vy-sv2[1]),up=Math.atan2(q2.dy,q2.dx),tilt=Math.abs(Math.atan2(Math.sin(r.a-up),Math.cos(r.a-up))),safe=G.crashV+(has(r,'legs')?6:0);

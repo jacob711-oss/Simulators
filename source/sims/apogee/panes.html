@@ -1,5 +1,7 @@
 <div class="pane" id="pane-build">
-    <select id="preset" class="btn" style="width:100%"></select>
+    <div class="row"><select id="plType" class="btn"><option value="rocket">Rocket (launch pad)</option><option value="plane">Plane (runway)</option></select><select id="preset" class="btn" style="flex:1;min-width:0"></select></div>
+    <canvas id="edit" class="edit"></canvas>
+    <div class="evs"><button class="btn" id="symBtn">Mirror: on</button><button class="btn" id="rmSide">✕ Remove selected part</button></div>
     <span class="k">Your rocket, top to bottom (click a part, then add the next part under it)</span>
     <div id="stack" class="stack"></div>
     <div class="evs"><button class="btn" id="saveBtn">💾 Save design</button><button class="btn" id="clearBtn">🧹 Start again</button></div>
@@ -11,6 +13,7 @@
     <div id="flightInfo"></div>
     <div class="sl"><div class="row"><span class="k">Throttle (W/S, Z full, X off)</span></div><input type="range" id="thrS" min="0" max="100" value="0"></div>
     <div class="evs"><button class="btn primary" data-fl="stage">⏭ Stage (Space)</button><button class="btn" data-fl="chute">🪂 Parachute (C)</button></div>
+    <p class="note">Planes: W/S throttle, A/D pitch the nose, B brakes. Build up speed on the runway, then lift the nose gently.</p>
     <span class="k">Point the rocket</span>
     <div class="views"><button class="btn" data-sas="hold">Hold</button><button class="btn" data-sas="pro">Forward</button><button class="btn" data-sas="retro">Backward</button><button class="btn" data-sas="up">Straight up</button><button class="btn" data-sas="">Off</button></div>
     <span class="k">Autopilot</span>

@@ -25,6 +25,7 @@
  "js": [
   "sim.js",
   "career.js",
+  "craft.js",
   "draw.js",
   "three3d.js",
   "main.js",
