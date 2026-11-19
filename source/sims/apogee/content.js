@@ -16,6 +16,11 @@ CC(3.1,{t:'Touchdown',g:'Land the falling lander softly on Luna.',hint:'Point Ba
 CC(3.2,{t:'Moon rocks',g:'Land on Luna and take a surface sample.',hint:'After landing, open the Flight tab and press Surface sample.',scen:'descent',check:()=>{const ok=evAny(e=>e.k==='exp'&&e.k2!==1&&e.b===1&&e.s==='landed'&&e.kk!==1)&&evAny(e=>e.k==='exp'&&e.b===1);return[ok&&mv('land1')>0,(mv('land1')?0.5:0)+(ok?0.5:0),'']},fail:()=>R&&R.dead?'Crashed into Luna':'',stars:byTime(180,400)});
 CC(3.4,{t:'Escape',g:'Leave Terra’s pull for good.',hint:'From orbit, point Forward and burn about +1,000 m/s. Your path opens up and never comes back.',scen:'orbit',check:()=>[mv('escape')>0,mv('escape')?1:0,''],stars:byTime(400,1200)});
 CC(3.6,{t:'Space agency',g:'In your space agency, complete 2 missions in one go.',hint:'Start with the Hopper: First launch and Touch space are close together. Science from flights unlocks bigger parts.',scen:'pad',check:()=>{const n=evN('mission');return[n>=2,n/2,`${n} of 2 missions`]},stars:byTime(400,900)});
+CC(3.7,{t:'Red planet',g:'Fly from Terra orbit into Rust\u2019s pull.',hint:'Press Find a transfer (target Rust), then Do planned burn: it warps to the right day. After you leave Terra, press Find a transfer again for a small course correction.',scen:'rustbound',check:()=>[mv('soi5')>0,mv('soi5')?1:mv('escape')?0.5:0,mv('escape')?'Heading out into space…':''],stars:byTime(600,1500)});
+CC(3.75,{t:'Dust and rocks',g:'Land on Rust.',hint:'Press Autopilot landing, or point Backward and brake. The air is too thin for parachutes to do much.',scen:'rustland',check:()=>[mv('land5')>0,mv('land5')?1:0,''],fail:()=>R&&R.dead?'Crashed on Rust':'',stars:byTime(240,600)});
+CC(3.8,{t:'Ice moon',g:'Land on Frost, the icy moon of Goliath.',hint:'Low gravity: burn gently. Autopilot landing works too.',scen:'frost',check:()=>[mv('land8')>0,mv('land8')?1:0,''],fail:()=>R&&R.dead?'Crashed on Frost':'',stars:byTime(240,600)});
+CC(3.85,{t:'Purple rain',g:'Bring the capsule down through Veil\u2019s thick air and land.',hint:'Keep the heat shield in front (Backward). The parachute opens by itself.',scen:'veil',check:()=>[mv('land4')>0,mv('land4')?1:0,''],fail:()=>R&&R.dead?'The capsule did not make it':'',stars:byTime(400,1200)});
+CC(3.9,{t:'Star chart',g:'Look at the whole solar system, then visit 3 other worlds in map view.',hint:'Press Whole solar system in the Flight tab, then use the , and . keys to jump between worlds.',scen:'orbit',check:()=>{const n=mv('mapcycle');return[n>=3,n/3,`${Math.min(n,3)} of 3 worlds`]},stars:byTime(60,180)});
 TSTEPS.push(
  ['Look around','Drag (or use two fingers) to move around. Scroll or pinch to zoom out and see the whole planet.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
  ['A ready-made rocket','In the Rocket tab, use “Load a ready-made rocket” and pick the Orbiter.',r=>mv('preset')>r.n||evN('preset')>r.e,r=>{r.n=mv('preset');r.e=evN('preset')}],
@@ -32,9 +37,14 @@ TSTEPS.push(
  ['Time warp','Use the 50× or 500× buttons at the top to skip the boring bits (not while burning or in the air).',()=>S.speedI>=2],
  ['Plan a burn','Move the Speed change slider. The orange line shows where that burn would take you.',r=>mv('plan')>0],
  ['Science','Press Crew report to record what your astronaut sees. Each place gives science once.',r=>mv('exp')>0],
+ ['Pick a target','In the Flight tab, choose a world in the Target list. It turns gold on the map.',r=>mv('target')>r.n,r=>{r.n=mv('target')}],
+ ['Navball','The ball next to the readouts shows where the nose points: blue sky above, brown ground below. The green circle shows which way you are moving.',r=>true],
+ ['Whole solar system','Press Whole solar system to see every world around Aster. Use , and . to jump between them.',r=>mv('mapcycle')+mv('map')>r.n,r=>{r.n=mv('mapcycle')+mv('map')}],
  ['Your agency','Open the Agency tab: missions pay money, science unlocks parts, and you can hire astronauts.',r=>(CNT.tab_agency||0)>0],
 );
 DEMO.push(
+ ['rustbound','Off to Rust','From Terra orbit, a burn on the right day sends this ship across the solar system to the red planet.',()=>{setTimeout(()=>{if(GL.ok)glMap(SUN)},300)}],
+ ['frost','Frost and Goliath','An icy moon circling a giant striped planet, far from Terra.',()=>{setTimeout(()=>{if(GL.ok){GL.dist=1.2e8;GL.pitch=0.3}},300)}],
  ['demo','Lift-off','The autopilot flies the Orbiter: straight up, then a slow lean to the right.',()=>{setSpeed(1)}],
  ['orbit','In orbit','At 2,300 m/s the capsule falls around Terra and keeps missing it.',()=>{setSpeed(2);setTimeout(mapView,300)}],
  ['moonready','Ready for Luna','A burn here, with Luna about 110° ahead, would send this lander to the Moon.',()=>{PLAN={at:'now',dv:880};setTimeout(()=>{mapView();cam.z/=9;clampCam()},300)}],

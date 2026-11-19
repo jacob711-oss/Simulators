@@ -24,6 +24,8 @@ No install or account needed. Works on computers, tablets and phones.
 | Contrail | Air traffic control: guide planes onto runways and keep them apart | [Play](https://jacob711-oss.github.io/Simulators/contrail/) |
 | Sports | Every sport in one simulator: pick football, basketball, ice hockey, handball, rugby sevens, cricket (plus the 3D Cricket Championship), baseball, tennis, badminton, table tennis, volleyball, golf, the 100 m or the 50 m swim. Play as an athlete, coach, or watch, with 8 clubs, sound, live commentary, phone controls and a tutorial for every sport | [Play](https://jacob711-oss.github.io/Simulators/sports/) |
 
+**Apogee (inside Barycenter):** build rockets in 3D and fly them across a whole solar system: the star Aster, the planets Cinder, Veil, Terra, Rust, Goliath and Rime, and moons like Luna, Dot, Frost and Ember. Real orbital mechanics, time warp, a navball, a transfer planner with course corrections, autopilot landings, a space agency with missions, science, research and astronauts, plus sandbox mode. [Play](https://jacob711-oss.github.io/Simulators/barycenter/rockets/)
+
 **3D Cricket Championship:** the original arcade cricket game, in 3D, inside Sports. [Play](https://jacob711-oss.github.io/Simulators/sports/cricket3d/)
 
 **Quasar AI:** also inside every simulator (Ask Quasar at the top): it sees your game and tracks your progress, so you never have to explain. Chat, web search with sources, picture making, videos, and questions about your photos and files. [Open Quasar](https://jacob711-oss.github.io/Simulators/quasar/)

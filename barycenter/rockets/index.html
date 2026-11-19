@@ -254,15 +254,18 @@ body.dockHidden .dock,body.dockHidden .zoomb{display:none!important}@media (min-
     <span class="k">Autopilot</span>
     <div class="evs"><button class="btn" data-fl="orbit">🛰 Fly to orbit</button><button class="btn" data-fl="home">🏠 Come home</button><button class="btn" data-fl="burn">🔥 Do planned burn</button><button class="btn" data-fl="apoff">✋ Autopilot off</button></div>
     <p class="note" id="apState"></p>
+    <span class="k">Going somewhere</span>
+    <div class="row"><span class="k">Target</span><select id="tgtSel" class="btn"></select></div>
+    <div class="evs"><button class="btn primary" data-fl="xfer">🧭 Find a transfer</button><button class="btn" data-fl="circPe">🎯 Capture / round orbit at lowest point</button><button class="btn" data-fl="circAp">⭕ Round orbit at highest point</button><button class="btn" data-fl="land">🛬 Autopilot landing</button></div>
     <span class="k">Plan a burn</span>
-    <div class="row"><span class="k">When</span><select id="planAt" class="btn"><option value="ap">At the highest point</option><option value="pe">At the lowest point</option><option value="now">Right now</option></select></div>
+    <div class="row"><span class="k">When</span><select id="planAt" class="btn"><option value="ap">At the highest point</option><option value="pe">At the lowest point</option><option value="now">Right now</option><option value="time">At the planned time</option></select></div>
     <div class="sl"><div class="row"><span class="k">Speed change</span><span id="planDvV">0 m/s</span></div><input type="range" id="planDv" min="-1500" max="1500" step="10" value="0"></div>
     <p class="note" id="planInfo"></p>
     <p class="note" id="phase"></p>
     <span class="k">Science</span>
     <div class="evs"><button class="btn" data-fl="crew">📝 Crew report</button><button class="btn" data-fl="sense">🌡 Sensor reading</button><button class="btn" data-fl="sample">🪨 Surface sample</button><button class="btn" data-fl="send">📡 Send data home</button></div>
     <span class="k">Camera and mission</span>
-    <div class="evs"><button class="btn" data-fl="map">🗺 Map (M)</button><button class="btn" data-fl="follow">🎥 Follow rocket (F)</button><button class="btn" data-fl="recover">✅ Recover (G)</button><button class="btn" data-fl="revert">↩ Revert to launch</button><button class="btn" data-fl="build">🔧 Back to building</button></div>
+    <div class="evs"><button class="btn" data-fl="map">🗺 Map (M)</button><button class="btn" data-fl="system">🌌 Whole solar system</button><button class="btn" data-fl="follow">🎥 Follow rocket (F)</button><button class="btn" data-fl="recover">✅ Recover (G)</button><button class="btn" data-fl="revert">↩ Revert to launch</button><button class="btn" data-fl="build">🔧 Back to building</button></div>
   </div>
   <div class="pane" id="pane-agency" hidden>
     <div id="agency"></div>
@@ -343,7 +346,7 @@ document.addEventListener('pointerdown',e=>{if(D.open&&!D.contains(e.target))D.o
 
 </script>
 <script>
-const __STATE_NAMES=["WS", "C0", "G0", "BODIES", "PT", "PRESETS", "OMEGA", "PAD_A0", "padAngle", "DESIGN", "R", "DEB", "PRED", "PINFO", "MODE", "MISSION", "AP", "G", "PARTS", "HOVER", "DRAG", "TB", "sayT", "bodyPos", "bodyVel", "has", "COST", "TECH", "MISSIONS", "CREWPOOL", "CAR", "partOK", "designCost", "EXP", "SITN", "STARS", "LAND", "CRAT", "PAD_A", "fmtKm", "GL", "PADDIR", "MATS", "V3", "PLAN", "PLANP", "PLANI", "SELI", "PREDT", "TOUCH", "fmtT", "flying", "SIM", "LASTSYNC", "sb", "evAny"];
+const __STATE_NAMES=["WS", "C0", "G0", "BODIES", "KIDS", "PT", "PRESETS", "OMEGA", "PAD_A0", "PREDV", "PREDREF", "padAngle", "DESIGN", "R", "DEB", "PRED", "PINFO", "MODE", "MISSION", "AP", "G", "PARTS", "HOVER", "DRAG", "TB", "sayT", "moonPos", "moonVel", "stumpC", "stumpS", "has", "COST", "TECH", "MISSIONS", "CREWPOOL", "CAR", "partOK", "designCost", "EXP", "SITN", "STARS", "LAND", "CRAT", "PAD_A", "fmtKm", "GL", "PADDIR", "WORLDTEX", "ATMCOL", "SKYCOL", "MATS", "V3", "PLAN", "PLANP", "PLANI", "SELI", "PREDT", "TOUCH", "fmtT", "flying", "SIM", "LASTSYNC", "sb", "evAny"];
 const SIMLIST=[{"id": "barycenter", "icon": "🪐", "name": "Barycenter", "tag": "Gravity, planets, stars and black holes", "url": "https://jacob711-oss.github.io/Simulators/barycenter/", "color": "#e8b04a"}, {"id": "biosphere", "icon": "🌿", "name": "Biosphere", "tag": "A living world of animals, plants and people", "url": "https://jacob711-oss.github.io/Simulators/life/", "color": "#7fe0a8"}, {"id": "lithosphere", "icon": "🌋", "name": "Lithosphere", "tag": "Drift continents, raise mountains and set off volcanoes", "url": "https://jacob711-oss.github.io/Simulators/lithosphere/", "color": "#ff8a5c"}, {"id": "troposphere", "icon": "🌀", "name": "Troposphere", "tag": "Steer winds, brew hurricanes and change the climate", "url": "https://jacob711-oss.github.io/Simulators/troposphere/", "color": "#60d6e6"}, {"id": "catalyst", "icon": "⚛️", "name": "Catalyst", "tag": "Mix atoms, spark reactions and build molecules", "url": "https://jacob711-oss.github.io/Simulators/catalyst/", "color": "#c48bff"}, {"id": "abyssal", "icon": "🐋", "name": "Abyssal", "tag": "Dive into a living ocean, from coral reefs to the deep sea", "url": "https://jacob711-oss.github.io/Simulators/abyssal/", "color": "#4fa3ff"}, {"id": "interchange", "icon": "🚉", "name": "Interchange", "tag": "Draw the transit lines of a growing city and keep everyone moving", "url": "https://jacob711-oss.github.io/Simulators/interchange/", "color": "#ff5ab4"}, {"id": "gridlock", "icon": "🚗", "name": "Gridlock", "tag": "Draw the roads of a growing town and keep the traffic flowing", "url": "https://jacob711-oss.github.io/Simulators/gridlock/", "color": "#ffd23a"}, {"id": "hivemind", "icon": "🐜", "name": "Hivemind", "tag": "Ant colonies that find food by following each other's scent trails", "url": "https://jacob711-oss.github.io/Simulators/hivemind/", "color": "#ff9a3d"}, {"id": "flux", "icon": "⚡", "name": "Flux", "tag": "Place charges and magnets, and watch the fields bend particles through space", "url": "https://jacob711-oss.github.io/Simulators/flux/", "color": "#5ae0ff"}, {"id": "seaway", "icon": "🚢", "name": "Seaway", "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving", "url": "https://jacob711-oss.github.io/Simulators/seaway/", "color": "#3ab8e0"}, {"id": "contrail", "icon": "✈️", "name": "Contrail", "tag": "Guide planes onto runways, keep them apart and run a busy airport", "url": "https://jacob711-oss.github.io/Simulators/contrail/", "color": "#9fa8ff"}, {"id": "quasar", "icon": "✨", "name": "Quasar AI", "tag": "Our AI: chat, make pictures and find videos", "url": "https://jacob711-oss.github.io/Simulators/quasar/", "color": "#9b7bff"}, {"id": "sports", "icon": "🏆", "name": "Sports", "tag": "Every sport in one place: pick football, cricket, tennis, golf and 11 more, then play, coach or watch", "url": "https://jacob711-oss.github.io/Simulators/sports/", "color": "#ffb547"}],LB_GAME="apogee";
 /* ===== simulator kit: core helpers shared by every simulator ===== */
 const $=id=>document.getElementById(id);
@@ -370,9 +373,24 @@ const since=()=>S.t-CH.t0;
 
 /* ================= Apogee: build rockets and fly them to orbit and the Moon ================= */
 // Units are metres, seconds, tonnes and kilonewtons (so kN / t = m/s²). Terra sits in the middle of a 32,000 km world.
-const WS=3.2e7,C0=WS/2,G0=9.80665;
-const BODIES=[{id:'terra',nm:'Terra',R:640000,mu:9.81*640000*640000,atm:60000,rho0:1.2,H:6000},{id:'luna',nm:'Luna',R:200000,mu:1.62*2e5*2e5,orbit:1.2e7,m0:2.2}];
-BODIES[1].period=2*Math.PI*Math.sqrt(BODIES[1].orbit**3/BODIES[0].mu);BODIES[1].soi=BODIES[1].orbit*Math.pow(BODIES[1].mu/BODIES[0].mu,0.4);
+const WS=3.2e11,C0=0,G0=9.80665;
+// The solar system: Aster (a star) in the middle, planets around it, moons around planets. Every name here is our own.
+// [id, name, parent, radius m, surface gravity m/s², orbit radius m, start angle, air height m, sea-level air density, air scale height m, day length s (0 = always faces its parent), science ×, kind]
+const BODIES=[
+ ['terra','Terra',2,640000,9.81,1.36e10,0.0,60000,1.2,6000,21600,1,'terra'],
+ ['luna','Luna',0,200000,1.62,1.2e7,2.2,0,0,1,0,4,'moon'],
+ ['aster','Aster',-1,2.6e8,0,0,0,0,0,1,400000,1,'star'],
+ ['cinder','Cinder',2,250000,2.4,5.5e9,1.0,0,0,1,420000,7,'cinder'],
+ ['veil','Veil',2,700000,15.5,9.6e9,4.0,90000,5,7000,80000,5,'veil'],
+ ['rust','Rust',2,330000,3.6,2.05e10,2.6,40000,0.08,5000,25000,5,'rust'],
+ ['dot','Dot',5,25000,0.15,3.0e6,1.3,0,0,1,0,6,'rock'],
+ ['goliath','Goliath',2,6.0e6,8.5,6.8e10,0.6,220000,15,30000,36000,6,'gas'],
+ ['frost','Frost',7,450000,1.3,2.8e7,0.4,0,0,1,0,8,'frost'],
+ ['ember','Ember',7,300000,2.0,6.5e7,3.3,0,0,1,0,8,'ember'],
+ ['rime','Rime',2,180000,0.9,1.0e11,3.5,0,0,1,50000,10,'rime'],
+].map(([id,nm,parent,R,g,orbit,m0,atm,rho0,H,day,sci,kind])=>({id,nm,parent,R,mu:(id==='aster'?1.2e18:g*R*R),orbit,m0,atm,rho0,H,day,sci,kind}));
+BODIES.forEach(B=>{if(B.parent>=0){const P=BODIES[B.parent];B.period=2*Math.PI*Math.sqrt(B.orbit**3/P.mu);B.soi=B.orbit*Math.pow(B.mu/P.mu,0.4)}else{B.period=Infinity;B.soi=Infinity}B.rot=B.day?2*Math.PI/B.day:(B.parent>=0?2*Math.PI/B.period:0)});
+const KIDS=BODIES.map((_,i)=>BODIES.map((B,j)=>B.parent===i?j:-1).filter(j=>j>=0));const SUN=2;
 const PT={
  pod1:{nm:'Capsule, 1 seat',k:'pod',m:0.84,h:2.1,w:2.4,crew:1,trq:14},
  pod3:{nm:'Capsule, 3 seats',k:'pod',m:2.4,h:3,w:3.6,crew:3,trq:28},
@@ -396,21 +414,38 @@ const PRESETS={
  lunar:{nm:'Moon lander (there and back)',parts:['chute','pod1','shield','dec','tankM','tankM','spark','legs','dec','tankL','tankL','lifter','dec','tankL','tankL','tankL','tankL','thunder','fins']},
  heavy:{nm:'Big crew (3 seats)',parts:['chute','pod3','shield','dec','tankM','tankM','spark','dec','tankL','tankL','tankL','thunder','fins']},
 };
-const OMEGA=2*Math.PI/21600,PAD_A0=-Math.PI/2;let PREDV=0;
+const OMEGA=2*Math.PI/21600,PAD_A0=-Math.PI/2;// Terra's spin and where the launch pad starts
+let PREDV=0,PREDREF=[0,0];
 const padAngle=t=>PAD_A0+OMEGA*t;
-function airVel(b,dx,dy){return b===0?[-OMEGA*dy,OMEGA*dx]:[0,0]}
+function airVel(b,dx,dy){const w=BODIES[b].rot||0;return[-w*dy,w*dx]}
 function soundSpeed(alt){const T=alt<11000?288-6.5*alt/1000:alt<20000?216.6:alt<47000?216.6+(alt-20000)/27000*54:270-(alt-47000)/13000*70;return 20.05*Math.sqrt(Math.max(150,T))}
 function machCd(M){return M<0.8?1:M<1.05?1+(M-0.8)/0.25*1.1:M<1.3?2.1-(M-1.05)/0.25*0.6:Math.max(1.05,1.5-(M-1.3)*0.25)}
 let DESIGN=PRESETS.orbiter.parts.slice(),R=null,DEB=[],PRED=[],PINFO={},MODE='build',MISSION={};
 const AP={mode:'',ph:''};
-const G={throttleStep:0.1,autoChute:true,crashV:9};
+const G={throttleStep:0.1,autoChute:true,crashV:9,target:1};
 let PARTS=[],HOVER=null,DRAG={keys:new Set(),idle:9,rot:0,thr:0},TB=[];
 const sayT=(m,ms)=>{if($('home').hidden)toast(m,ms)};const ev=(k,n)=>{MISSION[k]=(MISSION[k]||0)+(n||1)},mv=k=>MISSION[k]||0;
-/* ---------- the Moon moves around Terra ---------- */
-function moonPos(t){const L=BODIES[1],a=L.m0+2*Math.PI*t/L.period;return[C0+L.orbit*Math.cos(a),C0+L.orbit*Math.sin(a)]}
-function moonVel(t){const L=BODIES[1],a=L.m0+2*Math.PI*t/L.period,w=2*Math.PI/L.period*L.orbit;return[-Math.sin(a)*w,Math.cos(a)*w]}
-const bodyPos=(i,t)=>i?moonPos(t):[C0,C0],bodyVel=(i,t)=>i?moonVel(t):[0,0];
-function domBody(x,y,t){const m=moonPos(t);return Math.hypot(x-m[0],y-m[1])<BODIES[1].soi?1:0}
+/* ---------- every world moves on a circle around its parent ---------- */
+function bodyPos(i,t){const B=BODIES[i];if(B.parent<0)return[0,0];const p=bodyPos(B.parent,t),a=B.m0+2*Math.PI*t/B.period;return[p[0]+B.orbit*Math.cos(a),p[1]+B.orbit*Math.sin(a)]}
+function bodyVel(i,t){const B=BODIES[i];if(B.parent<0)return[0,0];const p=bodyVel(B.parent,t),a=B.m0+2*Math.PI*t/B.period,w=2*Math.PI/B.period*B.orbit;return[p[0]-Math.sin(a)*w,p[1]+Math.cos(a)*w]}
+function bodyAcc(i,t){const B=BODIES[i];if(B.parent<0)return[0,0];const p=bodyAcc(B.parent,t),a=B.m0+2*Math.PI*t/B.period,w=2*Math.PI/B.period,k=w*w*B.orbit;return[p[0]-Math.cos(a)*k,p[1]-Math.sin(a)*k]}
+// whose gravity are we in? Walk down from the star into any planet or moon whose pull (sphere of influence) we are inside
+function domBody(x,y,t){let cur=SUN;for(let d=0;d<4;d++){let next=-1;for(const k of KIDS[cur]){const p=bodyPos(k,t);if(Math.hypot(x-p[0],y-p[1])<BODIES[k].soi){next=k;break}}if(next<0)break;cur=next}return cur}
+const moonPos=t=>bodyPos(1,t),moonVel=t=>bodyVel(1,t);
+/* ---------- exact orbits ("on rails"): where will something coasting around a world be after dt seconds? ---------- */
+const stumpC=z=>z>1e-8?(1-Math.cos(Math.sqrt(z)))/z:z<-1e-8?(Math.cosh(Math.sqrt(-z))-1)/(-z):0.5;
+const stumpS=z=>{if(z>1e-8){const s=Math.sqrt(z);return(s-Math.sin(s))/(s*s*s)}if(z<-1e-8){const s=Math.sqrt(-z);return(Math.sinh(s)-s)/(s*s*s)}return 1/6};
+function kepler(mu,rx,ry,vx,vy,dt){const r0=Math.hypot(rx,ry),v2=vx*vx+vy*vy,sm=Math.sqrt(mu),vr0=(rx*vx+ry*vy)/r0,alpha=2/r0-v2/mu;let chi=alpha>0?sm*alpha*dt:Math.sign(dt)*Math.sqrt(-1/alpha)*Math.log(Math.max(1e-9,(-2*mu*alpha*dt)/(vr0*r0+Math.sign(dt)*Math.sqrt(-mu/alpha)*(1-r0*alpha))));if(!isFinite(chi))chi=sm*dt/r0;
+  for(let i=0;i<60;i++){const z=alpha*chi*chi,C=stumpC(z),Sz=stumpS(z),F=r0*vr0/sm*chi*chi*C+(1-alpha*r0)*chi*chi*chi*Sz+r0*chi-sm*dt,dF=r0*vr0/sm*chi*(1-z*Sz)+(1-alpha*r0)*chi*chi*C+r0,d=F/dF;chi-=d;if(Math.abs(d)<1e-9*Math.max(1,Math.abs(chi)))break}
+  const z=alpha*chi*chi,C=stumpC(z),Sz=stumpS(z),f=1-chi*chi/r0*C,g=dt-chi*chi*chi/sm*Sz,nx=f*rx+g*vx,ny=f*ry+g*vy,r=Math.hypot(nx,ny),fd=sm/(r*r0)*(alpha*chi*chi*chi*Sz-chi),gd=1-chi*chi/r*C;return[nx,ny,fd*rx+gd*vx,fd*ry+gd*vy]}
+// move a coasting state forward by dt around whichever world holds it
+// kepler with a safety net: the orbit's energy must not change; if it does, take two half steps instead
+function keplerSafe(mu,rx,ry,vx,vy,dt,depth){const k=kepler(mu,rx,ry,vx,vy,dt);const e0=(vx*vx+vy*vy)/2-mu/Math.hypot(rx,ry),e1=(k[2]*k[2]+k[3]*k[3])/2-mu/Math.hypot(k[0],k[1]);
+  if(k.every(isFinite)&&Math.abs(e1-e0)<=2e-4*Math.abs(e0)+0.5)return k;if((depth||0)>=10)return null;const h=keplerSafe(mu,rx,ry,vx,vy,dt/2,(depth||0)+1);if(!h)return null;return keplerSafe(mu,h[0],h[1],h[2],h[3],dt/2,(depth||0)+1)}
+function railStep(st,dt){const b=domBody(st.x,st.y,st.t),bp=bodyPos(b,st.t),bv=bodyVel(b,st.t);const k=keplerSafe(BODIES[b].mu,st.x-bp[0],st.y-bp[1],st.vx-bv[0],st.vy-bv[1],dt);if(!k){const g=gravity(st.x,st.y,st.t);st.vx+=g[0]*dt;st.vy+=g[1]*dt;st.x+=st.vx*dt;st.y+=st.vy*dt;st.t+=dt;return b}const np=bodyPos(b,st.t+dt),nv=bodyVel(b,st.t+dt);st.x=np[0]+k[0];st.y=np[1]+k[1];st.vx=nv[0]+k[2];st.vy=nv[1]+k[3];st.t+=dt;return b}
+// a sensible step: small near the ground or near a moon's pull, big far out
+function railDt(st,k){const b=domBody(st.x,st.y,st.t),bp=bodyPos(b,st.t),bv=bodyVel(b,st.t),r=Math.hypot(st.x-bp[0],st.y-bp[1]),v=Math.hypot(st.vx-bv[0],st.vy-bv[1])||1,alt=r-BODIES[b].R;let dt=r/v*(k||0.02);dt=Math.min(dt,Math.max(alt,2000)*0.25/v);
+  for(const c of KIDS[b]){const cp=bodyPos(c,st.t),cv=bodyVel(c,st.t),ex=st.x-cp[0],ey=st.y-cp[1],dd=Math.hypot(ex,ey),rvx=st.vx-cv[0],rvy=st.vy-cv[1],close=-(ex*rvx+ey*rvy)/dd,d=dd-BODIES[c].soi;if(close<=0&&d>BODIES[c].soi*0.5)continue;dt=Math.min(dt,Math.max(d,BODIES[c].soi*0.05)*0.3/Math.max(Math.abs(close),Math.hypot(rvx,rvy)*0.3,1))}if(BODIES[b].parent>=0){const sp=BODIES[b].soi-r;dt=Math.min(dt,Math.max(sp,BODIES[b].soi*0.02)*0.3/v)}return clamp(dt,0.05,4e4)}
 /* ---------- rocket bookkeeping ---------- */
 function sections(parts){const S=[[]];parts.forEach((p,i)=>{if(PT[p].k==='dec'&&S[S.length-1].length)S.push([]);S[S.length-1].push(i)});return S}
 function partMass(id,fuel){return PT[id].m+(fuel||0)}
@@ -433,34 +468,35 @@ function orbitOf(r,t){const q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy),v
   const bound=eps<0,pe=(bound?a*(1-Math.min(e,1)):h*h/mu/(1+e))-B0.R,ap=bound?a*(1+Math.min(e,1))-B0.R:Infinity;e=bound?Math.min(e,0.99999):e;return{b:q.b,alt:rr-B0.R,r:rr,spd:Math.sqrt(v2),vr:(q.dx*q.vx+q.dy*q.vy)/rr,vh:Math.abs(h)/rr,ap,pe,e,a,h,period:e<1?2*Math.PI*Math.sqrt(a*a*a/mu):Infinity}}
 function rho(b,alt){const B0=BODIES[b];return B0.atm&&alt<B0.atm?B0.rho0*Math.exp(-alt/B0.H):0}
 /* ---------- physics ---------- */
-function gravity(x,y,t){let ax=0,ay=0;for(let i=0;i<2;i++){const p=bodyPos(i,t),dx=p[0]-x,dy=p[1]-y,d2=dx*dx+dy*dy,d=Math.sqrt(d2),g=BODIES[i].mu/d2;ax+=dx/d*g;ay+=dy/d*g}return[ax,ay]}
+// only the world you are near pulls on you (like most space games): add how that world itself is accelerating, so its orbit carries you along
+function gravity(x,y,t){const b=domBody(x,y,t),p=bodyPos(b,t),dx=p[0]-x,dy=p[1]-y,d2=dx*dx+dy*dy,d=Math.sqrt(d2),g=BODIES[b].mu/d2,ba=bodyAcc(b,t);return[dx/d*g+ba[0],dy/d*g+ba[1]]}
 function thrustNow(r,dt,alt,b){if(!r.lit||r.dead)return 0;let F=0;const p=rho(b,alt)/1.2;for(const i of engines(r)){const P=PT[r.parts[i]],isp=lerp(P.isp[1],P.isp[0],clamp(p,0,1));
     if(P.k==='srb'){if(r.fuel[i]<=0)continue;const md=P.thr/(P.isp[0]*G0);r.fuel[i]=Math.max(0,r.fuel[i]-md*dt);F+=P.thr*isp/P.isp[0]}
     else{if(r.thr<=0)continue;const fl=liquid(r);if(fl<=0)continue;const f=P.thr*r.thr*isp/P.isp[0],md=P.thr*r.thr/(P.isp[0]*G0)*dt;let need=md;for(const j of bottomSec(r)){if(PT[r.parts[j]].k!=='tank'||need<=0)continue;const take=Math.min(r.fuel[j],need*r.fuel[j]/fl+1e-9);r.fuel[j]-=take;need-=take}F+=f}}return F}
 function stepRocket(r,dt){if(r.dead)return;const t=S.t,q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy),alt=rr-B0.R,ux=q.dx/rr,uy=q.dy/rr,m=rMass(r);
   // steering: your keys, the stability assist or the autopilot
   let cmd=DRAG.rot;if(AP.mode)cmd=apSteer(r)??cmd;const trq=r.parts.reduce((s,p)=>s+(PT[p].trq||0),0)+(r.lit?0.06*PT_thrust(r):0),aC=trq/Math.max(1,m)*0.5;
-  if(!cmd&&r.sas){let tgt=null;const sp=Math.hypot(q.vx,q.vy);if(r.sas==='hold')tgt=r.sasA;else if(r.sas==='pro'&&sp>1)tgt=Math.atan2(q.vy,q.vx);else if(r.sas==='retro'&&sp>1)tgt=Math.atan2(-q.vy,-q.vx);else if(r.sas==='up')tgt=Math.atan2(uy,ux);
-    if(AP.mode&&AP.tgt!=null)tgt=AP.tgt;if(tgt!=null){let d=tgt-r.a;d=Math.atan2(Math.sin(d),Math.cos(d));const want=clamp(d*2.2,-1.2,1.2);cmd=clamp((want-r.om)*4,-1,1)}}
+  let tgt=null;if(!cmd&&r.sas){const sp=Math.hypot(q.vx,q.vy);if(r.sas==='hold')tgt=r.sasA;else if(r.sas==='pro'&&sp>1)tgt=Math.atan2(q.vy,q.vx);else if(r.sas==='retro'&&sp>1)tgt=Math.atan2(-q.vy,-q.vx);else if(r.sas==='up')tgt=Math.atan2(uy,ux);
+    if(AP.mode&&AP.tgt!=null)tgt=AP.tgt;if(r.chute===2&&(!AP.mode||AP.mode==='home'))tgt=Math.atan2(uy,ux);if(tgt!=null){let d=tgt-r.a;d=Math.atan2(Math.sin(d),Math.cos(d));const want=clamp(d*2.2,-1.2,1.2);cmd=clamp((want-r.om)*4,-1,1)}}
   else if(cmd)r.sasA=r.a;
   let aero=0;const den=rho(q.b,alt),av=airVel(q.b,q.dx,q.dy),vrx=q.vx-av[0],vry=q.vy-av[1],vs=Math.hypot(vrx,vry);r.mach=den>0?vs/soundSpeed(alt):0;r.q=0.5*den*vs*vs;r.maxQ=Math.max(r.maxQ||0,r.q);
   if(den>0&&vs>30&&r.landed<0){const aoa=Math.atan2(Math.sin(Math.atan2(vry,vrx)-r.a),Math.cos(Math.atan2(vry,vrx)-r.a)),qd=0.5*den*vs*vs;aero=(has(r,'fins')?1:-0.35)*Math.sin(aoa)*qd/1000/Math.max(1,m)*0.6;if(qd>32000&&Math.abs(aoa)>0.5&&r.landed<0){boom(r,'broke apart: it turned sideways while flying fast through thick air');return}}
-  r.om+=(cmd*aC+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt;
+  if(dt>0.08){r.om=0;if(tgt!=null)r.a=tgt}else{r.om+=(cmd*aC+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt}
   // forces
-  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);let ax=F*dx/m,ay=F*dy/m,dragA=0;
+  const F=thrustNow(r,dt,alt,q.b),dx=Math.cos(r.a),dy=Math.sin(r.a);r.thrAcc=F/m;let ax=F*dx/m,ay=F*dy/m,dragA=0;
   if(den>0&&vs>0.1){const top=PT[r.parts[0]].k,cd=r.chute===2?0:(['pod','cone','chute'].includes(top)?0.35:0.8),A=Math.PI*(rocketW(r.parts)/2)**2,cda=cd*A+(r.chute===2?450:0),Fd=0.5*den*vs*vs*cda*machCd(r.mach)/1000;ax-=vrx/vs*Fd/m;ay-=vry/vs*Fd/m;dragA=Fd/m;
     const heat=den*vs*vs*vs*2.6e-10*(has(r,'shield')&&Math.cos(Math.atan2(vry,vrx)-r.a)<-0.7?0.08:1);r.heat=Math.max(0,r.heat+(heat-0.06)*dt);if(r.heat>1){boom(r,'burned up coming back into the air');return}}else r.heat=Math.max(0,r.heat-0.08*dt);
   if(r.chute===1&&G.autoChute&&den>0&&alt<5000&&vs<260&&q.vx*ux+q.vy*uy<0)openChute(r);
   if(r.chute===2&&vs>320&&den>0.05){r.chute=-1;callout('The parachute ripped!',r.x,r.y,'#ffb347')}
-  if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){if(r.landed===0){const c=Math.cos(OMEGA*dt),s=Math.sin(OMEGA*dt),lx=r.lx*c-r.ly*s;r.ly=r.lx*s+r.ly*c;r.lx=lx}const sv=airVel(r.landed,r.lx,r.ly);r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0]+sv[0];r.vy=bv[1]+sv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
+  if(r.landed>=0){const bp=bodyPos(r.landed,t),bv=bodyVel(r.landed,t);const up=Math.atan2(uy,ux);const lift=F/m;const gl=B0.mu/(rr*rr);if(lift<=gl*1.001||Math.cos(r.a-up)<0.2){if(BODIES[r.landed].rot){const w=BODIES[r.landed].rot,c=Math.cos(w*dt),s=Math.sin(w*dt),lx=r.lx*c-r.ly*s;r.ly=r.lx*s+r.ly*c;r.lx=lx}const sv=airVel(r.landed,r.lx,r.ly);r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.vx=bv[0]+sv[0];r.vy=bv[1]+sv[1];r.a=lerp(r.a,up,Math.min(1,dt*2));r.om=0;return}
     r.landed=-1;callout('Lift-off!',r.x,r.y,'#9fd0ff');ev('liftoff');chEv('liftoff',{b:q.b})}
-  r.gf=r.landed>=0?1:Math.hypot(ax,ay)/G0;r.maxG=Math.max(r.maxG||0,r.gf);const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt;
+  r.gf=r.landed>=0?1:Math.hypot(ax,ay)/G0;r.maxG=Math.max(r.maxG||0,r.gf);if(ax===0&&ay===0&&r.landed<0&&den===0&&alt>2000){const st={x:r.x,y:r.y,vx:r.vx,vy:r.vy,t};railStep(st,dt);r.x=st.x;r.y=st.y;r.vx=st.vx;r.vy=st.vy}else{const g=gravity(r.x,r.y,t);r.vx+=(ax+g[0])*dt;r.vy+=(ay+g[1])*dt;r.x+=r.vx*dt;r.y+=r.vy*dt}
   // the ground
-  const q2=rel(r,t+dt),rr2=Math.hypot(q2.dx,q2.dy),half=rocketLen(r.parts)/2,bottom=rr2-B0.R-Math.max(0,half*Math.cos(r.a-Math.atan2(q2.dy,q2.dx)));
-  if(bottom<=0){const sv2=airVel(q2.b,q2.dx,q2.dy),vimp=Math.hypot(q2.vx-sv2[0],q2.vy-sv2[1]),up=Math.atan2(q2.dy,q2.dx),tilt=Math.abs(Math.atan2(Math.sin(r.a-up),Math.cos(r.a-up))),safe=G.crashV+(has(r,'legs')?6:0);
+  const q2=rel(r,t+dt),rr2=Math.hypot(q2.dx,q2.dy),half=rocketLen(r.parts)/2,bottom=rr2-BODIES[q2.b].R-Math.max(0,half*Math.cos(r.a-Math.atan2(q2.dy,q2.dx)));
+  if(bottom<=0&&BODIES[q2.b].kind==='star')return boom(r,'flew into Aster and melted');if(bottom<=0&&BODIES[q2.b].kind==='gas')return boom(r,'sank into the crushing clouds of Goliath');if(bottom<=0){const sv2=airVel(q2.b,q2.dx,q2.dy),vimp=Math.hypot(q2.vx-sv2[0],q2.vy-sv2[1]),up=Math.atan2(q2.dy,q2.dx),tilt=Math.abs(Math.atan2(Math.sin(r.a-up),Math.cos(r.a-up))),safe=G.crashV+(has(r,'legs')?6:0);
     if(vimp>safe)return boom(r,`hit ${BODIES[q2.b].nm} at ${Math.round(vimp)} m/s`);if(tilt>0.7&&vimp>2)return boom(r,'tipped over on landing');
     r.landed=q2.b;const bp=bodyPos(q2.b,t);const k=(BODIES[q2.b].R+half)/rr2;r.lx=q2.dx*k;r.ly=q2.dy*k;r.x=bp[0]+r.lx;r.y=bp[1]+r.ly;r.om=0;r.thr=0;const wasFlight=r.maxAlt>200;
-    if(wasFlight){const nm=BODIES[q2.b].nm;callout(`Landed on ${nm}!`,r.x,r.y,'#8fe39a');toast(`Touchdown on ${nm} at ${vimp.toFixed(1)} m/s. ${r.crew.length?'The crew are safe!':''}`,6000);ev('land'+q2.b);if(r.maxAlt>BODIES[0].atm&&q2.b===0)ev('returned');if(mv('land1')&&q2.b===0)ev('moonReturn');chEv('land',{b:q2.b,v:vimp});if(AP.mode==='home')apOff('Landed safely')}}
+    if(wasFlight){const nm=BODIES[q2.b].nm;callout(`Landed on ${nm}!`,r.x,r.y,'#8fe39a');toast(`Touchdown on ${nm} at ${vimp.toFixed(1)} m/s. ${r.crew.length?'The crew are safe!':''}`,6000);ev('land'+q2.b);if(r.maxAlt>BODIES[0].atm&&q2.b===0)ev('returned');if(mv('land1')&&q2.b===0)ev('moonReturn');chEv('land',{b:q2.b,v:vimp});if(AP.mode==='home'||AP.mode==='land')apOff('Landed safely')}}
   r.maxAlt=Math.max(r.maxAlt,alt);if(q.b===1&&!mv('soi1')){ev('soi1');toast('You are in Luna’s pull now: its gravity takes over',5000);chEv('soi',{})}}
 function PT_thrust(r){let f=0;for(const i of engines(r))f+=PT[r.parts[i]].thr;return f}
 function openChute(r){if(!has(r,'chute')||r.chute===2)return;r.chute=2;callout('Parachute open',r.x,r.y,'#ffd28a');ev('chute');chEv('chute',{})}
@@ -475,13 +511,14 @@ function stepDebris(dt){for(const d of DEB){if(d.dead)continue;d.age+=dt;const g
     if(den>0){const bv=bodyVel(b,S.t),vx=d.vx-bv[0],vy=d.vy-bv[1],vs=Math.hypot(vx,vy),m=d.parts.reduce((s,p,i)=>s+PT[p].m+(d.fuel[i]||0),0),Fd=0.5*den*vs*vs*0.9*10/1000;if(vs>0.1){ax-=vx/vs*Fd/m;ay-=vy/vs*Fd/m}}
     d.vx+=ax*dt;d.vy+=ay*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.a+=d.om*dt;if(alt<0){d.dead=1;for(let i=0;i<5;i++)PARTS.push({k:'fire',x:d.x,y:d.y,vx:rr(-8,8),vy:rr(-8,8),age:rr(0,.3),s:rr(3,7)})}}DEB=DEB.filter(d=>!d.dead&&d.age<900)}
 /* ---------- the flight path ahead ---------- */
-function predict(){PRED=[];PINFO={};if(!R||R.dead||R.landed>=0){PREDV++;return}const t0=S.t,b0=domBody(R.x,R.y,t0),o=orbitOf(R,t0);let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0,inLuna=b0===1,closest=1e18,closestT=0;const m0=moonPos(t0),maxT=o.e<1&&o.period<4e5?o.period*1.02:4e5;
-  for(let i=0;i<1400&&t-t0<maxT;i++){const bnow=domBody(x,y,t),bp=bodyPos(bnow,t),r0=Math.hypot(x-bp[0],y-bp[1]),v=Math.hypot(vx-bodyVel(bnow,t)[0],vy-bodyVel(bnow,t)[1]);const dt=clamp(r0/Math.max(v,1)*0.012,0.5,200);
-    const g1=gravity(x,y,t);vx+=g1[0]*dt*0.5;vy+=g1[1]*dt*0.5;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt*0.5;vy+=g2[1]*dt*0.5;
-    const mp=moonPos(t),dm=Math.hypot(x-mp[0],y-mp[1]);if(dm<closest){closest=dm;closestT=t}if(bnow===1&&b0===0&&!PINFO.enc){PINFO.enc=true;PINFO.encT=t-t0}
-    let px=x,py=y;if(b0===1){px=x-mp[0]+m0[0];py=y-mp[1]+m0[1]}PRED.push([px,py]);
-    const bb=domBody(x,y,t),bq=bodyPos(bb,t);if(Math.hypot(x-bq[0],y-bq[1])<BODIES[bb].R){PINFO.impact=BODIES[bb].nm;PINFO.impT=t-t0;break}}
-  PINFO.closest=closest-BODIES[1].R;PINFO.closestT=closestT-t0;PREDV++}
+function predict(){PRED=[];PINFO={};if(!R||R.dead||R.landed>=0){PREDV++;return}const t0=S.t,b0=domBody(R.x,R.y,t0),o=orbitOf(R,t0),tg=G.target;let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0,closest=1e30,closestT=0,bprev=b0;
+  const f0=bodyPos(b0,t0),maxT=o.e<1&&o.period<3e7?o.period*1.02:BODIES[b0].kind==='star'?4e7:3e7;PREDREF=[R.x,R.y];
+  const st={x,y,vx,vy,t};for(let i=0;i<4000&&t-t0<maxT;i++){railStep(st,railDt(st,0.03));({x,y,vx,vy,t}=st);
+    if(tg!=null&&tg!==b0){const tp=bodyPos(tg,t),dm=Math.hypot(x-tp[0],y-tp[1]);if(dm<closest){closest=dm;closestT=t}}
+    const bn=domBody(x,y,t);if(bn!==bprev){if(!PINFO.enc){PINFO.enc=true;PINFO.encB=bn;PINFO.encT=t-t0}if(bn===tg){PINFO.encTarget=true;PINFO.tT=t-t0}bprev=bn}
+    const fb=bodyPos(b0,t);PRED.push([x-fb[0]+f0[0],y-fb[1]+f0[1]]);
+    const bq=bodyPos(bn,t);if(Math.hypot(x-bq[0],y-bq[1])<BODIES[bn].R){PINFO.impact=BODIES[bn].nm;PINFO.impT=t-t0;break}}
+  if(tg!=null){PINFO.closest=closest-BODIES[tg].R;PINFO.closestT=closestT-t0}PREDV++}
 
 /* ================= Apogee: space agency mode: money, missions, science, research and crew ================= */
 Object.assign(PT,{sci:{nm:'Science pod (sensors and sample jar)',k:'sci',m:0.2,h:0.8,w:2.4}});
@@ -497,6 +534,10 @@ const MISSIONS=[
  {id:'m7',nm:'Orbit Luna',g:'Get into orbit around Luna.',pay:80000,sci:12,ok:()=>mv('orbit1')>0},
  {id:'m8',nm:'Land on Luna',g:'Land safely on Luna.',pay:120000,sci:20,ok:()=>mv('land1')>0},
  {id:'m9',nm:'Moon rocks',g:'Take a surface sample on Luna and bring it back to Terra.',pay:150000,sci:25,ok:()=>CAR.rocks>0},
+ {id:'m11',nm:'Another planet',g:'Fly into the pull of another planet (Cinder, Veil, Rust, Goliath or Rime).',pay:250000,sci:40,ok:()=>[3,4,5,7,10].some(b=>mv('soi'+b)>0)},
+ {id:'m12',nm:'Red dust',g:'Land on Rust.',pay:400000,sci:60,ok:()=>mv('land5')>0},
+ {id:'m13',nm:'The giant',g:'Get into orbit around Goliath.',pay:500000,sci:70,ok:()=>mv('orbit7')>0},
+ {id:'m14',nm:'Ice moon',g:'Land on Frost, a moon of Goliath.',pay:700000,sci:90,ok:()=>mv('land8')>0},
  {id:'m10',nm:'Escape',g:'Leave Terra’s pull for good (escape speed).',pay:100000,sci:15,ok:()=>mv('escape')>0},
 ];
 const CREWPOOL=['Ada Vega','Yuri Kepler','Mae Orion','Neil Okafor','Sally Ride-Novak','Kalpana Ito','Chris Hadfield-Reyes','Valentina Peake','Rakesh Banerjee','Ellen Lovell','Kofi Mensah','Rin Tanaka'];
@@ -511,16 +552,16 @@ function hire(){if(CAR.crew.length>=12)return toast('Your astronaut corps is ful
 /* ---------- science: run experiments in different places ---------- */
 const EXP={crew:{nm:'Crew report',base:5,need:'crew'},sense:{nm:'Sensor reading',base:8,need:'sci'},sample:{nm:'Surface sample',base:14,need:'crew',landed:1}};
 function situation(r){const q=rel(r,S.t),B0=BODIES[q.b],alt=Math.hypot(q.dx,q.dy)-B0.R;if(r.landed>=0)return{b:q.b,s:'landed',m:q.b===0&&Math.abs(Math.atan2(q.dy,q.dx)-PAD_A)<0.01?0.3:1};
-  if(B0.atm&&alt<B0.atm)return{b:q.b,s:alt<18000?'lowair':'highair',m:alt<18000?1:1.4};return{b:q.b,s:alt<(q.b?60000:250000)?'space':'farspace',m:alt<(q.b?60000:250000)?2:2.6}}
+  if(B0.atm&&alt<B0.atm)return{b:q.b,s:alt<18000?'lowair':'highair',m:alt<18000?1:1.4};const near=Math.max(B0.atm||0,B0.R*0.4);return{b:q.b,s:alt<near?'space':'farspace',m:alt<near?2:2.6}}
 const SITN={landed:'on the ground',lowair:'low in the air',highair:'high in the air',space:'in space nearby',farspace:'far out in space'};
 function runExp(k){if(!R||R.dead)return;const E=EXP[k];if(E.need==='crew'&&!R.crew.length)return toast('This needs a crew on board');if(E.need==='sci'&&!has(R,'sci'))return toast('This needs a Science pod on the rocket');if(E.landed&&R.landed<0)return toast('Land first, then take a sample');
   const si=situation(R),key=`${k}:${BODIES[si.b].id}:${si.s}`;if(CAR.sciDone[key]||R.data.some(d=>d.key===key))return toast(`You already have a ${E.nm.toLowerCase()} from ${BODIES[si.b].nm} ${SITN[si.s]}`);
-  const val=Math.round(E.base*si.m*(si.b?4:1));R.data.push({key,nm:`${E.nm}: ${BODIES[si.b].nm}, ${SITN[si.s]}`,val,moon:si.b===1&&k==='sample'});callout(`+${val} science stored`,R.x,R.y,'#9fe3ff');toast(`${E.nm} done ${SITN[si.s]} on ${BODIES[si.b].nm}. Worth ${val} science: send it home now for half, or bring it back for all of it.`,6000);ev('exp');chEv('exp',{k,b:si.b,s:si.s});syncPanel()}
+  const val=Math.round(E.base*si.m*(BODIES[si.b].sci||1));R.data.push({key,nm:`${E.nm}: ${BODIES[si.b].nm}, ${SITN[si.s]}`,val,moon:si.b===1&&k==='sample'});callout(`+${val} science stored`,R.x,R.y,'#9fe3ff');toast(`${E.nm} done ${SITN[si.s]} on ${BODIES[si.b].nm}. Worth ${val} science: send it home now for half, or bring it back for all of it.`,6000);ev('exp');chEv('exp',{k,b:si.b,s:si.s});syncPanel()}
 function transmit(){if(!R||!R.data.length)return toast('No science data on board yet');let got=0;for(const d of R.data){const v=d.val*0.5;got+=v;CAR.sciDone[d.key]=1}CAR.sci+=got;R.data=[];carSave();toast(`Sent home: +${got.toFixed(1)} science`);ev('transmit');chEv('transmit',{});syncPanel()}
 function recover(){if(!R)return;const onTerra=R.landed===0&&!R.dead;let got=0,pay=0;if(onTerra){for(const d of R.data){got+=d.val;CAR.sciDone[d.key]=1;if(d.moon)CAR.rocks++}pay=Math.round(designCost(R.parts)*0.8);CAR.sci+=got;CAR.funds+=pay;for(const c of CAR.crew)if(c.st==='flying'){c.st='ready';c.xp+=Math.round(R.maxAlt/20000)+1}}
   carSave();checkMissions();if(onTerra)toast(`Recovered! +${got} science and ${pay.toLocaleString()} back for the parts.`,6000);R=null;DEB=[];PRED=[];toBuild()}
 /* ---------- missions pay money ---------- */
-function checkMissions(){if(CAR.mode==='sandbox')return;for(const m of MISSIONS){if(CAR.done[m.id])continue;let ok=false;try{ok=m.ok()}catch(e){}if(ok){CAR.done[m.id]=1;CAR.funds+=m.pay;CAR.sci+=m.sci;carSave();toast(`Mission complete: ${m.nm}! +${m.pay.toLocaleString()} and +${m.sci} science`,6500);callout('Mission complete!',R?R.x:C0,R?R.y:C0,'#8fe39a');ev('mission');chEv('mission',{id:m.id})}}}
+function checkMissions(){if(CAR.mode==='sandbox'||S.scen!=='pad')return;for(const m of MISSIONS){if(CAR.done[m.id])continue;let ok=false;try{ok=m.ok()}catch(e){}if(ok){CAR.done[m.id]=1;CAR.funds+=m.pay;CAR.sci+=m.sci;carSave();toast(`Mission complete: ${m.nm}! +${m.pay.toLocaleString()} and +${m.sci} science`,6500);callout('Mission complete!',R?R.x:C0,R?R.y:C0,'#8fe39a');ev('mission');chEv('mission',{id:m.id})}}}
 
 /* ================= Apogee: drawing space, worlds, rockets and paths ================= */
 const STARS=Array.from({length:260},()=>[Math.random(),Math.random(),Math.random()*0.8+0.2,Math.random()<0.1?1.6:1]);
@@ -604,6 +645,18 @@ function terraAt(x,y,z){// x,y,z: unit vector in the planet's own (spinning) fra
   const h=(e-0.5)/0.25;if(lat>0.86||h>0.9)return[236,240,245,1];if(e<0.515)return[205,190,140,1];
   if(h>0.6)return[lerp(120,150,h-0.6),lerp(108,135,h-0.6),lerp(92,120,h-0.6),1];if(lat<0.42&&dry>0.56)return[201,178,122,1];const g=fbm(x*9,y*9,z*9,3);return[lerp(48,82,g),lerp(100,140,g),lerp(46,64,g),1]}
 function lunaAt(x,y,z){let v=0.55+0.25*(fbm(x*3,y*3,z*3)-0.5);const m=fbm(x*1.3+5,y*1.3,z*1.3);if(m>0.56)v-=0.16;for(let i=0;i<3;i++){const c=vnoise(x*(8<<i),y*(8<<i),z*(8<<i));if(c>0.82)v-=(c-0.82)*1.2;else if(c>0.76)v+=(c-0.76)*1.4}v=clamp(v,0.18,0.85)*255;return[v,v*0.98,v*0.95,1]}
+const WORLDTEX={
+ cinder:(x,y,z)=>{let v=0.35+0.3*(fbm(x*3,y*3,z*3)-0.5);const c=vnoise(x*14,y*14,z*14);if(c>0.8)v-=(c-0.8)*1.4;v=clamp(v,0.12,0.6)*255;return[v*1.05,v*0.85,v*0.7,1]},
+ veil:(x,y,z)=>{const b=fbm(x*1.2+y*4,y*6,z*1.2,5),w=fbm(x*3,y*3,z*3);return[lerp(110,190,b),lerp(70,120,w),lerp(150,215,b),1]},
+ rust:(x,y,z)=>{if(Math.abs(y)>0.88)return[235,228,220,1];const e=fbm(x*2.2+3,y*2.2,z*2.2),c=vnoise(x*12,y*12,z*12);let r=lerp(150,205,e),g=lerp(62,98,e),b=lerp(40,60,e);if(e<0.45){r*=0.7;g*=0.7;b*=0.75}if(c>0.82){r*=0.8;g*=0.8}return[r,g,b,1]},
+ rock:(x,y,z)=>{const v=clamp(0.45+0.35*(fbm(x*4,y*4,z*4)-0.5),0.2,0.7)*255;return[v,v*0.96,v*0.9,1]},
+ gas:(x,y,z)=>{const t=fbm(x*2,y*2,z*2,4)*0.35,band=Math.sin((y+t)*22)*0.5+0.5,band2=Math.sin((y+t)*7+1)*0.5+0.5;let r=lerp(170,232,band),g=lerp(130,198,band),b=lerp(95,150,band);r=lerp(r,200,band2*0.3);if(Math.hypot(x-0.6,y+0.25,z-0.75)<0.12){r=200;g=110;b=80}return[r,g,b,1]},
+ frost:(x,y,z)=>{const v=fbm(x*3,y*3,z*3),c=Math.abs(vnoise(x*9,y*9,z*9)-0.5);let r=lerp(200,240,v),g=lerp(215,245,v),b=lerp(232,255,v);if(c<0.03){r*=0.7;g*=0.78;b*=0.9}return[r,g,b,1]},
+ ember:(x,y,z)=>{const v=fbm(x*3,y*3,z*3),s=vnoise(x*10,y*10,z*10);let r=lerp(200,245,v),g=lerp(160,215,v),b=lerp(40,90,v);if(s>0.83){r=60;g=40;b=30}else if(s>0.78){r=240;g=110;b=40}return[r,g,b,1]},
+ rime:(x,y,z)=>{const v=fbm(x*2.5,y*2.5,z*2.5),c=vnoise(x*16,y*16,z*16);let r=lerp(170,225,v),g=lerp(190,232,v),b=lerp(210,248,v);if(c>0.84){r*=0.75;g*=0.8}return[r,g,b,1]},
+};
+const ATMCOL={terra:[0.35,0.6,1],veil:[0.75,0.45,1],rust:[1,0.55,0.35],gas:[1,0.85,0.6]};
+const SKYCOL={terra:[0.32,0.55,0.92],veil:[0.5,0.32,0.62],rust:[0.78,0.55,0.42],gas:[0.7,0.6,0.45]};
 function sphereTex(fn,w,h,alpha){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),img=x.createImageData(w,h),d=img.data;
   for(let j=0;j<h;j++){const th=(j+0.5)/h*Math.PI,sy=Math.cos(th),r=Math.sin(th);for(let i=0;i<w;i++){const ph=(i+0.5)/w*Math.PI*2,sx0=-Math.cos(ph)*r,sz=Math.sin(ph)*r;const col=fn(sx0,sy,sz),o=(j*w+i)*4;d[o]=col[0];d[o+1]=col[1];d[o+2]=col[2];d[o+3]=alpha?col[3]:255}}
   x.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t}
@@ -613,21 +666,29 @@ function stripeTex(fn){const c=document.createElement('canvas');c.width=256;c.he
 function gl3Init(){if(GL.ok||typeof THREE==='undefined')return;try{
   const cv=document.createElement('canvas');cv.id='gl';cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0';const w2=$('world');w2.parentNode.insertBefore(cv,w2);w2.style.zIndex='1';w2.style.background='transparent';
   const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,logarithmicDepthBuffer:true,powerPreference:'high-performance'});r.setPixelRatio(DPR);r.setSize(W,H,false);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;GL.r=r;
-  const sc0=new THREE.Scene();GL.scene=sc0;GL.cam=new THREE.PerspectiveCamera(55,W/H,0.2,4e9);
+  const sc0=new THREE.Scene();GL.scene=sc0;GL.cam=new THREE.PerspectiveCamera(55,W/H,0.2,4e13);
   GL.sunDir=new THREE.Vector3(0.35,0.42,-1).normalize();const sun=new THREE.DirectionalLight(0xfff3e0,2.6);sun.position.copy(GL.sunDir);sc0.add(sun);GL.sun=sun;sc0.add(new THREE.HemisphereLight(0x8aa4d8,0x101018,0.18));
   // stars and the Sun
-  const sp=[];for(let i=0;i<4000;i++){const u=Math.random()*2-1,a=Math.random()*Math.PI*2,s=Math.sqrt(1-u*u);sp.push(Math.cos(a)*s*1e9,u*1e9,Math.sin(a)*s*1e9)}const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+  const sp=[];for(let i=0;i<4000;i++){const u=Math.random()*2-1,a=Math.random()*Math.PI*2,s=Math.sqrt(1-u*u);sp.push(Math.cos(a)*s*5e12,u*5e12,Math.sin(a)*s*5e12)}const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
   GL.stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:1.3,sizeAttenuation:false,transparent:true,opacity:0.85,depthWrite:false,fog:false}));sc0.add(GL.stars);
   GL.sunSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:gradTex([[0,'rgba(255,255,240,1)'],[0.12,'rgba(255,240,200,.95)'],[0.35,'rgba(255,200,120,.25)'],[1,'rgba(255,180,90,0)']],256,1),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));sc0.add(GL.sunSpr);
   // Terra: land, sea, clouds and a glowing rim of air
   const T=BODIES[0];GL.terra=new THREE.Group();sc0.add(GL.terra);
   const tm=new THREE.Mesh(new THREE.SphereGeometry(T.R,160,120),new THREE.MeshStandardMaterial({map:sphereTex(terraAt,1024,512),roughness:0.85,metalness:0}));GL.terra.add(tm);
   const ct=sphereTex((x,y,z)=>{const v=fbm(x*3.2+20,y*3.2*1.6,z*3.2,5);const a=clamp((v-0.5)*4,0,1)*255;return[255,255,255,a]},1024,512,true);GL.clouds=new THREE.Mesh(new THREE.SphereGeometry(T.R*1.006,128,96),new THREE.MeshStandardMaterial({map:ct,transparent:true,depthWrite:false,roughness:1}));GL.terra.add(GL.clouds);
-  const atm=new THREE.ShaderMaterial({uniforms:{sun:{value:GL.sunDir}},vertexShader:'varying vec3 vN;varying vec3 vV;varying vec3 vW;void main(){vN=normalize(mat3(modelMatrix)*normal);vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vV=normalize(cameraPosition-w.xyz);gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader:'uniform vec3 sun;varying vec3 vN;varying vec3 vV;void main(){float r=1.0-max(dot(vN,vV),0.0);float i=pow(r,3.0)*1.3;float d=clamp(dot(vN,sun)*0.8+0.35,0.0,1.0);gl_FragColor=vec4(vec3(0.35,0.6,1.0)*i*d,i*d);}',side:THREE.FrontSide,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false});
+  const atm=new THREE.ShaderMaterial({uniforms:{sun:{value:GL.sunDir},col:{value:new THREE.Vector3(0.35,0.6,1)}},vertexShader:'varying vec3 vN;varying vec3 vV;varying vec3 vW;void main(){vN=normalize(mat3(modelMatrix)*normal);vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vV=normalize(cameraPosition-w.xyz);gl_Position=projectionMatrix*viewMatrix*w;}',
+    fragmentShader:'uniform vec3 sun;uniform vec3 col;varying vec3 vN;varying vec3 vV;void main(){float r=1.0-max(dot(vN,vV),0.0);float i=pow(r,3.0)*1.3;float d=clamp(dot(vN,sun)*0.8+0.35,0.0,1.0);gl_FragColor=vec4(col*i*d,i*d);}',side:THREE.FrontSide,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false});
   GL.atm=new THREE.Mesh(new THREE.SphereGeometry(T.R+T.atm*1.1,96,64),atm);sc0.add(GL.atm);
+  // every other world: plain colour first, its detailed surface is painted the first time you come close
+  GL.B=[];BODIES.forEach((B0,i)=>{if(i<=1)return;let m;
+    if(B0.kind==='star')m=new THREE.Mesh(new THREE.SphereGeometry(B0.R,64,48),new THREE.MeshBasicMaterial({color:0xffe2a0,fog:false}));
+    else m=new THREE.Mesh(new THREE.SphereGeometry(B0.R,B0.R>1e6?128:96,B0.R>1e6?96:64),new THREE.MeshStandardMaterial({color:0x8a8a8a,roughness:0.95,metalness:0}));
+    sc0.add(m);const o={grp:m,mesh:m,tex:B0.kind==='star'};
+    if(ATMCOL[B0.kind]&&B0.atm){const a=new THREE.Mesh(new THREE.SphereGeometry(B0.R+B0.atm*1.1,96,64),atm.clone());a.material.uniforms={sun:{value:GL.sunDir},col:{value:new THREE.Vector3(...ATMCOL[B0.kind])}};sc0.add(a);o.atm=a}
+    GL.B[i]=o});
+  GL.B[0]={grp:GL.terra,tex:true,atm:null};
   // Luna
-  GL.luna=new THREE.Mesh(new THREE.SphereGeometry(BODIES[1].R,128,96),new THREE.MeshStandardMaterial({map:sphereTex(lunaAt,1024,512),roughness:0.95,metalness:0}));sc0.add(GL.luna);
+  GL.luna=new THREE.Mesh(new THREE.SphereGeometry(BODIES[1].R,128,96),new THREE.MeshStandardMaterial({map:sphereTex(lunaAt,1024,512),roughness:0.95,metalness:0}));sc0.add(GL.luna);GL.B[1]={grp:GL.luna,mesh:GL.luna,tex:true};
   // the launch site, fixed to the spinning ground
   const site=new THREE.Group();const pd=PADDIR;site.position.set(pd[0]*T.R,0,pd[2]*T.R);site.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(pd[0],0,pd[2]));GL.terra.add(site);GL.site=site;
   const grassC=document.createElement('canvas');grassC.width=grassC.height=512;{const g=grassC.getContext('2d');g.fillStyle='#4a7d3c';g.fillRect(0,0,512,512);for(let i=0;i<9000;i++){g.fillStyle=`hsl(${95+Math.random()*30},${35+Math.random()*20}%,${22+Math.random()*16}%)`;g.fillRect(Math.random()*512,Math.random()*512,2+Math.random()*3,2+Math.random()*3)}}
@@ -640,8 +701,8 @@ function gl3Init(){if(GL.ok||typeof THREE==='undefined')return;try{
   const treeGeo=new THREE.ConeGeometry(4,13,7),treeMat=new THREE.MeshStandardMaterial({color:0x2e5a2b,roughness:1}),trees=new THREE.InstancedMesh(treeGeo,treeMat,700),M4=new THREE.Matrix4();let n=0;
   for(let i=0;i<5000&&n<700;i++){const a=Math.random()*Math.PI*2,d=250+Math.random()*3600,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<120&&z>-80)continue;const s=0.7+Math.random()*0.8;M4.makeScale(s,s,s);M4.setPosition(x,6*s,z);trees.setMatrixAt(n++,M4)}trees.count=n;site.add(trees);
   // lines: flight path, planned burn and Luna's orbit
-  const mkLine=(col,dash)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(3*1600),3));g.setDrawRange(0,0);const m=dash?new THREE.LineDashedMaterial({color:col,dashSize:4e4,gapSize:3e4,transparent:true,opacity:0.9,depthTest:true}):new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.85});const l=new THREE.Line(g,m);l.frustumCulled=false;sc0.add(l);return l};
-  GL.path=mkLine(0x5ad2ff);GL.plan=mkLine(0xffaa3c,true);GL.orb=mkLine(0x8890a0);{const a=GL.orb.geometry.attributes.position;for(let i=0;i<=360;i++){const t=i/360*Math.PI*2;a.setXYZ(i,Math.cos(t)*BODIES[1].orbit,0,Math.sin(t)*BODIES[1].orbit)}a.needsUpdate=true;GL.orb.geometry.setDrawRange(0,361);GL.orb.material.opacity=0.25}
+  const mkLine=(col,dash)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(3*4000),3));g.setDrawRange(0,0);const m=dash?new THREE.LineDashedMaterial({color:col,dashSize:4e4,gapSize:3e4,transparent:true,opacity:0.9,depthTest:true}):new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.85});const l=new THREE.Line(g,m);l.frustumCulled=false;sc0.add(l);return l};
+  GL.path=mkLine(0x5ad2ff);GL.plan=mkLine(0xffaa3c,true);GL.orbs=BODIES.map((B0,i)=>{if(B0.parent<0)return null;const l=mkLine(0x8890a0),a=l.geometry.attributes.position;for(let k=0;k<=360;k++){const t=k/360*Math.PI*2;a.setXYZ(k,Math.cos(t)*B0.orbit,0,Math.sin(t)*B0.orbit)}a.needsUpdate=true;l.geometry.setDrawRange(0,361);l.material.opacity=0.3;return l});
   // flames, smoke, plasma
   GL.flameMat=new THREE.MeshBasicMaterial({map:gradTex([[0,'rgba(255,255,235,1)'],[0.25,'rgba(255,200,90,.9)'],[0.7,'rgba(255,110,30,.45)'],[1,'rgba(255,60,10,0)']]),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
   GL.smokeTex=gradTex([[0,'rgba(240,240,242,.9)'],[0.5,'rgba(220,220,225,.35)'],[1,'rgba(200,200,205,0)']],64,1);GL.glowTex=gradTex([[0,'rgba(255,220,160,1)'],[0.4,'rgba(255,120,40,.5)'],[1,'rgba(255,80,20,0)']],64,1);
@@ -685,7 +746,7 @@ function gl3Controls(){const cv=$('world');const own=e=>e.target===cv;
   $('zIn').onclick=()=>{GL.dist=Math.max(glMinD(),GL.dist/1.6);CNT.zoomed++};$('zOut').onclick=()=>{GL.dist=Math.min(3e8,GL.dist*1.6);CNT.zoomed++};$('zFit').onclick=()=>{glReset();CNT.zoomed++}}
 function glMinD(){const L=R?rocketLen(R.parts):rocketLen(DESIGN);return GL.mode==='map'?BODIES[GL.mapB||0].R*1.2:Math.max(4,L*0.8)}
 function glReset(){GL.mode='chase';GL.yaw=0.35;GL.pitch=0.22;GL.dist=Math.max(25,(R?rocketLen(R.parts):rocketLen(DESIGN))*2.6)}
-function glMap(){if(!R)return;const o=orbitOf(R,S.t);GL.mode='map';GL.mapB=o.b;GL.yaw=0;GL.pitch=1.2;const span=o.e<1&&o.ap<5e7?o.ap+BODIES[o.b].R:Math.max(o.r,BODIES[o.b].R)*2.2;GL.dist=Math.max(span,BODIES[o.b].R*1.3)*2.4}
+function glMap(b){if(!R&&b==null)return;const o=R?orbitOf(R,S.t):{b:b,e:2,r:BODIES[b].R*3};GL.mode='map';GL.mapB=b!=null?b:o.b;if(b!=null){const B0=BODIES[b];GL.yaw=0;GL.pitch=1.2;GL.dist=B0.kind==='star'?2.6e11:Math.max(B0.R*6,KIDS[b].length?Math.max(...KIDS[b].map(k=>BODIES[k].orbit))*2.6:B0.R*6);return}GL.yaw=0;GL.pitch=1.2;const span=o.e<1&&o.ap<5e7?o.ap+BODIES[o.b].R:Math.max(o.r,BODIES[o.b].R)*2.2;GL.dist=Math.max(span,BODIES[o.b].R*1.3)*2.4}
 /* ---------- drawing a frame ---------- */
 const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
 function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.width!==Math.round(W*DPR)||r.domElement.height!==Math.round(H*DPR))r.setSize(W,H,false);
@@ -697,15 +758,19 @@ function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.w
   const cp=Math.cos(GL.pitch),dir=new THREE.Vector3().addScaledVector(N,cp*Math.cos(GL.yaw)).addScaledVector(E,cp*Math.sin(GL.yaw)).addScaledVector(U,Math.sin(GL.pitch));
   let dist=GL.dist;if(GL.mode!=='map'){const camAlt=Math.hypot(fx-bp[0]+dir.x*dist,fy-bp[1]+dir.z*dist)-BODIES[b].R;if(camAlt<3&&Math.abs(dir.y)<1)dist=dist}
   const cam=GL.cam;cam.position.copy(dir).multiplyScalar(dist);if(GL.mode!=='map'){const cw=V3(cam.position.x+fx-bp[0],cam.position.y,cam.position.z+fy-bp[1]);const rr0=cw.length();if(rr0<BODIES[b].R+2){cw.multiplyScalar((BODIES[b].R+2)/rr0);cam.position.set(cw.x-fx+bp[0],cw.y,cw.z-fy+bp[1])}}
-  cam.up.copy(U);cam.lookAt(0,0,0);cam.aspect=W/H;cam.near=Math.max(0.1,dist*0.002);cam.far=4e9;cam.updateProjectionMatrix();
+  cam.up.copy(U);cam.lookAt(0,0,0);cam.aspect=W/H;cam.near=Math.max(0.1,dist*0.002);cam.far=Math.max(4e9,dist*80);cam.updateProjectionMatrix();
+  // the star lights everything from where it really is
+  const sunP=bodyPos(SUN,t);GL.sunDir.set(sunP[0]-fx,0,sunP[1]-fy).normalize();GL.sun.position.copy(GL.sunDir);
   // sky colour from the air around the camera
-  const cwx=fx+cam.position.x,cwz=fy+cam.position.z,cb=domBody(cwx,cwz,t),cbp=bodyPos(cb,t),cdx=cwx-cbp[0],cdz=cwz-cbp[1],cr=Math.hypot(cdx,cdz,cam.position.y),alt=cr-BODIES[cb].R,air=cb===0?clamp(1-alt/45000,0,1):0,sunUp=cb===0?clamp((cdx*GL.sunDir.x+cam.position.y*GL.sunDir.y+cdz*GL.sunDir.z)/cr*3+0.3,0,1):1;
-  const fogC=new THREE.Color().setRGB(lerp(0.004,0.55,air*sunUp),lerp(0.006,0.68,air*sunUp),lerp(0.02,0.9,air*sunUp));if(air>0.02){if(!GL.scene.fog)GL.scene.fog=new THREE.FogExp2(fogC,1e-5);GL.scene.fog.color.copy(fogC);GL.scene.fog.density=1.6e-5*air*air}else GL.scene.fog=null;
-  GL.scene.background=new THREE.Color().setRGB(lerp(0.004,0.32,air*sunUp),lerp(0.006,0.55,air*sunUp),lerp(0.02,0.92,air*sunUp));GL.stars.material.opacity=0.85*(1-air*sunUp);GL.stars.position.copy(cam.position);
-  GL.sunSpr.position.copy(GL.sunDir).multiplyScalar(6e8).add(cam.position);GL.sunSpr.scale.setScalar(6e8*0.09);
+  const cwx=fx+cam.position.x,cwz=fy+cam.position.z,cb=domBody(cwx,cwz,t),cbp=bodyPos(cb,t),cdx=cwx-cbp[0],cdz=cwz-cbp[1],cr=Math.hypot(cdx,cdz,cam.position.y),CB=BODIES[cb],alt=cr-CB.R,air=CB.atm&&SKYCOL[CB.kind]?clamp(1-alt/(CB.atm*0.75),0,1)*Math.min(1,CB.rho0):0,sunUp=CB.kind==='star'?1:clamp((cdx*GL.sunDir.x+cam.position.y*GL.sunDir.y+cdz*GL.sunDir.z)/cr*3+0.3,0,1),sk=SKYCOL[CB.kind]||[0,0,0];
+  const skyC=new THREE.Color().setRGB(lerp(0.004,sk[0],air*sunUp),lerp(0.006,sk[1],air*sunUp),lerp(0.02,sk[2],air*sunUp));GL.scene.background=skyC;GL.stars.material.opacity=0.85*(1-air*sunUp);GL.stars.position.copy(cam.position);
+  if(air>0.02){if(!GL.scene.fog)GL.scene.fog=new THREE.FogExp2(skyC,1e-5);GL.scene.fog.color.copy(skyC).lerp(new THREE.Color(1,1,1),0.15);GL.scene.fog.density=1.6e-5*air*air*(CB.kind==='veil'?3:1)}else GL.scene.fog=null;
+  const sd=Math.hypot(sunP[0]-fx,sunP[1]-fy);GL.sunSpr.position.set(sunP[0]-fx,0,sunP[1]-fy);GL.sunSpr.scale.setScalar(Math.max(BODIES[SUN].R*9,sd*0.06));
   // worlds
-  const tp=bodyPos(0,t);GL.terra.position.copy(P(tp[0],tp[1]));GL.terra.rotation.y=-OMEGA*t;GL.clouds.rotation.y=-OMEGA*t*0.12;GL.atm.position.copy(GL.terra.position);GL.atm.visible=air<0.98;
-  const lp=moonPos(t);GL.luna.position.copy(P(lp[0],lp[1]));GL.luna.rotation.y=-(BODIES[1].m0+2*Math.PI*t/BODIES[1].period);GL.orb.position.copy(P(C0,C0));GL.site.visible=Math.hypot(fx-C0,fy-C0)<BODIES[0].R+4e5;
+  BODIES.forEach((B0,i)=>{const o=GL.B[i];if(!o)return;const p=bodyPos(i,t),pos=P(p[0],p[1]);o.grp.position.copy(pos);o.grp.rotation.y=-(B0.rot||0)*t-(i===1?B0.m0:0);if(o.atm){o.atm.position.copy(pos);o.atm.material.uniforms.sun.value=GL.sunDir}
+    const dcam=pos.distanceTo(cam.position),px=B0.R/Math.max(1,dcam)*H;if(!o.tex&&px>3&&WORLDTEX[B0.kind]){o.tex=true;o.mesh.material.map=sphereTex(WORLDTEX[B0.kind],B0.R>1e6?1024:768,B0.R>1e6?512:384);o.mesh.material.color.set(0xffffff);o.mesh.material.needsUpdate=true}
+    const ol=GL.orbs[i];if(ol){const pp=bodyPos(B0.parent,t);ol.position.copy(P(pp[0],pp[1]));ol.visible=(GL.mode==='map'||GL.dist>B0.orbit*0.05)&&B0.orbit*1.0>GL.dist*0.004;ol.material.color.set(i===G.target?0xffd23a:0x8890a0);ol.material.opacity=i===G.target?0.7:0.28}});
+  GL.clouds.rotation.y=OMEGA*t*0.88;GL.atm.position.copy(GL.terra.position);GL.atm.visible=true;GL.atm.material.uniforms.sun.value=GL.sunDir;GL.site.visible=Math.hypot(fx-bodyPos(0,t)[0],fy-bodyPos(0,t)[1])<BODIES[0].R+4e5;
   // rocket and debris
   const live=new Set();const place=(obj,parts,x,y,a)=>{const m=rocketMesh(obj,parts);m.visible=true;m.position.copy(P(x,y));m.quaternion.setFromUnitVectors(V3(0,1,0),V3(Math.cos(a),0,Math.sin(a)));live.add(m);return m};
   if(R&&!R.dead){const m=place(R,R.parts,R.x,R.y,R.a);const fl=m.getObjectByName('flame');const burning=R.lit&&((R.thr>0&&liquid(R)>0&&engines(R).some(i=>PT[R.parts[i]].k==='eng'))||engines(R).some(i=>PT[R.parts[i]].k==='srb'&&R.fuel[i]>0));
@@ -720,9 +785,9 @@ function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.w
   GL.scene.children.forEach(o=>{if(o.userData&&o.userData.key&&!live.has(o)){o.visible=false}});
   for(const s of GL.smoke){if(s.age>=1){s.s.visible=false;continue}s.age+=1/60/2.4;s.s.visible=true;s.s.position.copy(P(s.x,s.y)).setY(s.z);s.s.scale.setScalar(s.sz*(1+s.age*7));s.s.material.opacity=(1-s.age)*0.55}
   // paths
-  const upd=(line,pts)=>{const a=line.geometry.attributes.position,n=Math.min(pts.length,1600);for(let i=0;i<n;i++)a.setXYZ(i,pts[i][0]-C0,0,pts[i][1]-C0);a.needsUpdate=true;line.geometry.setDrawRange(0,n);line.position.copy(P(C0,C0));line.computeLineDistances&&line.material.isLineDashedMaterial&&line.computeLineDistances()};
-  if(GL.ver!==PREDV){GL.ver=PREDV;upd(GL.path,PRED);upd(GL.plan,PLANP)}else{GL.path.position.copy(P(C0,C0));GL.plan.position.copy(P(C0,C0))}
-  const showLines=GL.dist>2000||GL.mode==='map';GL.path.visible=showLines&&PRED.length>1;GL.plan.visible=showLines&&PLANP.length>1;GL.orb.visible=GL.dist>5e5||GL.mode==='map';
+  const upd=(line,pts)=>{const a=line.geometry.attributes.position,n=Math.min(pts.length,4000);for(let i=0;i<n;i++)a.setXYZ(i,pts[i][0]-PREDREF[0],0,pts[i][1]-PREDREF[1]);a.needsUpdate=true;line.geometry.setDrawRange(0,n);line.position.copy(P(PREDREF[0],PREDREF[1]));line.computeLineDistances&&line.material.isLineDashedMaterial&&line.computeLineDistances()};
+  if(GL.ver!==PREDV){GL.ver=PREDV;upd(GL.path,PRED);upd(GL.plan,PLANP)}else{GL.path.position.copy(P(PREDREF[0],PREDREF[1]));GL.plan.position.copy(P(PREDREF[0],PREDREF[1]))}
+  const showLines=GL.dist>2000||GL.mode==='map';GL.path.visible=showLines&&PRED.length>1;GL.plan.visible=showLines&&PLANP.length>1;
   r.render(GL.scene,cam);return true}
 function gl3Project(x,y,z){const v=V3(x-GL.focus[0],z||0,y-GL.focus[1]).project(GL.cam);if(v.z>1)return null;return[(v.x+1)/2*W,(1-v.y)/2*H]}
 
@@ -732,9 +797,9 @@ const TOUCH=(()=>{try{return matchMedia('(pointer:coarse)').matches||'ontouchsta
 const fmtT=s=>{if(!isFinite(s))return'–';s=Math.max(0,s);const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),x=Math.floor(s%60);return d?`${d} d ${h} h`:h?`${h} h ${m} m`:m?`${m} m ${x} s`:`${x} s`};
 function orbitFrom(b,dx,dy,vx,vy){const B0=BODIES[b],rr=Math.hypot(dx,dy),v2=vx*vx+vy*vy,mu=B0.mu,eps=v2/2-mu/rr,h=dx*vy-dy*vx,e=Math.sqrt(Math.max(0,1+2*eps*h*h/(mu*mu))),a=-mu/(2*eps);const bd=eps<0;return{pe:(bd?a*(1-Math.min(e,1)):h*h/mu/(1+e))-B0.R,ap:bd?a*(1+Math.min(e,1))-B0.R:Infinity,e:bd?Math.min(e,0.99999):e}}
 /* ---------- launching and going back to the building ---------- */
-function padPos(parts){const B0=BODIES[0],L=rocketLen(parts),a=padAngle(S.t);return[C0+Math.cos(a)*(B0.R+L/2+0.01),C0+Math.sin(a)*(B0.R+L/2+0.01)]}
+function padPos(parts){const B0=BODIES[0],L=rocketLen(parts),a=padAngle(S.t),c=bodyPos(0,S.t);return[c[0]+Math.cos(a)*(B0.R+L/2+0.01),c[1]+Math.sin(a)*(B0.R+L/2+0.01)]}
 function launch(){if(!DESIGN.some(p=>PT[p].k==='pod'))return toast('Every rocket needs a capsule on top to steer it');const cost=designCost(DESIGN);if(CAR.mode==='career'){const lock=DESIGN.find(p=>!partOK(p));if(lock)return toast(`${PT[lock].nm} is not researched yet`);if(CAR.funds<cost)return toast(`This rocket costs ${cost.toLocaleString()}, but you have ${Math.floor(CAR.funds).toLocaleString()}`);CAR.funds-=cost}
-  S.t=0;const [x,y]=padPos(DESIGN);const sv=airVel(0,x-C0,y-C0);R=newRocket(DESIGN,x,y,sv[0],sv[1],padAngle(0));R.data=[];R.landed=0;R.lx=x-C0;R.ly=y-C0;R.cost=cost;const seats=R.crew.length;const ready=CAR.crew.filter(c=>c.st==='ready');R.crew=ready.slice(0,seats).map(c=>{c.st='flying';return c.nm});CAR.flights++;carSave();
+  S.t=0;const [x,y]=padPos(DESIGN),tc=bodyPos(0,0),tv=bodyVel(0,0);const sv=airVel(0,x-tc[0],y-tc[1]);R=newRocket(DESIGN,x,y,tv[0]+sv[0],tv[1]+sv[1],padAngle(0));R.data=[];R.landed=0;R.lx=x-tc[0];R.ly=y-tc[1];R.cost=cost;const seats=R.crew.length;const ready=CAR.crew.filter(c=>c.st==='ready');R.crew=ready.slice(0,seats).map(c=>{c.st='flying';return c.nm});CAR.flights++;carSave();
   MODE='flight';MISSION={};DEB=[];PRED=[];S.t=0;R.t0=0;AP.mode='';showTab('flight');S.sel={rocket:1};S.follow=true;cam.z=clamp(H*0.45/rocketLen(R.parts),1,30);setTool('fly');ev('launch');chEv('launch',{mass:rMass(R),cost});if($('home').hidden)toast(`${R.crew.length?R.crew.join(', ')+' on board. ':''}Press Space (or STAGE) to light the engines!`,6000);syncPanel()}
 function toBuild(){MODE='build';R=null;DEB=[];PRED=[];PLANP=[];AP.mode='';showTab('build');setTool('select');camPad();syncPanel()}
 function revert(){if(!R)return;if(CAR.mode==='career'){CAR.funds+=R.cost||0;for(const c of CAR.crew)if(c.st==='flying')c.st='ready';CAR.flights--;carSave()}toast('Back on the pad, as if nothing happened');R=null;launch()}
@@ -742,8 +807,8 @@ function lostCrew(){for(const c of CAR.crew)if(c.st==='flying')c.st=CAR.mode==='
 function camPad(){if(GL.ok&&MODE==='build'){GL.mode='chase';GL.yaw=0.4;GL.pitch=0.12;GL.dist=Math.max(28,rocketLen(DESIGN)*2.4)}const [x,y]=padPos(DESIGN);cam.x=x;cam.y=y;cam.z=clamp(H*0.55/Math.max(8,rocketLen(DESIGN)),1,30);S.follow=false}
 function placeOrbit(parts,b,alt,ang,extra){const bp=bodyPos(b,S.t),bv=bodyVel(b,S.t),r=BODIES[b].R+alt,v=Math.sqrt(BODIES[b].mu/r)*(extra||1);const ro=newRocket(parts,bp[0]+Math.cos(ang)*r,bp[1]+Math.sin(ang)*r,bv[0]-Math.sin(ang)*v,bv[1]+Math.cos(ang)*v,ang+Math.PI/2);ro.data=[];ro.lit=true;ro.thr=0;ro.maxAlt=alt;ro.sas='pro';return ro}
 /* ---------- autopilot ---------- */
-function apStart(m){if(!R||R.dead)return;if(m==='home'&&rel(R,S.t).b===1)return toast('The autopilot can only bring you home from around Terra. From Luna, plan a burn back.');if(m==='burn'&&!PLAN.dv)return toast('Plan a burn first: set the speed change below');
-  AP.mode=m;AP.ph='';AP.tgt=null;AP.done=0;if(m==='burn')AP.node={...PLANI.node};if($('home').hidden)toast({orbit:'Autopilot: flying to orbit',home:'Autopilot: bringing you home',burn:'Autopilot: waiting for the planned burn'}[m]);ev('ap_'+m);chEv('ap',{m});syncPanel()}
+function apStart(m){if(!R||R.dead)return;if(m==='land'&&R.landed>=0)return toast('You are already on the ground');if(m==='home'&&rel(R,S.t).b!==0)return toast('The autopilot can only bring you home from around Terra. From Luna, plan a burn back.');if(m==='burn'&&!PLAN.dv)return toast('Plan a burn first: set the speed change below');
+  AP.mode=m;AP.ph='';AP.tgt=null;AP.done=0;AP.falling=false;if(m==='burn')AP.node={...PLANI.node};if($('home').hidden)toast({orbit:'Autopilot: flying to orbit',home:'Autopilot: bringing you home',burn:'Autopilot: warping to the planned burn, then burning',land:'Autopilot: landing. It drops out of orbit, then brakes along a safe-speed curve to touch down gently'}[m]);ev('ap_'+m);chEv('ap',{m});syncPanel()}
 function apOff(msg){AP.mode='';AP.tgt=null;if(R)R.sasA=R.a;if(msg)toast(msg,5000);syncPanel()}
 function apSteer(){return null}
 function engOut(r){return r.lit&&engines(r).length&&!engines(r).some(i=>{const P=PT[r.parts[i]];return P.k==='srb'?r.fuel[i]>0:liquid(r)>0})}
@@ -751,26 +816,59 @@ function apTick(dt){if(!AP.mode||!R||R.dead)return;const t=S.t,q=rel(R,t),o=orbi
   if(AP.mode==='orbit'){if(!R.lit||R.landed>=0&&!R.lit){stage(R);R.thr=1}if(engOut(R)&&sections(R.parts).length>1&&AP.t>0.6){AP.t=0;stage(R)}
     if(!AP.ph)AP.ph='up';if(AP.ph==='up'){const p=Math.PI/2*Math.pow(clamp((o.alt-900)/62000,0,1),0.5);AP.tgt=ua+Math.min(p,ua!==null?Math.PI/2:p);R.thr=1;if(o.ap>84000){R.thr=0;AP.ph='coast'}}
     else if(AP.ph==='coast'){AP.tgt=pro;if(o.ap<78000&&o.alt<B0.atm)AP.boost=1;if(o.ap>84000)AP.boost=0;R.thr=AP.boost?1:0;if(o.alt>B0.atm-2000){const g=B0.mu/(o.r*o.r),tAp=Math.max(0,o.vr)/g,rA=o.ap+B0.R,need=Math.sqrt(B0.mu/rA)-o.h/rA;if(tAp<need/Math.max(acc,0.5)/2+3)AP.ph='circ'}}
-    else if(AP.ph==='circ'){AP.tgt=ua+Math.PI/2+clamp(-o.vr/300,-0.3,0.3);R.thr=o.pe>45000?0.4:1;if(o.pe>70000||o.e>0.999){R.thr=0;R.sas='pro';apOff(o.pe>70000?'In orbit! Your capsule now falls around Terra forever without landing.':'')}}}
+    else if(AP.ph==='circ'){AP.tgt=ua+Math.PI/2+clamp(-o.vr/300,-0.3,0.3);R.thr=o.pe>45000?0.4:1;if(o.pe>70000||(o.pe>63000&&o.ap>110000)||o.e>0.999){R.thr=0;R.sas='pro';apOff(o.pe>70000?'In orbit! Your capsule now falls around Terra forever without landing.':'')}}}
   else if(AP.mode==='home'){if(AP.ph===''){AP.ph=o.alt>B0.atm?'deorbit':'drop'}
     if(AP.ph==='deorbit'){AP.tgt=pro+Math.PI;const ok=Math.cos(R.a-AP.tgt)>0.97;R.thr=ok?1:0;if(engOut(R)&&sections(R.parts).length>1){stage(R)}if(o.pe<25000){R.thr=0;AP.ph='drop';AP.t=0}}
     else if(AP.ph==='drop'){AP.tgt=pro+Math.PI;R.thr=0;if(sections(R.parts).length>1&&AP.t>1.2){AP.t=0;stage(R)}else if(sections(R.parts).length<=1){AP.ph='fall';if(has(R,'chute')&&R.chute<2)R.chute=1}}
     else if(AP.ph==='fall'){AP.tgt=R.chute===2?ua:pro+Math.PI;R.thr=0}}
+  else if(AP.mode==='land'){const B0=BODIES[q.b],sv=airVel(q.b,q.dx,q.dy),vx=q.vx-sv[0],vy=q.vy-sv[1],vs=Math.hypot(vx,vy),g=B0.mu/(o.r*o.r),amax=Math.max(0.1,acc-g),alt=o.alt,stop=vs*vs/(2*amax);if(R.landed>=0)return apOff('Landed!');
+    if(!R.lit)stage(R);if(engOut(R)&&sections(R.parts).length>1)stage(R);
+    if(o.pe>-B0.R*0.15&&alt>(B0.atm||0)+5000&&!AP.falling){AP.tgt=Math.atan2(-q.vy,-q.vx);R.thr=Math.cos(R.a-AP.tgt)>0.95?1:0;return}AP.falling=true;
+    AP.tgt=vs>2.5?Math.atan2(-vy,-vx):ua;if(B0.atm&&B0.rho0>=1&&rho(q.b,alt)>0.05&&has(R,'chute')&&R.chute<2)R.chute=1;
+    const vd=Math.max(1.6,Math.sqrt(2*amax*0.5*Math.max(alt-2,0)));const thr=clamp((g+(vd>1.7?amax*0.5:0)+(vs-vd)*3)/Math.max(acc,0.1),0,1);R.thr=Math.cos(R.a-AP.tgt)>0.8||vs<4?thr:0}
   else if(AP.mode==='burn'){const nd=AP.node;if(!nd)return apOff('');const dir=nd.dv>0?pro:pro+Math.PI,bt=Math.abs(nd.dv)/Math.max(acc,0.05);AP.tgt=dir;
-    if(t<nd.t-bt/2){R.thr=0;if(nd.t-bt/2-t<25&&S.speedI>1){setSpeed(1)}if(nd.t-bt/2-t<6&&S.speedI>0)setSpeed(0)}else{if(!R.lit)stage(R);if(engOut(R)&&sections(R.parts).length>1)stage(R);R.thr=Math.cos(R.a-dir)>0.95?1:0;AP.done+=acc*R.thr*dt;if(AP.done>=Math.abs(nd.dv)){R.thr=0;PLAN.dv=0;apOff('Burn complete. Check your new path!')}}}}
+    if(t<nd.t-bt/2){R.thr=0;const rem=nd.t-bt/2-t,want=rem>3e5?6:rem>3e4?5:rem>3000?4:rem>300?3:rem>60?2:rem>10?1:0;const ok=orbitOf(R,t).alt>(BODIES[o.b].atm||0);if(ok&&S.speedI!==want)setSpeed(want)}else{if(!R.lit)stage(R);if(engOut(R)&&sections(R.parts).length>1)stage(R);R.thr=Math.cos(R.a-dir)>0.95?1:0;AP.done+=(R.thrAcc||0)*dt;if(AP.done>=Math.abs(nd.dv)){R.thr=0;PLAN.dv=0;apOff('Burn complete. Check your new path!')}}}}
 /* ---------- the burn planner ---------- */
-function planCompute(){const had=PLANP.length;PLANP=[];PLANI={};if(!R||R.dead||R.landed>=0||!PLAN.dv){if(had)PREDV++;return}const t0=S.t;let x=R.x,y=R.y,vx=R.vx,vy=R.vy,t=t0;const b=domBody(x,y,t0);
-  if(PLAN.at!=='now'){let lastVr=null;for(let i=0;i<4000;i++){const bp=bodyPos(b,t),bv=bodyVel(b,t),dx=x-bp[0],dy=y-bp[1],rvx=vx-bv[0],rvy=vy-bv[1],vr=dx*rvx+dy*rvy;
-      if(lastVr!=null&&((PLAN.at==='ap'&&lastVr>0&&vr<=0)||(PLAN.at==='pe'&&lastVr<0&&vr>=0)))break;lastVr=vr;const rr0=Math.hypot(dx,dy),dt=clamp(rr0/Math.hypot(rvx,rvy)*0.004,0.2,60);const g1=gravity(x,y,t);vx+=g1[0]*dt/2;vy+=g1[1]*dt/2;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt/2;vy+=g2[1]*dt/2;if(t-t0>4e5)break}}
-  const bv=bodyVel(b,t),rvx=vx-bv[0],rvy=vy-bv[1],sp=Math.hypot(rvx,rvy);vx+=rvx/sp*PLAN.dv;vy+=rvy/sp*PLAN.dv;PLANI.node={t,dv:PLAN.dv};const bp=bodyPos(b,t);PLANI.o=orbitFrom(b,x-bp[0],y-bp[1],vx-bv[0],vy-bv[1]);PLANI.in=t-t0;
-  const m0=moonPos(t0);let closest=1e18,enc=false;for(let i=0;i<1200&&t-t0<6e5;i++){const bb=domBody(x,y,t),bq=bodyPos(bb,t),r0=Math.hypot(x-bq[0],y-bq[1]),bv2=bodyVel(bb,t),dt=clamp(r0/Math.max(Math.hypot(vx-bv2[0],vy-bv2[1]),1)*0.012,0.5,200);
-    const g1=gravity(x,y,t);vx+=g1[0]*dt/2;vy+=g1[1]*dt/2;x+=vx*dt;y+=vy*dt;t+=dt;const g2=gravity(x,y,t);vx+=g2[0]*dt/2;vy+=g2[1]*dt/2;const mp=moonPos(t),dm=Math.hypot(x-mp[0],y-mp[1]);closest=Math.min(closest,dm);if(dm<BODIES[1].soi)enc=true;
-    PLANP.push(b===1?[x-mp[0]+m0[0],y-mp[1]+m0[1]]:[x,y]);if(r0<BODIES[bb].R)break}PLANI.enc=enc;PLANI.closest=closest-BODIES[1].R;PREDV++}
+function propStep(st){const b=domBody(st.x,st.y,st.t);railStep(st,railDt(st,st.k||0.03));return b}
+function simpleOrbit(st){const b=domBody(st.x,st.y,st.t),bp=bodyPos(b,st.t),bv=bodyVel(b,st.t),o=orbitFrom(b,st.x-bp[0],st.y-bp[1],st.vx-bv[0],st.vy-bv[1]),B0=BODIES[b];if(o.e>=1)return false;const far=o.ap+B0.R;if(o.pe<(B0.atm||0)+1000)return false;if(B0.parent>=0&&far>B0.soi*0.9)return false;for(const k of KIDS[b])if(far>BODIES[k].orbit-BODIES[k].soi*1.2)return false;return true}
+function planState(at,tAt,from){const st=from?{...from}:{x:R.x,y:R.y,vx:R.vx,vy:R.vy,t:S.t,k:0.004};const b=domBody(st.x,st.y,st.t);if(at==='now')return{st,b};
+  if(at==='time'){if(simpleOrbit(st)){railStep(st,tAt-st.t);return{st,b}}for(let i=0;i<40000&&st.t<tAt-1e-6;i++){const d=Math.min(tAt-st.t,railDt(st,0.2));railStep(st,d)}return{st,b:domBody(st.x,st.y,st.t)}}
+  let lastVr=null;for(let i=0;i<6000;i++){const bp=bodyPos(b,st.t),bv=bodyVel(b,st.t),vr=(st.x-bp[0])*(st.vx-bv[0])+(st.y-bp[1])*(st.vy-bv[1]);if(lastVr!=null&&((at==='ap'&&lastVr>0&&vr<=0)||(at==='pe'&&lastVr<0&&vr>=0)))break;lastVr=vr;propStep(st);if(st.t-S.t>3e7)break}return{st,b}}
+function applyDv(st,b,dv){const bv=bodyVel(b,st.t),rvx=st.vx-bv[0],rvy=st.vy-bv[1],sp=Math.hypot(rvx,rvy)||1;st.vx+=rvx/sp*dv;st.vy+=rvy/sp*dv}
+function flyOut(st,b,tg,maxT,keep,maxN){const t0=st.t,f0=bodyPos(b,t0),pts=keep?[]:null;let closest=1e30,enc=false,encB=-1,bprev=b,impact=false;for(let i=0;i<(maxN||1600)&&st.t-t0<maxT;i++){const bn=propStep(st);if(tg!=null){const tp=bodyPos(tg,st.t),d=Math.hypot(st.x-tp[0],st.y-tp[1]);if(d<closest)closest=d}const b2=domBody(st.x,st.y,st.t);if(b2!==bprev){if(!enc){enc=true;encB=b2}bprev=b2}
+    if(pts){const fb=bodyPos(b,st.t);pts.push([st.x-fb[0]+f0[0],st.y-fb[1]+f0[1]])}const bq=bodyPos(b2,st.t);if(Math.hypot(st.x-bq[0],st.y-bq[1])<BODIES[b2].R){impact=true;break}}return{pts,closest:tg!=null?closest-BODIES[tg].R:Infinity,enc,encB,hit:tg!=null&&bprev===tg,impact}}
+function planCompute(){const had=PLANP.length;PLANP=[];PLANI={};if(!R||R.dead||R.landed>=0||!PLAN.dv){if(had)PREDV++;return}const {st,b}=planState(PLAN.at,PLAN.t);PLANI.node={t:st.t,dv:PLAN.dv};
+  applyDv(st,b,PLAN.dv);const bp=bodyPos(b,st.t),bv=bodyVel(b,st.t);PLANI.o=orbitFrom(b,st.x-bp[0],st.y-bp[1],st.vx-bv[0],st.vy-bv[1]);PLANI.in=st.t-S.t;PLANI.b=b;
+  const o=PLANI.o,maxT=o.e<1&&o.ap<BODIES[b].soi?2*Math.PI*Math.sqrt(((o.ap+o.pe)/2+BODIES[b].R)**3/BODIES[b].mu)*1.05:BODIES[b].kind==='star'?4e7:3e7;st.k=0.03;const res=flyOut(st,b,G.target,maxT,true,6000);PLANP=res.pts;PREDREF=[R.x,R.y];PLANI.enc=res.hit;PLANI.closest=res.closest;PLANI.encB=res.encB;PREDV++}
+/* ---------- one-tap helpers: circularise, capture, and find a transfer to the target ---------- */
+function circAt(at){if(!R||R.dead||R.landed>=0)return;const {st,b}=planState(at);const bp=bodyPos(b,st.t),bv=bodyVel(b,st.t),dx=st.x-bp[0],dy=st.y-bp[1],r=Math.hypot(dx,dy),vx=st.vx-bv[0],vy=st.vy-bv[1],v=Math.hypot(vx,vy),vt=Math.abs(dx*vy-dy*vx)/r;
+  const need=Math.sqrt(BODIES[b].mu/r);PLAN={at,dv:Math.round(need-v)};syncPlanUI();planCompute();ev('plan');toast(`Planned: ${PLAN.dv>0?'+':''}${PLAN.dv} m/s at the ${at==='ap'?'highest':'lowest'} point to make a round orbit. Press Do planned burn.`,6000);syncPanel()}
+function syncPlanUI(){const a=$('planAt'),d=$('planDv');if(a)a.value=PLAN.at==='time'?'time':PLAN.at;if(d){d.value=clamp(PLAN.dv,-3000,3000);$('planDvV').textContent=(PLAN.dv>0?'+':'')+PLAN.dv+' m/s'}}
+function findTransfer(){if(!R||R.dead||R.landed>=0)return toast('Get into orbit first, then find a transfer');const tg=G.target,o=orbitOf(R,S.t),b=o.b,T=BODIES[tg];if(tg===b)return toast(`You are already in ${T.nm}'s pull`);
+  const box=$('planInfo');if(box)box.innerHTML='Searching for the best burn…';setTimeout(()=>{const t0=S.t;let best=null;const muB=BODIES[b].mu;
+    // the target circles the same world we orbit (e.g. Terra → Luna)
+    const sameParent=T.parent===b,interp=!sameParent&&BODIES[b].parent===T.parent;
+    // already on the way? then plan a small mid-course correction instead of a whole new transfer
+    if(sameParent&&(o.e>=1||o.ap+BODIES[b].R>T.orbit*0.8)&&PINFO.closest<T.orbit*0.3){const evalC=(tb,dv)=>{const st={...planState('time',tb).st,k:0.03};const bb=domBody(st.x,st.y,st.t);applyDv(st,bb,dv);const res=flyOut(st,bb,tg,4e7,false,8000);return{score:(res.hit?(res.closest<20000?5e4+Math.abs(res.closest):Math.abs(res.closest-80000)*0.01):res.closest),tb,dv,res}};
+      let bestC=null;for(let i=0;i<8;i++)for(let dv=-240;dv<=240;dv+=30){const e=evalC(t0+60+i*86400*1.5,dv);if(!bestC||e.score<bestC.score)bestC=e}
+      let dT=43200,dD=15;for(let it=0;it<40&&dD>0.2;it++){let moved=false;for(const [a,c] of [[dT,0],[-dT,0],[0,dD],[0,-dD]]){if(bestC.tb+a<t0+30)continue;const e=evalC(bestC.tb+a,bestC.dv+c);if(e.score<bestC.score){bestC=e;moved=true;break}}if(!moved){dT/=2;dD/=2}}
+      PLAN={at:'time',t:bestC.tb,dv:Math.round(bestC.dv*10)/10||0.1};syncPlanUI();planCompute();ev('plan');ev('correction');toast(`Course correction: ${PLAN.dv>0?'+':''}${PLAN.dv} m/s in ${fmtT(bestC.tb-t0)}. ${PLANI.enc?'Then you reach '+T.nm+'!':'Closest pass '+fmtKm(PLANI.closest)+'.'}`,7000);syncPanel();return}if(!sameParent&&!interp){if(box)box.textContent='Try a world that circles the same thing you do (a moon of your planet, or another planet when you orbit a planet).';return}
+    let tDep=t0,dvGuess,TH;const r1=o.r;if(sameParent){const r2=T.orbit;dvGuess=Math.sqrt(muB/r1)*(Math.sqrt(2*r2/(r1+r2))-1);TH=Math.PI*Math.sqrt(((r1+r2)/2)**3/muB)}
+    else{const P=BODIES[b],mu=BODIES[P.parent].mu,ra=P.orbit,rb=T.orbit,th=Math.PI*Math.sqrt(((ra+rb)/2)**3/mu),nA=2*Math.PI/P.period,nB=2*Math.PI/T.period,ideal=Math.PI-nB*th;
+      const pa=bodyPos(b,t0),pp=bodyPos(P.parent,t0),pb=bodyPos(tg,t0);let ph=Math.atan2(pb[1]-pp[1],pb[0]-pp[0])-Math.atan2(pa[1]-pp[1],pa[0]-pp[0]);ph=mod(ph,2*Math.PI);const rel0=nB-nA;let wait=mod(ideal-ph,2*Math.PI)/rel0;if(wait<0)wait=mod(ph-ideal,2*Math.PI)/(nA-nB);tDep=t0+Math.max(0,wait);
+      TH=th;const vinf=Math.abs(Math.sqrt(mu/ra)*(Math.sqrt(2*rb/(ra+rb))-1));dvGuess=Math.sqrt(vinf*vinf+2*muB/r1)-Math.sqrt(muB/r1);if(rb<ra)dvGuess=dvGuess;}
+    dvGuess*=1.01;const per=o.e<1?o.period:6000;for(let i=0;i<40;i++){const tb=tDep+per*i/40;const base=planState('time',tb).st;for(const f of [0.92,0.96,1,1.02,1.04,1.07,1.1]){const dv=dvGuess*f;const st={...base,k:0.06};const bb=domBody(st.x,st.y,st.t);applyDv(st,bb,dv);const res=flyOut(st,bb,tg,TH*1.5,false,6000);
+        const score=(res.hit?(res.closest<20000?5e4+Math.abs(res.closest):Math.abs(res.closest-80000)*0.01):res.closest);if(!best||score<best.score)best={score,tb,dv,res}}}
+    if(!best){if(box)box.textContent='No transfer found';return}
+    // fine-tune: nudge the burn time and size until the pass is as close as we can get
+    const evalB=(tb,dv)=>{const st={...planState('time',tb).st,k:0.05};const bb=domBody(st.x,st.y,st.t);applyDv(st,bb,dv);const res=flyOut(st,bb,tg,TH*1.5,false,6000);return{score:(res.hit?(res.closest<20000?5e4+Math.abs(res.closest):Math.abs(res.closest-80000)*0.01):res.closest),tb,dv,res}};
+    let dT=per/40,dD=Math.abs(dvGuess)*0.03;for(let it=0;it<40&&dT>0.5;it++){let moved=false;for(const [a,c] of [[dT,0],[-dT,0],[0,dD],[0,-dD],[dT,dD],[-dT,-dD],[dT,-dD],[-dT,dD]]){if(best.tb+a<t0)continue;const e=evalB(best.tb+a,best.dv+c);if(e.score<best.score){best=e;moved=true;break}}if(!moved){dT/=2;dD/=2}}PLAN={at:'time',t:best.tb,dv:Math.round(best.dv)};syncPlanUI();planCompute();ev('plan');ev('transfer');chEv('transfer',{tg});
+    toast(`Transfer to ${T.nm}: burn ${PLAN.dv>0?'+':''}${PLAN.dv} m/s in ${fmtT(best.tb-t0)}. ${PLANI.enc?'It reaches '+T.nm+'!':'Closest pass '+fmtKm(PLANI.closest)+'.'} Press Do planned burn (it warps for you).`,8000);syncPanel()},30)}
 /* ---------- keys: steer, throttle, stage ---------- */
 const flying=()=>MODE==='flight'&&R&&!R.dead&&$('home').hidden;
 addEventListener('keydown',e=>{if(!flying())return;const tg=e.target.tagName;if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA')return;const k=e.key.toLowerCase();
-  const map=['a','d','w','s','arrowleft','arrowright','arrowup','arrowdown',' ','z','x','shift','t','c','m','f','g'];if(!map.includes(k))return;e.preventDefault();e.stopImmediatePropagation();if(DRAG.keys.has(k))return;DRAG.keys.add(k);DRAG.idle=0;
-  if(k===' ')stage(R);else if(k==='z'){R.thr=1;ev('thr')}else if(k==='x'){R.thr=0;ev('thr')}else if(k==='t'){R.sas=R.sas?'':'hold';R.sasA=R.a;toast(R.sas?'Stability assist on':'Stability assist off')}else if(k==='c'){stage1chute()}else if(k==='m')mapView();else if(k==='f')followRocket();else if(k==='g'){if(R.landed===0)recover()}},true);
+  const map=['a','d','w','s','arrowleft','arrowright','arrowup','arrowdown',' ','z','x','shift','t','c','m','f','g',',','.'];if(!map.includes(k))return;e.preventDefault();e.stopImmediatePropagation();if(DRAG.keys.has(k))return;DRAG.keys.add(k);DRAG.idle=0;
+  if(k===' ')stage(R);else if(k==='z'){R.thr=1;ev('thr')}else if(k==='x'){R.thr=0;ev('thr')}else if(k==='t'){R.sas=R.sas?'':'hold';R.sasA=R.a;toast(R.sas?'Stability assist on':'Stability assist off')}else if(k==='c'){stage1chute()}else if(k==='m')mapView();else if(k==='f')followRocket();else if(k==='g'){if(R.landed===0)recover()}else if(k===','||k==='.'){if(GL.ok){const n=BODIES.length;let b=GL.mode==='map'?GL.mapB:rel(R,S.t).b;b=(b+(k==='.'?1:n-1))%n;glMap(b);ev('mapcycle')}}},true);
 addEventListener('keyup',e=>DRAG.keys.delete(e.key.toLowerCase()),true);addEventListener('blur',()=>DRAG.keys.clear());
 function stage1chute(){if(!R)return;if(!has(R,'chute'))return toast('No parachute on this rocket');const q=rel(R,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R;if(rho(q.b,alt)>0&&Math.hypot(q.vx,q.vy)<260)openChute(R);else{R.chute=1;toast('Parachute armed: it opens when you are low and slow enough')}}
 function keyTick(dt){const k=DRAG.keys;DRAG.rot=(k.has('a')||k.has('arrowleft')||DRAG.padL?-1:0)+(k.has('d')||k.has('arrowright')||DRAG.padR?1:0);if(DRAG.rot){ev('steer');if(AP.mode&&AP.mode!=='burn')apOff('Autopilot off: you have the controls')}
@@ -779,27 +877,34 @@ function mapView(){if(!R)return;if(GL.ok){if(GL.mode==='map'){glReset();ev('map'
 function followRocket(){if(!R)return;if(GL.ok)glReset();S.sel={rocket:1};S.follow=true;cam.z=clamp(H*0.45/rocketLen(R.parts),1,30);ev('follow')}
 /* ---------- the simulator ---------- */
 const SIM={id:'apogee',name:'Apogee',defTool:'select',world:{w:WS,h:WS,wrapX:false,maxZ:60,followZ:6},home:'demo',freeScen:'pad',tutScen:'sandbox',defSpeed:0,homeSpeed:1,canFollow:true,
-  speeds:[['1×',1],['5×',5],['50×',50],['500×',500],['5000×',5000]],fmtRate:v=>`${v}× time`,
+  speeds:[['1×',1],['5×',5],['50×',50],['500×',500],['5k×',5000],['50k×',50000],['200k×',200000]],fmtRate:v=>`${v}× time`,
   dateTxt:()=>MODE==='build'?(CAR.mode==='career'?`£${Math.floor(CAR.funds).toLocaleString()} · ${Math.floor(CAR.sci)} science`:'Sandbox'):`T+ ${fmtT(S.t)}`,
   dateSub:()=>{if(MODE==='build')return`Building · ${designCost(DESIGN).toLocaleString()} · Δv ${fmtN(stats(DESIGN).reduce((s,x)=>s+x.dv,0))} m/s`;if(!R)return'';if(R.dead)return'Crashed: '+R.dead;const o=orbitOf(R,S.t);return`${BODIES[o.b].nm} · ${fmtKm(o.alt)} · ${fmtN(o.spd)} m/s${AP.mode?' · autopilot':''}`},
-  stepSize:()=>{if(!R||R.dead)return 0.05;if(R.landed>=0&&!R.lit)return 0.5;const o=orbitOf(R,S.t);if((R.lit&&R.thr>0)||o.alt<(BODIES[o.b].atm||0)+2000||o.alt<8000||AP.mode)return 0.02;return clamp(o.r/Math.max(o.spd,1)*0.003,0.05,20)},
-  tools:[['',[['select','👆','Look','Drag to look around. Scroll or pinch to zoom.'],['fly','🚀','Fly','Keys: A/D steer, W/S throttle, Z full, X cut, Space stage, T stability, C parachute, M map, F follow.']]]],
-  scens:[{id:'pad',name:'Space agency',desc:'Career: missions pay money, science unlocks new parts, look after your crew.'},{id:'sandbox',name:'Sandbox',desc:'Every part unlocked and unlimited money.'},{id:'orbit',name:'In orbit',desc:'Start circling Terra at 100 km with fuel to spare.'},{id:'moonready',name:'Ready for Luna',desc:'In orbit with a Moon lander. Plan a burn to reach Luna.'},{id:'lunaorbit',name:'Orbiting Luna',desc:'A lander circling Luna at 30 km. Go down and land!'},{id:'descent',name:'Moon landing',desc:'Falling towards Luna. Burn to slow down and touch down gently.'},{id:'reentry',name:'Coming home',desc:'A capsule falling back into Terra’s air. Keep the heat shield in front!'},{id:'demo',name:'Watch a launch',desc:'The autopilot flies an Orbiter to space.'}],
+  stepSize:()=>{if(!R||R.dead)return 0.05;if(R.landed>=0&&!R.lit)return 0.5;const o=orbitOf(R,S.t);if((R.lit&&R.thr>0)||o.alt<(BODIES[o.b].atm||0)+2000||o.alt<8000||(AP.mode&&R.thr>0)||(AP.mode==='land'))return 0.02;return railDt({x:R.x,y:R.y,vx:R.vx,vy:R.vy,t:S.t},0.01)},
+  tools:[['',[['select','👆','Look','Drag to look around. Scroll or pinch to zoom.'],['fly','🚀','Fly','Keys: A/D steer, W/S throttle, Z full, X cut, Space stage, T stability, C parachute, M map (, and . switch world), F follow.']]]],
+  scens:[{id:'pad',name:'Space agency',desc:'Career: missions pay money, science unlocks new parts, look after your crew.'},{id:'sandbox',name:'Sandbox',desc:'Every part unlocked and unlimited money.'},{id:'orbit',name:'In orbit',desc:'Start circling Terra at 100 km with fuel to spare.'},{id:'moonready',name:'Ready for Luna',desc:'In orbit with a Moon lander. Plan a burn to reach Luna.'},{id:'lunaorbit',name:'Orbiting Luna',desc:'A lander circling Luna at 30 km. Go down and land!'},{id:'descent',name:'Moon landing',desc:'Falling towards Luna. Burn to slow down and touch down gently.'},{id:'reentry',name:'Coming home',desc:'A capsule falling back into Terra’s air. Keep the heat shield in front!'},{id:'rustbound',name:'Off to Rust',desc:'In orbit around Terra with a ship that can reach the red planet. Press Find a transfer.'},{id:'rustland',name:'Landing on Rust',desc:'Circling the red desert planet. Its air is thin: parachutes help a little, engines do the rest.'},{id:'frost',name:'Frost, moon of Goliath',desc:'Orbiting an icy moon of the giant planet. Land on the ice.'},{id:'veil',name:'Falling into Veil',desc:'A capsule dropping into Veil\u2019s thick purple air. Heavy gravity, soft parachute landing.'},{id:'demo',name:'Watch a launch',desc:'The autopilot flies an Orbiter to space.'}],
   load(id){PARTS=[];DEB=[];PRED=[];PLANP=[];AP.mode='';MISSION={};PLAN={at:'ap',dv:0};S.t=0;R=null;MODE='build';
     if(id==='sandbox')carNew('sandbox');else if(CAR.mode!=='career'||!carLoad())if(!carLoad())carNew('career');
     if(id==='pad'||id==='sandbox'){if(!DESIGN.length)DESIGN=PRESETS.orbiter.parts.slice();return}
     const fly=r=>{R=r;MODE='flight';S.sel={rocket:1};S.follow=true};
     if(id==='orbit')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark'],0,100000,-Math.PI/2));
-    else if(id==='moonready')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark','legs','dec','tankL','tankL','tankL','lifter'],0,100000,BODIES[1].m0-1.98));
+    else if(id==='moonready'){G.target=1}if(id==='moonready')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark','legs','dec','tankL','tankL','tankL','lifter'],0,100000,BODIES[1].m0-1.98));
     else if(id==='lunaorbit')fly(placeOrbit(['chute','pod1','shield','dec','tankM','tankM','spark','legs'],1,30000,-Math.PI/2));
     else if(id==='descent'){const r=placeOrbit(['chute','pod1','shield','tankM','spark','legs'],1,6000,-Math.PI/2,0.15);r.a=-Math.PI/2+Math.PI;r.sas='retro';fly(r)}
     else if(id==='reentry'){const r=placeOrbit(['chute','pod1','shield'],0,90000,-Math.PI*0.7,0.985);r.sas='retro';r.lit=false;r.chute=1;fly(r)}
-    else if(id==='demo'){DESIGN=PRESETS.orbiter.parts.slice();S.t=0;const [x,y]=padPos(DESIGN);const sv=airVel(0,x-C0,y-C0);R=newRocket(DESIGN,x,y,sv[0],sv[1],padAngle(0));R.data=[];R.landed=0;R.lx=x-C0;R.ly=y-C0;MODE='flight';S.sel={rocket:1};S.follow=true;setTimeout(()=>{if(R&&!R.dead)apStart('orbit')},800)}
+    else if(id==='rustbound'){G.target=5;fly(placeOrbit(['chute','pod1','shield','dec','sci','tankM','tankM','spark','legs','dec','tankL','tankL','tankL','tankL','lifter'],0,100000,-Math.PI/2))}
+    else if(id==='rustland'){G.target=5;const r=placeOrbit(['chute','pod1','shield','sci','tankM','spark','legs'],5,60000,-Math.PI/2);fly(r)}
+    else if(id==='frost'){G.target=8;fly(placeOrbit(['chute','pod1','sci','tankM','tankM','spark','legs'],8,30000,-Math.PI/2))}
+    else if(id==='veil'){G.target=4;const r=placeOrbit(['chute','pod1','shield','sci'],4,130000,-Math.PI/2,0.97);r.sas='retro';r.lit=false;r.chute=1;fly(r)}
+    else if(id==='demo'){DESIGN=PRESETS.orbiter.parts.slice();S.t=0;const [x,y]=padPos(DESIGN),tc=bodyPos(0,0),tv=bodyVel(0,0);const sv=airVel(0,x-tc[0],y-tc[1]);R=newRocket(DESIGN,x,y,tv[0]+sv[0],tv[1]+sv[1],padAngle(0));R.data=[];R.landed=0;R.lx=x-tc[0];R.ly=y-tc[1];MODE='flight';S.sel={rocket:1};S.follow=true;setTimeout(()=>{if(R&&!R.dead)apStart('orbit')},800)}
     if(R)R.crew=crewNames(R.parts.reduce((s,p)=>s+(PT[p].crew||0),0))},
   after(){if(GL.ok)glReset();if(MODE==='build')camPad();else{cam.z=clamp(H*0.45/rocketLen(R.parts),0.5,30);S.follow=true;if(['orbit','moonready'].includes(S.scen))cam.z=3}setTimeout(()=>{if($('home').hidden)showTab(MODE==='build'?'build':'flight')},0);syncPanel()},
   init(){gl3Init();initPanels()},
-  step(dt){if(R){stepRocket(R,dt);apTick(dt);if(R.dead&&!R.lostDone){R.lostDone=1;lostCrew()}if(!R.dead&&R.landed<0){const o=orbitOf(R,S.t);if(o.b===0&&o.e<1&&o.pe>BODIES[0].atm&&!mv('orbit0')){ev('orbit0');sayT('Orbit! You are falling around Terra fast enough to never hit it.',6000);chEv('orbit',{b:0})}
-      if(o.b===1&&o.e<1&&o.pe>3000&&!mv('orbit1')){ev('orbit1');sayT('You are orbiting Luna!',6000);chEv('orbit',{b:1})}if(o.b===0&&o.e>=1&&o.alt>3e6&&!mv('escape')){ev('escape');toast('Escape! Terra can no longer pull you back.',6000);chEv('escape',{})}}}stepDebris(dt)},
+  step(dt){const t0=S.t;if(R){stepRocket(R,dt);S.t=t0+dt;apTick(dt);if(R.dead&&!R.lostDone){R.lostDone=1;lostCrew()}
+    if(!R.dead&&R.landed<0){const o=orbitOf(R,S.t),Bb=BODIES[o.b];if(R.lastB==null)R.lastB=o.b;
+      if(o.b!==R.lastB){const was=BODIES[R.lastB];R.lastB=o.b;ev('soi'+o.b);chEv('soi',{b:o.b});if(o.b===SUN)ev('escape');sayT(o.b===was.parent?`Leaving ${was.nm}'s pull: now ${Bb.nm}'s gravity holds you`:`Entering ${Bb.nm}'s pull: its gravity takes over`,5000)}
+      if(Bb.kind!=='star'&&o.e<1&&o.pe>Math.max(Bb.atm||0,3000)&&o.ap<Bb.soi&&!mv('orbit'+o.b)){ev('orbit'+o.b);sayT(o.b===0?'Orbit! You are falling around Terra fast enough to never hit it.':`You are orbiting ${Bb.nm}!`,6000);chEv('orbit',{b:o.b})}}}
+    S.t=t0;stepDebris(dt)},
   frame(dt){keyTick(dt);for(const p of PARTS){p.age+=dt*(p.k==='txt'?0.45:1.2);if(p.vx){p.x+=p.vx*dt;p.y+=p.vy*dt}}PARTS=PARTS.filter(p=>p.age<1);
     if(R&&!R.dead&&R.lit&&R.thr>0&&!S.paused){const q=rel(R,S.t),alt=Math.hypot(q.dx,q.dy)-BODIES[q.b].R;if(rho(q.b,alt)>0.02&&Math.random()<0.6){const L=rocketLen(R.parts);PARTS.push({k:'smoke',x:R.x-Math.cos(R.a)*L*0.6,y:R.y-Math.sin(R.a)*L*0.6,age:0,s:rr(2,5)})}}
     if(R&&!R.dead&&S.speedI>1){const o=orbitOf(R,S.t);if((R.lit&&R.thr>0)||(R.landed<0&&o.alt<(BODIES[o.b].atm||0))){setSpeed(1);toast('Time warp slows down while engines burn or you are in the air')}}
@@ -829,9 +934,10 @@ function initPanels(){const sel=$('preset');sel.innerHTML='<option value="">Load
   $('clearBtn').onclick=()=>{DESIGN=['pod1'];SELI=-1;camPad();syncPanel()};
   $('thrS').oninput=e=>{if(R){R.thr=+e.target.value/100;ev('thr')}};
   document.querySelectorAll('[data-fl]').forEach(b=>b.onclick=()=>{const k=b.dataset.fl;if(!R&&k!=='build')return;
-    ({stage:()=>stage(R),chute:stage1chute,map:mapView,follow:followRocket,revert,recover,build:()=>{if(R&&R.landed===0&&!R.dead)recover();else toBuild()},orbit:()=>apStart('orbit'),home:()=>apStart('home'),burn:()=>apStart('burn'),apoff:()=>apOff('Autopilot off'),
+    ({system:()=>{if(GL.ok){glMap(SUN);ev('map')}},stage:()=>stage(R),chute:stage1chute,map:mapView,follow:followRocket,revert,recover,build:()=>{if(R&&R.landed===0&&!R.dead)recover();else toBuild()},orbit:()=>apStart('orbit'),home:()=>apStart('home'),burn:()=>apStart('burn'),land:()=>apStart('land'),xfer:findTransfer,circAp:()=>circAt('ap'),circPe:()=>circAt('pe'),apoff:()=>apOff('Autopilot off'),
       crew:()=>runExp('crew'),sense:()=>runExp('sense'),sample:()=>runExp('sample'),send:transmit})[k]();syncPanel()});
   document.querySelectorAll('[data-sas]').forEach(b=>b.onclick=()=>{if(!R)return;R.sas=b.dataset.sas;R.sasA=R.a;if(AP.mode&&AP.mode!=='burn')apOff('');ev('sas_'+R.sas);chEv('sas',{m:R.sas});syncPanel()});
+  {const ts=$('tgtSel');ts.innerHTML=BODIES.map((B,i)=>B.kind==='star'?'':`<option value="${i}">${B.nm}${B.parent>=0&&B.parent!==SUN?' (moon of '+BODIES[B.parent].nm+')':''}</option>`).join('');ts.value=G.target;ts.onchange=()=>{G.target=+ts.value;ev('target');PREDT=0;syncPanel()}}
   $('planAt').onchange=e=>{PLAN.at=e.target.value;planCompute();syncPanel()};$('planDv').oninput=e=>{PLAN.dv=+e.target.value;$('planDvV').textContent=(PLAN.dv>0?'+':'')+PLAN.dv+' m/s';ev('plan');planCompute();syncPanel()};
   $('agency').onclick=e=>{const b=e.target.closest('[data-tech],[data-hire],[data-mode]');if(!b)return;if(b.dataset.tech)research(b.dataset.tech);else if(b.dataset.hire!=null)hire();else if(b.dataset.mode){if(b.dataset.mode==='career'&&!confirm('Start a brand-new space agency? Your current career progress will be replaced.'))return;loadScen(b.dataset.mode==='career'?'pad':'sandbox');if(b.dataset.mode==='career'){carNew('career');syncPanel()}}};
   buildPad()}
@@ -846,11 +952,11 @@ function syncPanel(){if(!$('stack'))return;const st=stats(DESIGN),tot=st.reduce(
       `<p class="note">${!DESIGN.some(p=>PT[p].k==='pod')?'⚠ Add a capsule: it steers the rocket. ':''}${st.length&&st[0].twr<1.05?'⚠ The first stage is too weak to lift off (needs more than 1×). ':''}Rough guide: space needs about 1,500 m/s, orbit about 3,400 m/s, landing on Luna and coming home about 7,000 m/s.</p>`;
     document.querySelectorAll('#parts [data-add]').forEach(b=>{const id=b.dataset.add,lk=CAR.mode==='career'&&!partOK(id);b.disabled=lk});renderAgency()}
   $('launchBtn').textContent=CAR.mode==='career'?`🚀 Launch (${cost.toLocaleString()})`:'🚀 Launch';
-  const fl=$('flightInfo');if(fl){if(!R){fl.innerHTML='<p class="note">Build a rocket in the Rocket tab and press Launch.</p>'}else{const o=orbitOf(R,S.t),q=rel(R,S.t);const rows=[['Near',BODIES[o.b].nm],['Altitude',fmtKm(o.alt)],['Speed',fmtN(o.spd)+' m/s'],['Climbing',fmtN(o.vr)+' m/s'],['Apoapsis',o.ap===Infinity?'escaping':fmtKm(o.ap)],['Periapsis',fmtKm(o.pe)],['Orbit time',o.e<1?fmtT(o.period):'–'],['Heat',Math.round(R.heat*100)+'%'],['Mach',(R.mach||0).toFixed(2)],['Air pressure on rocket',fmtN((R.q||0)/1000,1)+' kPa (max '+fmtN((R.maxQ||0)/1000,1)+')'],['G-force',(R.gf||0).toFixed(1)+' g (max '+(R.maxG||0).toFixed(1)+')'],['Fuel (this stage)',fmtN(liquid(R)+engines(R).reduce((s,i)=>s+(PT[R.parts[i]].k==='srb'?R.fuel[i]:0),0),2)+' t'],['Stages left',sections(R.parts).length]];
-      fl.innerHTML=(R.dead?`<p class="warn">Crashed: ${R.dead}.</p>`:R.landed>=0?`<p class="good">Landed on ${BODIES[R.landed].nm}.</p>`:'')+`<div class="kv">${rows.map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}</div>`+(PINFO.enc?`<p class="good">On this path you reach Luna in ${fmtT(PINFO.encT)}.</p>`:PINFO.impact&&R.landed<0?`<p class="warn">On this path you hit ${PINFO.impact} in ${fmtT(PINFO.impT)}.</p>`:o.b===0&&PINFO.closest<3e6?`<p class="note">Closest pass to Luna: ${fmtKm(PINFO.closest)}.</p>`:'')+(R.crew.length?`<p class="note">Crew: ${R.crew.join(', ')}</p>`:'')+(R.data&&R.data.length?`<p class="note">Science on board: ${R.data.map(d=>d.nm+' ('+d.val+')').join('; ')}</p>`:'')}}
-  if(R)$('thrS').value=Math.round(R.thr*100);document.querySelectorAll('[data-sas]').forEach(b=>b.setAttribute('aria-pressed',!!R&&R.sas===b.dataset.sas));const apb=$('apState');if(apb)apb.textContent=AP.mode?`Autopilot: ${{orbit:'flying to orbit',home:'bringing you home',burn:'doing the planned burn'}[AP.mode]} (${AP.ph||'starting'})`:'';
-  const pha=$('phase');if(pha&&R&&!R.dead){const q=rel(R,S.t),mp=moonPos(S.t);if(q.b===0){let d=Math.atan2(mp[1]-C0,mp[0]-C0)-Math.atan2(q.dy,q.dx);d=mod(d+Math.PI,Math.PI*2)-Math.PI;const deg=Math.round(d*180/Math.PI);pha.innerHTML=`Luna is <b>${deg}°</b> ${deg>=0?'ahead of':'behind'} you. From a low orbit, burn about +870 m/s when Luna is about 110° ahead.`}else pha.textContent=''}
-  const pi=$('planInfo');if(pi)pi.innerHTML=!PLAN.dv?'Set a speed change to see the new path (orange).':PLANI.o?`In ${fmtT(PLANI.in)}: new apoapsis ${PLANI.o.ap===Infinity?'escape':fmtKm(PLANI.o.ap)}, periapsis ${fmtKm(PLANI.o.pe)}${PLANI.enc?' · <b>reaches Luna!</b>':PLANI.closest<5e6?' · passes '+fmtKm(PLANI.closest)+' from Luna':''}`:'';
+  const fl=$('flightInfo');if(fl){if(!R){fl.innerHTML='<p class="note">Build a rocket in the Rocket tab and press Launch.</p>'}else{const o=orbitOf(R,S.t),q=rel(R,S.t);const rows=[['Near',BODIES[o.b].nm+(BODIES[o.b].atm?' (has air)':' (no air)')],['Altitude',fmtKm(o.alt)],['Speed',fmtN(o.spd)+' m/s'],['Climbing',fmtN(o.vr)+' m/s'],['Apoapsis',o.ap===Infinity?'escaping':fmtKm(o.ap)],['Periapsis',fmtKm(o.pe)],['Orbit time',o.e<1?fmtT(o.period):'–'],['Heat',Math.round(R.heat*100)+'%'],['Mach',(R.mach||0).toFixed(2)],['Air pressure on rocket',fmtN((R.q||0)/1000,1)+' kPa (max '+fmtN((R.maxQ||0)/1000,1)+')'],['G-force',(R.gf||0).toFixed(1)+' g (max '+(R.maxG||0).toFixed(1)+')'],['Fuel (this stage)',fmtN(liquid(R)+engines(R).reduce((s,i)=>s+(PT[R.parts[i]].k==='srb'?R.fuel[i]:0),0),2)+' t'],['Stages left',sections(R.parts).length]];
+      fl.innerHTML=(R.dead?`<p class="warn">Crashed: ${R.dead}.</p>`:R.landed>=0?`<p class="good">Landed on ${BODIES[R.landed].nm}.</p>`:'')+`<div class="kv">${rows.map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}</div>`+(PINFO.impact&&R.landed<0?`<p class="warn">On this path you hit ${PINFO.impact} in ${fmtT(PINFO.impT)}.</p>`:'')+(PINFO.enc?`<p class="good">On this path you ${PINFO.encB===BODIES[o.b].parent?'leave '+BODIES[o.b].nm+'\'s pull':'reach '+BODIES[PINFO.encB].nm} in ${fmtT(PINFO.encT)}.</p>`:'')+(G.target!=null&&G.target!==o.b&&PINFO.closest<5e8?`<p class="note">Closest pass to ${BODIES[G.target].nm}: ${fmtKm(PINFO.closest)} in ${fmtT(PINFO.closestT)}.</p>`:'')+(R.crew.length?`<p class="note">Crew: ${R.crew.join(', ')}</p>`:'')+(R.data&&R.data.length?`<p class="note">Science on board: ${R.data.map(d=>d.nm+' ('+d.val+')').join('; ')}</p>`:'')}}
+  if(R)$('thrS').value=Math.round(R.thr*100);document.querySelectorAll('[data-sas]').forEach(b=>b.setAttribute('aria-pressed',!!R&&R.sas===b.dataset.sas));const apb=$('apState');if(apb)apb.textContent=AP.mode?`Autopilot: ${{orbit:'flying to orbit',home:'bringing you home',burn:'doing the planned burn',land:'landing'}[AP.mode]} (${AP.ph||'starting'})`:'';
+  const pha=$('phase');if(pha&&R&&!R.dead){const T=BODIES[G.target],q=rel(R,S.t);if(T&&T.parent>=0&&q.b!==G.target){const par=T.parent===q.b?q.b:BODIES[q.b].parent===T.parent?T.parent:-1;if(par>=0){const pp=bodyPos(par,S.t),me=T.parent===q.b?[R.x,R.y]:bodyPos(q.b,S.t),tp=bodyPos(G.target,S.t);let d=Math.atan2(tp[1]-pp[1],tp[0]-pp[0])-Math.atan2(me[1]-pp[1],me[0]-pp[0]);d=mod(d+Math.PI,Math.PI*2)-Math.PI;pha.innerHTML=`${T.nm} is <b>${Math.round(d*180/Math.PI)}°</b> ${d>=0?'ahead of':'behind'} ${T.parent===q.b?'you':BODIES[q.b].nm}. Press <b>Find a transfer</b> to plan the trip.`}else pha.innerHTML=`To reach ${T.nm}, first get into orbit around ${BODIES[T.parent]?BODIES[T.parent].nm:''} ${T.parent!==SUN&&BODIES[T.parent].parent===SUN&&q.b===0?'(plan a transfer to '+BODIES[T.parent].nm+' first)':''}.`}else pha.textContent=''}
+  const pi=$('planInfo');if(pi)pi.innerHTML=!PLAN.dv?'Set a speed change to see the new path (orange).':PLANI.o?`In ${fmtT(PLANI.in)}: new apoapsis ${PLANI.o.ap===Infinity?'escape':fmtKm(PLANI.o.ap)}, periapsis ${fmtKm(PLANI.o.pe)}${PLANI.enc?` · <b>reaches ${BODIES[G.target].nm}!</b>`:PLANI.closest<5e8?` · passes ${fmtKm(PLANI.closest)} from ${BODIES[G.target].nm}`:''}`:'';
   const recB=document.querySelector('[data-fl="recover"]');if(recB)recB.hidden=!(R&&R.landed===0&&!R.dead&&R.maxAlt>100)}
 function renderAgency(){const el=$('agency');if(!el)return;const car=CAR.mode==='career';
   el.innerHTML=`<div class="kv"><div><span class="k">Mode</span><span class="v">${car?'Space agency':'Sandbox'}</span></div><div><span class="k">Money</span><span class="v">${car?Math.floor(CAR.funds).toLocaleString():'unlimited'}</span></div><div><span class="k">Science</span><span class="v">${Math.floor(CAR.sci)}</span></div><div><span class="k">Flights</span><span class="v">${CAR.flights}</span></div></div>`+
@@ -866,12 +972,22 @@ function padTick(){const p=$('apad');if(!p)return;const show=TOUCH&&flying()&&!d
 /* ---------- writing on top of the 3D view ---------- */
 function overlay3D(c){c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='left';
   const lab=(x,y,txt,col)=>{const p=gl3Project(x,y,0);if(!p||p[0]<-50||p[0]>W+50||p[1]<-20||p[1]>H+20)return;c.fillStyle=col||'#5ad2ff';c.beginPath();c.arc(p[0],p[1],4,0,7);c.fill();c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.6)';c.strokeText(txt,p[0]+8,p[1]-6);c.fillStyle='#e6f4ff';c.fillText(txt,p[0]+8,p[1]-6)};
+  if(GL.dist>8e5||GL.mode==='map')for(let i=0;i<BODIES.length;i++){if(i<2)continue;const p=bodyPos(i,S.t);const s2=gl3Project(p[0],p[1],0);if(s2){c.textAlign='center';c.fillStyle=i===G.target?'#ffd23a':'rgba(230,235,255,.85)';c.font='600 12px "IBM Plex Mono",monospace';c.fillText(BODIES[i].nm,s2[0],s2[1]+16);c.textAlign='left'}}
   if((GL.dist>3e4||GL.mode==='map')&&R&&!R.dead&&R.landed<0){const o=orbitOf(R,S.t),b=o.b,bp=bodyPos(b,S.t),q=rel(R,S.t),mu=BODIES[b].mu,k=q.vx*q.vx+q.vy*q.vy-mu/o.r,rv=q.dx*q.vx+q.dy*q.vy,ex=(k*q.dx-rv*q.vx)/mu,ey=(k*q.dy-rv*q.vy)/mu,w=Math.atan2(ey,ex);
     if(o.pe>-BODIES[b].R*0.9)lab(bp[0]+Math.cos(w)*(o.pe+BODIES[b].R),bp[1]+Math.sin(w)*(o.pe+BODIES[b].R),'Pe '+fmtKm(o.pe));if(o.e<1&&o.ap<1e8)lab(bp[0]+Math.cos(w+Math.PI)*(o.ap+BODIES[b].R),bp[1]+Math.sin(w+Math.PI)*(o.ap+BODIES[b].R),'Ap '+fmtKm(o.ap));
     if(GL.dist>2e6)lab(R.x,R.y,'You','#ffe14a')}
   if(GL.dist>8e5||GL.mode==='map')for(let i=0;i<2;i++){const p=bodyPos(i,S.t);const s=gl3Project(p[0],p[1],0);if(s){c.textAlign='center';c.fillStyle='rgba(230,235,255,.85)';c.fillText(BODIES[i].nm,s[0],s[1]+4);c.textAlign='left'}}
   for(const p of PARTS){if(p.k!=='txt')continue;const s=gl3Project(p.x,p.y,0)||[W/2,H/2];const a=Math.max(0,1-p.age);c.globalAlpha=a;c.font='800 20px Oxanium,sans-serif';c.textAlign='center';c.lineWidth=4;c.strokeStyle='rgba(0,0,0,.6)';c.fillStyle=p.col;const Y=clamp(s[1],80,H-140)-40-p.age*30,X=clamp(s[0],80,W-80);c.strokeText(p.text,X,Y);c.fillText(p.text,X,Y);c.globalAlpha=1}
-  if(R)drawHud(c);if(R&&R.dead){c.textAlign='center';c.font='700 18px Oxanium,sans-serif';c.fillStyle='#ffb08a';c.fillText('Crashed: '+R.dead,W/2,H*0.3)}}
+  if(R){drawHud(c);if(GL.mode!=='map')navball(c)}if(R&&R.dead){c.textAlign='center';c.font='700 18px Oxanium,sans-serif';c.fillStyle='#ffb08a';c.fillText('Crashed: '+R.dead,W/2,H*0.3)}}
+/* ---------- the navball: where the nose points compared with the horizon, and which way you are moving ---------- */
+function navball(c){if(!R||R.dead)return;const q=rel(R,S.t),o=orbitOf(R,S.t),B0=BODIES[q.b],ua=Math.atan2(q.dy,q.dx),wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));const inAir=B0.atm&&o.alt<B0.atm;const sv=inAir?airVel(q.b,q.dx,q.dy):[0,0],vx=q.vx-sv[0],vy=q.vy-sv[1];
+  const rb=Math.min(58,W*0.11),hudW=Math.min(560,W-32),wide=W>hudW+rb*2+60,cx=wide?(W-hudW)/2-rb-14:W-rb-16,cy=wide?H-92+29-rb*0.15:H-(innerWidth<760?250:92)-rb-30,d=wrap(R.a-ua),el=Math.PI/2-Math.abs(d),side=Math.sign(d)||1;
+  c.save();c.beginPath();c.arc(cx,cy,rb,0,7);c.clip();const hy=cy+el/(Math.PI/2)*rb*0.95;c.fillStyle='#3e86c9';c.fillRect(cx-rb,cy-rb,rb*2,rb*2);c.fillStyle='#8a5a32';c.fillRect(cx-rb,hy,rb*2,rb*2);
+  c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.moveTo(cx-rb,hy);c.lineTo(cx+rb,hy);c.stroke();c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;for(const k of [-60,-30,30,60]){const y=hy-k/90*rb*0.95;c.beginPath();c.moveTo(cx-rb*0.3,y);c.lineTo(cx+rb*0.3,y);c.stroke()}
+  const mark=(ang,col,retro)=>{const dd=wrap(ang-ua);const e=Math.PI/2-Math.abs(dd),sd=Math.sign(dd)||side;if(sd!==side&&Math.abs(dd)>0.15&&Math.abs(Math.abs(dd)-Math.PI)>0.15)return;const y=cy+(el-e)/(Math.PI/2)*rb*0.95;c.strokeStyle=col;c.lineWidth=2.2;c.beginPath();c.arc(cx,y,7,0,7);c.stroke();c.beginPath();if(retro){c.moveTo(cx-5,y-5);c.lineTo(cx+5,y+5);c.moveTo(cx+5,y-5);c.lineTo(cx-5,y+5)}else{c.moveTo(cx,y-7);c.lineTo(cx,y-12);c.moveTo(cx-7,y);c.lineTo(cx-12,y);c.moveTo(cx+7,y);c.lineTo(cx+12,y)}c.stroke()};
+  if(Math.hypot(vx,vy)>1){const va=Math.atan2(vy,vx);mark(va,'#c8f04a',false);mark(va+Math.PI,'#c8f04a',true)}if(PLANI&&PLANI.node&&PLAN.dv){mark(Math.atan2(vy,vx)+(PLAN.dv<0?Math.PI:0),'#4aa8ff',false)}c.restore();
+  c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=3;c.beginPath();c.arc(cx,cy,rb,0,7);c.stroke();c.strokeStyle='#ffd23a';c.lineWidth=3;c.beginPath();c.moveTo(cx-18,cy+6);c.lineTo(cx-6,cy+6);c.lineTo(cx,cy);c.lineTo(cx+6,cy+6);c.lineTo(cx+18,cy+6);c.stroke();
+  c.fillStyle='rgba(8,10,20,.8)';c.fillRect(cx-46,cy-rb-20,92,18);c.fillStyle='#eef3ff';c.font='600 11px "IBM Plex Mono",monospace';c.textAlign='center';c.fillText(`${Math.round(el*180/Math.PI)}° ${side>0?'E':'W'} · ${inAir?'surface':'orbit'}`,cx,cy-rb-7)}
 
 /* ================= Apogee: challenges, tutorial, demo ================= */
 const sb=parts=>()=>{carNew('sandbox');DESIGN=parts.slice()};
@@ -891,6 +1007,11 @@ CC(3.1,{t:'Touchdown',g:'Land the falling lander softly on Luna.',hint:'Point Ba
 CC(3.2,{t:'Moon rocks',g:'Land on Luna and take a surface sample.',hint:'After landing, open the Flight tab and press Surface sample.',scen:'descent',check:()=>{const ok=evAny(e=>e.k==='exp'&&e.k2!==1&&e.b===1&&e.s==='landed'&&e.kk!==1)&&evAny(e=>e.k==='exp'&&e.b===1);return[ok&&mv('land1')>0,(mv('land1')?0.5:0)+(ok?0.5:0),'']},fail:()=>R&&R.dead?'Crashed into Luna':'',stars:byTime(180,400)});
 CC(3.4,{t:'Escape',g:'Leave Terra’s pull for good.',hint:'From orbit, point Forward and burn about +1,000 m/s. Your path opens up and never comes back.',scen:'orbit',check:()=>[mv('escape')>0,mv('escape')?1:0,''],stars:byTime(400,1200)});
 CC(3.6,{t:'Space agency',g:'In your space agency, complete 2 missions in one go.',hint:'Start with the Hopper: First launch and Touch space are close together. Science from flights unlocks bigger parts.',scen:'pad',check:()=>{const n=evN('mission');return[n>=2,n/2,`${n} of 2 missions`]},stars:byTime(400,900)});
+CC(3.7,{t:'Red planet',g:'Fly from Terra orbit into Rust\u2019s pull.',hint:'Press Find a transfer (target Rust), then Do planned burn: it warps to the right day. After you leave Terra, press Find a transfer again for a small course correction.',scen:'rustbound',check:()=>[mv('soi5')>0,mv('soi5')?1:mv('escape')?0.5:0,mv('escape')?'Heading out into space…':''],stars:byTime(600,1500)});
+CC(3.75,{t:'Dust and rocks',g:'Land on Rust.',hint:'Press Autopilot landing, or point Backward and brake. The air is too thin for parachutes to do much.',scen:'rustland',check:()=>[mv('land5')>0,mv('land5')?1:0,''],fail:()=>R&&R.dead?'Crashed on Rust':'',stars:byTime(240,600)});
+CC(3.8,{t:'Ice moon',g:'Land on Frost, the icy moon of Goliath.',hint:'Low gravity: burn gently. Autopilot landing works too.',scen:'frost',check:()=>[mv('land8')>0,mv('land8')?1:0,''],fail:()=>R&&R.dead?'Crashed on Frost':'',stars:byTime(240,600)});
+CC(3.85,{t:'Purple rain',g:'Bring the capsule down through Veil\u2019s thick air and land.',hint:'Keep the heat shield in front (Backward). The parachute opens by itself.',scen:'veil',check:()=>[mv('land4')>0,mv('land4')?1:0,''],fail:()=>R&&R.dead?'The capsule did not make it':'',stars:byTime(400,1200)});
+CC(3.9,{t:'Star chart',g:'Look at the whole solar system, then visit 3 other worlds in map view.',hint:'Press Whole solar system in the Flight tab, then use the , and . keys to jump between worlds.',scen:'orbit',check:()=>{const n=mv('mapcycle');return[n>=3,n/3,`${Math.min(n,3)} of 3 worlds`]},stars:byTime(60,180)});
 TSTEPS.push(
  ['Look around','Drag (or use two fingers) to move around. Scroll or pinch to zoom out and see the whole planet.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
  ['A ready-made rocket','In the Rocket tab, use “Load a ready-made rocket” and pick the Orbiter.',r=>mv('preset')>r.n||evN('preset')>r.e,r=>{r.n=mv('preset');r.e=evN('preset')}],
@@ -907,9 +1028,14 @@ TSTEPS.push(
  ['Time warp','Use the 50× or 500× buttons at the top to skip the boring bits (not while burning or in the air).',()=>S.speedI>=2],
  ['Plan a burn','Move the Speed change slider. The orange line shows where that burn would take you.',r=>mv('plan')>0],
  ['Science','Press Crew report to record what your astronaut sees. Each place gives science once.',r=>mv('exp')>0],
+ ['Pick a target','In the Flight tab, choose a world in the Target list. It turns gold on the map.',r=>mv('target')>r.n,r=>{r.n=mv('target')}],
+ ['Navball','The ball next to the readouts shows where the nose points: blue sky above, brown ground below. The green circle shows which way you are moving.',r=>true],
+ ['Whole solar system','Press Whole solar system to see every world around Aster. Use , and . to jump between them.',r=>mv('mapcycle')+mv('map')>r.n,r=>{r.n=mv('mapcycle')+mv('map')}],
  ['Your agency','Open the Agency tab: missions pay money, science unlocks parts, and you can hire astronauts.',r=>(CNT.tab_agency||0)>0],
 );
 DEMO.push(
+ ['rustbound','Off to Rust','From Terra orbit, a burn on the right day sends this ship across the solar system to the red planet.',()=>{setTimeout(()=>{if(GL.ok)glMap(SUN)},300)}],
+ ['frost','Frost and Goliath','An icy moon circling a giant striped planet, far from Terra.',()=>{setTimeout(()=>{if(GL.ok){GL.dist=1.2e8;GL.pitch=0.3}},300)}],
  ['demo','Lift-off','The autopilot flies the Orbiter: straight up, then a slow lean to the right.',()=>{setSpeed(1)}],
  ['orbit','In orbit','At 2,300 m/s the capsule falls around Terra and keeps missing it.',()=>{setSpeed(2);setTimeout(mapView,300)}],
  ['moonready','Ready for Luna','A burn here, with Luna about 110° ahead, would send this lander to the Moon.',()=>{PLAN={at:'now',dv:880};setTimeout(()=>{mapView();cam.z/=9;clampCam()},300)}],
