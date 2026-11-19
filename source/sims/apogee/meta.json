@@ -27,6 +27,7 @@
   "craft.js",
   "draw.js",
   "three3d.js",
+  "terrain.js",
   "main.js",
   "content.js"
  ],

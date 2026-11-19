@@ -20,6 +20,7 @@ CC(3.7,{t:'Red planet',g:'Fly from Terra orbit into Rust\u2019s pull.',hint:'Pre
 CC(3.75,{t:'Dust and rocks',g:'Land on Rust.',hint:'Press Autopilot landing, or point Backward and brake. The air is too thin for parachutes to do much.',scen:'rustland',check:()=>[mv('land5')>0,mv('land5')?1:0,''],fail:()=>R&&R.dead?'Crashed on Rust':'',stars:byTime(240,600)});
 CC(3.8,{t:'Ice moon',g:'Land on Frost, the icy moon of Goliath.',hint:'Low gravity: burn gently. Autopilot landing works too.',scen:'frost',check:()=>[mv('land8')>0,mv('land8')?1:0,''],fail:()=>R&&R.dead?'Crashed on Frost':'',stars:byTime(240,600)});
 CC(3.85,{t:'Purple rain',g:'Bring the capsule down through Veil\u2019s thick air and land.',hint:'Keep the heat shield in front (Backward). The parachute opens by itself.',scen:'veil',check:()=>[mv('land4')>0,mv('land4')?1:0,''],fail:()=>R&&R.dead?'The capsule did not make it':'',stars:byTime(400,1200)});
+CC(3.95,{t:'Highlands',g:'Land on Luna on high ground: at least 600 m above Luna’s average surface.',hint:'Watch Above the ground in the Flight tab: it is your real height over the hills. Look for the bright, bumpy highlands and land gently there.',scen:'descent',check:()=>{const h=R&&R.landed===1?groundH(1,Math.atan2(R.ly,R.lx),S.t):0;return[h>=600,clamp(h/600,0,1),R&&R.landed===1?`landed at ${h.toFixed(0)} m`:'']},fail:()=>R&&R.dead?'Crashed into the hills':'',stars:byTime(200,500)});
 CC(3.9,{t:'Star chart',g:'Look at the whole solar system, then visit 3 other worlds in map view.',hint:'Press Whole solar system in the Flight tab, then use the , and . keys to jump between worlds.',scen:'orbit',check:()=>{const n=mv('mapcycle');return[n>=3,n/3,`${Math.min(n,3)} of 3 worlds`]},stars:byTime(60,180)});
 TSTEPS.push(
  ['Look around','Drag (or use two fingers) to move around. Scroll or pinch to zoom out and see the whole planet.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
@@ -39,6 +40,7 @@ TSTEPS.push(
  ['Science','Press Crew report to record what your astronaut sees. Each place gives science once.',r=>mv('exp')>0],
  ['Pick a target','In the Flight tab, choose a world in the Target list. It turns gold on the map.',r=>mv('target')>r.n,r=>{r.n=mv('target')}],
  ['Navball','The ball next to the readouts shows where the nose points: blue sky above, brown ground below. The green circle shows which way you are moving.',r=>true],
+ ['Mountains and sound','Worlds now have real mountains, valleys and craters. Altitude is your height above the average surface; Above the ground is your real height over the hills below, so use that when landing. Turn the engine roar and wind on or off with Sound.',r=>true],
  ['Whole solar system','Press Whole solar system to see every world around Aster. Use , and . to jump between them.',r=>mv('mapcycle')+mv('map')>r.n,r=>{r.n=mv('mapcycle')+mv('map')}],
  ['Your agency','Open the Agency tab: missions pay money, science unlocks parts, and you can hire astronauts.',r=>(CNT.tab_agency||0)>0],
 );
