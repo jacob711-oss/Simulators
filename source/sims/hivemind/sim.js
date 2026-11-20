@@ -1,7 +1,7 @@
 /* ================= Hivemind: ant colonies and their scent trails ================= */
 // The world is a 160 x 100 grid of 1 cm cells. A day lasts 60 seconds of game time.
 const WW=160,WH=100,N=WW*WH,DAY=60,MAXANTS=2400;
-const NCOL=[{n:'Ember',c:'#ff7a3d',rgb:[255,122,61]},{n:'Azure',c:'#4ec3ff',rgb:[78,195,255]},{n:'Violet',c:'#c77dff',rgb:[199,125,255]},{n:'Moss',c:'#7ed957',rgb:[126,217,87]},{n:'Gold',c:'#ffd23a',rgb:[255,210,58]},{n:'Rose',c:'#ff6fae',rgb:[255,111,174]},{n:'Frost',c:'#e8f4ff',rgb:[232,244,255]},{n:'Jade',c:'#2fd6b5',rgb:[47,214,181]}];
+const NCOL=[{n:'Ember',c:'#ff7a3d',rgb:[255,122,61]},{n:'Azure',c:'#4ec3ff',rgb:[78,195,255]},{n:'Violet',c:'#c77dff',rgb:[199,125,255]},{n:'Moss',c:'#7ed957',rgb:[126,217,87]},{n:'Gold',c:'#ffd23a',rgb:[255,210,58]},{n:'Rose',c:'#ff6fae',rgb:[255,111,174]},{n:'Frost',c:'#e8f4ff',rgb:[232,244,255]},{n:'Jade',c:'#2fd6b5',rgb:[47,214,181]},{n:'Crimson',c:'#ff3b4e',rgb:[255,59,78]},{n:'Indigo',c:'#6f7bff',rgb:[111,123,255]}];
 const NC=NCOL.length,CIDX=NCOL.map((_,i)=>i);
 let FOOD=new Float32Array(N),WALL=new Uint8Array(N),TOF=[],TOH=[],NESTS=[],ANTS=[],HIST=[],BASE=new Float32Array(N);
 const G={gathered:0,kills:0,born:0,deaths:0,rain:false,feast:false,winter:false,raids:false,stolen:0,fallen:0,scent:1,fade:30,speed:1,feastT:0,raidT:20};
@@ -47,10 +47,10 @@ const SCENS={
   maze:()=>{RS=7;addNest(14,50,0);wallLine(35,0,35,70,1.2);wallLine(70,30,70,100,1.2);wallLine(105,0,105,70,1.2);addFood(140,50,6,8);addFood(88,88,3,5)},
   rivals:()=>{RS=11;addNest(30,50,0);addNest(130,50,1);addFood(80,50,7,8);addFood(80,15,3,6);addFood(80,85,3,6)},
   desert:()=>{RS=17;addNest(80,85,0,30);addFood(20,10,4,10);addFood(145,15,3,10);for(const [x,y,w] of [[50,40,2],[110,45,2]])addWall(x,y,w*3)},
-  kingdoms:()=>{RS=31;const P=[[22,20],[80,12],[138,20],[150,62],[120,90],[40,90],[10,58],[80,55]];P.forEach(([x,y],i)=>addNest(x,y,i,25));for(const [x,y] of [[50,35],[110,35],[110,72],[50,72],[80,32],[80,80]])addFood(x,y,3.5,7)},
+  kingdoms:()=>{RS=31;const P=[[22,20],[80,12],[138,20],[150,62],[120,90],[40,90],[10,58],[80,55],[110,52],[50,52]];P.forEach(([x,y],i)=>addNest(x,y,i,25));for(const [x,y] of [[50,32],[110,32],[110,75],[50,75],[80,32],[80,80],[30,40],[132,40]])addFood(x,y,3.5,7)},
   garden:()=>{RS=23;addNest(30,30,0);addNest(130,30,1);addNest(80,82,2);for(let k=0;k<7;k++)addFood(20+R()*120,10+R()*80,3,6)},
 };
-const SCENLIST=[{id:'meadow',name:'Meadow',desc:'One colony and scattered food. A gentle start.'},{id:'maze',name:'Maze',desc:'Walls stand between the nest and the food. Can the ants find the way?'},{id:'rivals',name:'Rivals',desc:'Two colonies, one feast in the middle. Expect war.'},{id:'desert',name:'Desert',desc:'Food is scarce and far away. Help them out.'},{id:'garden',name:'Garden',desc:'Three colonies share a garden.'},{id:'kingdoms',name:'Eight kingdoms',desc:'Eight rival colonies, one in every colour, fight over the same food.'}];
+const SCENLIST=[{id:'meadow',name:'Meadow',desc:'One colony and scattered food. A gentle start.'},{id:'maze',name:'Maze',desc:'Walls stand between the nest and the food. Can the ants find the way?'},{id:'rivals',name:'Rivals',desc:'Two colonies, one feast in the middle. Expect war.'},{id:'desert',name:'Desert',desc:'Food is scarce and far away. Help them out.'},{id:'garden',name:'Garden',desc:'Three colonies share a garden.'},{id:'kingdoms',name:'Ten kingdoms',desc:'Ten rival colonies, one in every colour, fight over the same food.'}];
 /* ---------- panel ---------- */
 let PARTS=[];function FX(x,y,col,small){PARTS.push({x,y,col,age:0,small:!!small})}
 const antsOf=c=>ANTS.filter(a=>a.c===c).length;
