@@ -961,7 +961,7 @@ function flyToW(x,y,z){S.follow=false;cam.x=x;cam.y=y;if(z)cam.z=Math.max(cam.z,
 function buildSpeeds(){const b=$('spds');b.textContent='';SIM.speeds.forEach(([l,v],i)=>{const e=document.createElement('button');e.className='spd';e.textContent=l;e.onclick=()=>{setSpeed(i);setPaused(false)};b.appendChild(e)})}
 function setSpeed(i){i=clamp(i,0,SIM.speeds.length-1);S.speedI=i;S.speed=SIM.speeds[i][1];[...$('spds').children].forEach((e,k)=>e.setAttribute('aria-pressed',k===i));updateRate()}
 function setPaused(p){S.paused=p;$('pauseBtn').innerHTML=p?'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.2l10 5.8-10 5.8z" fill="currentColor"/></svg>':'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></svg>';$('pauseBtn').setAttribute('aria-label',p?'Resume':'Pause');updateRate()}
-function updateRate(){$('rateTxt').textContent=S.paused?'Paused':SIM.fmtRate(S.speed)+(S.achieved<S.speed*0.8&&!S.paused?` (running ${SIM.fmtRate(Math.max(S.achieved,S.speed*0.01))})`:'')}
+function updateRate(){$('rateTxt').textContent=S.paused?'Paused':SIM.fmtRate(S.speed)+(S.achieved<S.speed*0.8&&!S.paused&&S.achieved>0?` (running ${SIM.fmtRate(isFinite(S.speed)?Math.max(S.achieved,S.speed*0.01):S.achieved)})`:'')}
 $('pauseBtn').onclick=()=>setPaused(!S.paused);
 
 /* tools */

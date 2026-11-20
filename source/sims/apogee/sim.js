@@ -5,7 +5,7 @@ const WS=3.2e11,C0=0,G0=9.80665;
 // [id, name, parent, radius m, surface gravity m/s², orbit radius m, start angle, air height m, sea-level air density, air scale height m, day length s (0 = always faces its parent), science ×, kind]
 const BODIES=[
  ['terra','Terra',2,640000,9.81,1.36e10,0.0,60000,1.2,6000,21600,1,'terra'],
- ['luna','Luna',0,200000,1.62,1.2e7,2.2,0,0,1,0,4,'moon'],
+ ['luna','Luna',0,200000,1.62,4e6,2.2,0,0,1,0,4,'moon'],
  ['aster','Aster',-1,2.6e8,0,0,0,0,0,1,400000,1,'star'],
  ['cinder','Cinder',2,250000,2.4,5.5e9,1.0,0,0,1,420000,7,'cinder'],
  ['veil','Veil',2,700000,15.5,9.6e9,4.0,90000,5,7000,80000,5,'veil'],
@@ -103,7 +103,7 @@ function thrustNow(r,dt,alt,b){if(!r.lit||r.dead)return 0;let F=0;const p=rho(b,
 function stepRocket(r,dt){if(r.dead)return;if(r.z==null){r.z=0;r.vz=0}if(r.el==null){r.el=0;r.oe=0}const t=S.t,q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy,q.dz),alt=rr-B0.R,ux=q.dx/rr,uy=q.dy/rr,uz=q.dz/rr,m=rMass(r);
   // steering: your keys, the stability assist or the autopilot. A/D swing the nose round, Q/E tilt it up or down out of the flat plane (depth)
   let cmd=DRAG.rot,cmdE=DRAG.tilt||0;if(AP.mode)cmd=apSteer(r)??cmd;const trq=r.parts.reduce((s,p)=>s+(PT[p].trq||0),0)+(r.lit?0.06*PT_thrust(r):0),aC=trq/Math.max(1,m)*0.5;
-  let tgt=null,tgtE=null;if(!cmd&&!cmdE&&r.sas){const sp=Math.hypot(q.vx,q.vy,q.vz),sh=Math.hypot(q.vx,q.vy,q.vz||0);if(r.sas==='hold'){tgt=r.sasA;tgtE=r.sasE||0}else if(r.sas==='pro'&&sp>1){tgt=Math.atan2(q.vy,q.vx);tgtE=Math.atan2(q.vz,sh)}else if(r.sas==='retro'&&sp>1){tgt=Math.atan2(-q.vy,-q.vx);tgtE=Math.atan2(-q.vz,sh)}else if(r.sas==='up'){tgt=Math.atan2(uy,ux);tgtE=Math.asin(clamp(uz,-1,1))}
+  let tgt=null,tgtE=null;if(!cmd&&!cmdE&&r.sas){const sp=Math.hypot(q.vx,q.vy,q.vz),sh=Math.hypot(q.vx,q.vy,q.vz||0);if(r.sas==='hold'){tgt=r.sasA;tgtE=r.sasE||0}else if(r.sas==='pro'&&sp>1){tgt=Math.atan2(q.vy,q.vx);tgtE=Math.atan2(q.vz,sh)}else if(r.sas==='retro'&&sp>1){tgt=Math.atan2(-q.vy,-q.vx);tgtE=Math.atan2(-q.vz,sh)}else if(r.sas==='up'){tgt=Math.atan2(uy,ux);tgtE=Math.asin(clamp(uz,-1,1))}else if(r.sas==='down'){tgt=Math.atan2(-uy,-ux);tgtE=Math.asin(clamp(-uz,-1,1))}else if((r.sas==='tgt'||r.sas==='atgt')&&G.target!=null){const tp=bodyPos(G.target,t),sg=r.sas==='tgt'?1:-1,ex=(tp[0]-r.x)*sg,ey=(tp[1]-r.y)*sg,ez=-(r.z||0)*sg;tgt=Math.atan2(ey,ex);tgtE=Math.atan2(ez,Math.hypot(ex,ey))}
     else if(r.sas==='nrm'||r.sas==='anti'){const o=orbitOf(r,t),hm=Math.hypot(o.hv[0],o.hv[1],o.hv[2])||1,sg=r.sas==='nrm'?1:-1,nx=o.hv[0]/hm*sg,ny=o.hv[1]/hm*sg,nz=o.hv[2]/hm*sg;tgtE=Math.asin(clamp(nz,-1,1));tgt=Math.hypot(nx,ny)>1e-3?Math.atan2(ny,nx):r.a}
     if(AP.mode&&AP.tgt!=null){tgt=AP.tgt;tgtE=AP.tgtE!=null?AP.tgtE:0}if(r.chute===2&&(!AP.mode||AP.mode==='home')){tgt=Math.atan2(uy,ux);tgtE=Math.asin(clamp(uz,-1,1))}
     if(tgt!=null){let d=tgt-r.a;d=Math.atan2(Math.sin(d),Math.cos(d));const want=clamp(d*2.2,-1.2,1.2);cmd=clamp((want-r.om)*4,-1,1)}if(tgtE!=null){const want=clamp((tgtE-r.el)*2.2,-1.2,1.2);cmdE=clamp((want-r.oe)*4,-1,1)}}
