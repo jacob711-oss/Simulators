@@ -13,18 +13,19 @@
     <div id="flightInfo"></div>
     <div class="sl"><div class="row"><span class="k">Throttle (W/S, Z full, X off)</span></div><input type="range" id="thrS" min="0" max="100" value="0"></div>
     <div class="evs"><button class="btn primary" data-fl="stage">⏭ Stage (Space)</button><button class="btn" data-fl="chute">🪂 Parachute (C)</button></div>
-    <p class="note">Planes: W/S throttle, A/D pitch the nose, B brakes. Build up speed on the runway, then lift the nose gently.</p>
+    <p class="note">Depth: Q tilts the nose up out of the flat plane, E tilts it down. Burn while tilted to tilt your whole orbit, or press Tilt north / Tilt south to point that way.</p><p class="note">Planes: W/S throttle, A/D pitch the nose, Q/E turn left and right, B brakes. Build up speed on the runway, then lift the nose gently.</p>
     <span class="k">Point the rocket</span>
-    <div class="views"><button class="btn" data-sas="hold">Hold</button><button class="btn" data-sas="pro">Forward</button><button class="btn" data-sas="retro">Backward</button><button class="btn" data-sas="up">Straight up</button><button class="btn" data-sas="">Off</button></div>
+    <div class="views"><button class="btn" data-sas="hold">Hold</button><button class="btn" data-sas="pro">Forward</button><button class="btn" data-sas="retro">Backward</button><button class="btn" data-sas="up">Straight up</button><button class="btn" data-sas="nrm">Tilt north</button><button class="btn" data-sas="anti">Tilt south</button><button class="btn" data-sas="">Off</button></div>
     <span class="k">Autopilot</span>
     <div class="evs"><button class="btn" data-fl="orbit">🛰 Fly to orbit</button><button class="btn" data-fl="home">🏠 Come home</button><button class="btn" data-fl="burn">🔥 Do planned burn</button><button class="btn" data-fl="apoff">✋ Autopilot off</button></div>
     <p class="note" id="apState"></p>
     <span class="k">Going somewhere</span>
     <div class="row"><span class="k">Target</span><select id="tgtSel" class="btn"></select></div>
     <div class="evs"><button class="btn primary" data-fl="xfer">🧭 Find a transfer</button><button class="btn" data-fl="circPe">🎯 Capture / round orbit at lowest point</button><button class="btn" data-fl="circAp">⭕ Round orbit at highest point</button><button class="btn" data-fl="land">🛬 Autopilot landing</button></div>
+    <span class="k">Flight plan</span><p class="note">Plan the whole trip step by step. The fuel check tells you if your rocket can make it, then the autopilot can fly every step for you.</p><div id="fpBox"></div>
     <span class="k">Plan a burn</span>
     <div class="row"><span class="k">When</span><select id="planAt" class="btn"><option value="ap">At the highest point</option><option value="pe">At the lowest point</option><option value="now">Right now</option><option value="time">At the planned time</option></select></div>
-    <div class="sl"><div class="row"><span class="k">Speed change</span><span id="planDvV">0 m/s</span></div><input type="range" id="planDv" min="-1500" max="1500" step="10" value="0"></div>
+    <div class="sl"><div class="row"><span class="k">Speed change</span><span id="planDvV">0 m/s</span></div><input type="range" id="planDv" min="-1500" max="1500" step="10" value="0"></div><div class="sl"><div class="row"><span class="k">Tilt change (north +, south −)</span><span id="planDvnV">0 m/s</span></div><input type="range" id="planDvn" min="-1500" max="1500" step="10" value="0"></div>
     <p class="note" id="planInfo"></p>
     <p class="note" id="phase"></p>
     <span class="k">Science</span>

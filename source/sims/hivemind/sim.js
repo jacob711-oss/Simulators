@@ -1,18 +1,19 @@
 /* ================= Hivemind: ant colonies and their scent trails ================= */
 // The world is a 160 x 100 grid of 1 cm cells. A day lasts 60 seconds of game time.
 const WW=160,WH=100,N=WW*WH,DAY=60,MAXANTS=2400;
-const NCOL=[{n:'Ember',c:'#ff7a3d',rgb:[255,122,61]},{n:'Azure',c:'#4ec3ff',rgb:[78,195,255]},{n:'Violet',c:'#c77dff',rgb:[199,125,255]}];
+const NCOL=[{n:'Ember',c:'#ff7a3d',rgb:[255,122,61]},{n:'Azure',c:'#4ec3ff',rgb:[78,195,255]},{n:'Violet',c:'#c77dff',rgb:[199,125,255]},{n:'Moss',c:'#7ed957',rgb:[126,217,87]},{n:'Gold',c:'#ffd23a',rgb:[255,210,58]},{n:'Rose',c:'#ff6fae',rgb:[255,111,174]},{n:'Frost',c:'#e8f4ff',rgb:[232,244,255]},{n:'Jade',c:'#2fd6b5',rgb:[47,214,181]}];
+const NC=NCOL.length,CIDX=NCOL.map((_,i)=>i);
 let FOOD=new Float32Array(N),WALL=new Uint8Array(N),TOF=[],TOH=[],NESTS=[],ANTS=[],HIST=[],BASE=new Float32Array(N);
 const G={gathered:0,kills:0,born:0,deaths:0,rain:false,feast:false,winter:false,raids:false,stolen:0,fallen:0,scent:1,fade:30,speed:1,feastT:0,raidT:20};
 let RAIDS=0,RAIDPEND=null,FOODADD=0,WALLADD=0,ERASED=0,SPRAYED=0,NESTADD=0,EVN=0,AID=0;
 let RS=1;function R(){RS|=0;RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
 const ix=(x,y)=>(y|0)*WW+(x|0),inW=(x,y)=>x>=0&&y>=0&&x<WW&&y<WH,blocked=(x,y)=>!inW(x,y)||WALL[ix(x,y)]>0;
-for(let c=0;c<3;c++){TOF.push(new Float32Array(N));TOH.push(new Float32Array(N))}
+for(let c=0;c<NC;c++){TOF.push(new Float32Array(N));TOH.push(new Float32Array(N))}
 /* ---------- world building ---------- */
 function addFood(x,y,r,amt){let n=0;for(let yy=-r;yy<=r;yy++)for(let xx=-r;xx<=r;xx++){const d=Math.hypot(xx,yy);if(d>r)continue;const X=x+xx,Y=y+yy;if(!inW(X,Y))continue;const i=ix(X,Y);if(WALL[i])continue;const v=amt*(1-d/(r+1))+1;if(FOOD[i]<v){n+=v-FOOD[i];FOOD[i]=v}}return n}
 function addWall(x,y,r){for(let yy=-r;yy<=r;yy++)for(let xx=-r;xx<=r;xx++){if(Math.hypot(xx,yy)>r)continue;const X=x+xx,Y=y+yy;if(!inW(X,Y))continue;if(NESTS.some(n=>Math.hypot(n.x-X,n.y-Y)<n.r+1))continue;const i=ix(X,Y);WALL[i]=1;FOOD[i]=0}}
 function wallLine(x0,y0,x1,y1,w){const L=Math.hypot(x1-x0,y1-y0);for(let k=0;k<=L;k+=0.7)addWall(x0+(x1-x0)*k/L,y0+(y1-y0)*k/L,w)}
-function addNest(x,y,c,ants){if(c==null){c=[0,1,2].find(k=>!NESTS.some(n=>n.c===k));if(c==null)return null}const n={c,x,y,r:3.2,food:0,store:ants!=null?0:10,born:0,id:NESTS.length};NESTS.push(n);for(let k=0;k<(ants??40);k++)spawnAnt(n);FX(x,y,NCOL[c].c);return n}
+function addNest(x,y,c,ants){if(c==null){c=CIDX.find(k=>!NESTS.some(n=>n.c===k));if(c==null)return null}const n={c,x,y,r:3.2,food:0,store:ants!=null?0:10,born:0,id:NESTS.length};NESTS.push(n);for(let k=0;k<(ants??40);k++)spawnAnt(n);FX(x,y,NCOL[c].c);return n}
 function spawnAnt(n){if(ANTS.length>=MAXANTS)return null;const a=R()*7,ant={id:AID++,c:n.c,nest:n,x:n.x+Math.cos(a)*n.r*0.6,y:n.y+Math.sin(a)*n.r*0.6,a,carry:0,t:0,age:0,life:110+R()*80,trail:[]};ANTS.push(ant);n.born++;G.born++;return ant}
 /* ---------- raids: a war party marches on a rival nest, fights its way in and steals from the larder ---------- */
 function launchRaid(from,to,quietly){if(!from||!to||from===to||from.c===to.c)return 0;const pool=ANTS.filter(a=>a.c===from.c&&!a.carry&&!a.raid).sort((a,b)=>Math.hypot(a.x-from.x,a.y-from.y)-Math.hypot(b.x-from.x,b.y-from.y));
@@ -46,9 +47,10 @@ const SCENS={
   maze:()=>{RS=7;addNest(14,50,0);wallLine(35,0,35,70,1.2);wallLine(70,30,70,100,1.2);wallLine(105,0,105,70,1.2);addFood(140,50,6,8);addFood(88,88,3,5)},
   rivals:()=>{RS=11;addNest(30,50,0);addNest(130,50,1);addFood(80,50,7,8);addFood(80,15,3,6);addFood(80,85,3,6)},
   desert:()=>{RS=17;addNest(80,85,0,30);addFood(20,10,4,10);addFood(145,15,3,10);for(const [x,y,w] of [[50,40,2],[110,45,2]])addWall(x,y,w*3)},
+  kingdoms:()=>{RS=31;const P=[[22,20],[80,12],[138,20],[150,62],[120,90],[40,90],[10,58],[80,55]];P.forEach(([x,y],i)=>addNest(x,y,i,25));for(const [x,y] of [[50,35],[110,35],[110,72],[50,72],[80,32],[80,80]])addFood(x,y,3.5,7)},
   garden:()=>{RS=23;addNest(30,30,0);addNest(130,30,1);addNest(80,82,2);for(let k=0;k<7;k++)addFood(20+R()*120,10+R()*80,3,6)},
 };
-const SCENLIST=[{id:'meadow',name:'Meadow',desc:'One colony and scattered food. A gentle start.'},{id:'maze',name:'Maze',desc:'Walls stand between the nest and the food. Can the ants find the way?'},{id:'rivals',name:'Rivals',desc:'Two colonies, one feast in the middle. Expect war.'},{id:'desert',name:'Desert',desc:'Food is scarce and far away. Help them out.'},{id:'garden',name:'Garden',desc:'Three colonies share a garden.'}];
+const SCENLIST=[{id:'meadow',name:'Meadow',desc:'One colony and scattered food. A gentle start.'},{id:'maze',name:'Maze',desc:'Walls stand between the nest and the food. Can the ants find the way?'},{id:'rivals',name:'Rivals',desc:'Two colonies, one feast in the middle. Expect war.'},{id:'desert',name:'Desert',desc:'Food is scarce and far away. Help them out.'},{id:'garden',name:'Garden',desc:'Three colonies share a garden.'},{id:'kingdoms',name:'Eight kingdoms',desc:'Eight rival colonies, one in every colour, fight over the same food.'}];
 /* ---------- panel ---------- */
 let PARTS=[];function FX(x,y,col,small){PARTS.push({x,y,col,age:0,small:!!small})}
 const antsOf=c=>ANTS.filter(a=>a.c===c).length;
@@ -62,7 +64,7 @@ const off=document.createElement('canvas');off.width=WW;off.height=WH;const ox=o
 function paintLayer(){const d=img.data,v=S.view,night=v==='night',tr=v==='trails';
   for(let i=0;i<N;i++){const b=BASE[i];let r,g,bl;if(WALL[i]){r=74+b*30;g=66+b*26;bl=58+b*20}else if(night){r=18+b*12;g=16+b*10;bl=14+b*8}else if(tr){r=14;g=12;bl=10}else{r=118+b*40;g=94+b*30;bl=60+b*20}
     if(!WALL[i]){const f=FOOD[i];if(f>0){const k=Math.min(1,f/5);r=r*(1-k)+120*k;g=g*(1-k)+200*k;bl=bl*(1-k)+60*k}
-      for(let c=0;c<3;c++){const tf=TOF[c][i],th=TOH[c][i];if(tf+th<0.01)continue;const C=NCOL[c].rgb,k=Math.min(1,(tr?1.4:night?0.9:0.35)*(tf+th*0.5));r+=(C[0]-r)*k;g+=(C[1]-g)*k;bl+=(C[2]-bl)*k}}
+      for(let c=0;c<NC;c++){const tf=TOF[c][i],th=TOH[c][i];if(tf+th<0.01)continue;const C=NCOL[c].rgb,k=Math.min(1,(tr?1.4:night?0.9:0.35)*(tf+th*0.5));r+=(C[0]-r)*k;g+=(C[1]-g)*k;bl+=(C[2]-bl)*k}}
     const o=i*4;d[o]=r;d[o+1]=g;d[o+2]=bl;d[o+3]=255}ox.putImageData(img,0,0)}
 function render(c,now){const z=cam.z,night=S.view==='night';c.fillStyle='#0c0905';c.fillRect(0,0,W,H);paintLayer();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';c.drawImage(off,sx(0),sy(0),WW*z,WH*z);
   for(const n of NESTS){const X=sx(n.x),Y=sy(n.y),R0=n.r*z,col=NCOL[n.c].c;const gr=c.createRadialGradient(X,Y,R0*0.2,X,Y,R0*1.5);gr.addColorStop(0,'rgba(60,40,20,.95)');gr.addColorStop(0.55,'rgba(150,110,70,.9)');gr.addColorStop(1,'rgba(150,110,70,0)');c.fillStyle=gr;c.beginPath();c.arc(X,Y,R0*1.5,0,7);c.fill();
@@ -71,7 +73,7 @@ function render(c,now){const z=cam.z,night=S.view==='night';c.fillStyle='#0c0905
     if(RAIDPEND===n&&S.tool==='raid'){c.strokeStyle='#ff4040';c.lineWidth=3;c.setLineDash([6,5]);c.beginPath();c.arc(X,Y,R0*2.1,0,7);c.stroke();c.setLineDash([])}
     if(S.sel&&S.sel.n===n){c.strokeStyle='#ffd23a';c.lineWidth=2;c.beginPath();c.arc(X,Y,R0*1.9,0,7);c.stroke()}}
   // ants: dots when far away, little bodies when close
-  if(z<5){for(let k=0;k<3;k++){c.fillStyle=night?NCOL[k].c:k===0?'#2a1206':k===1?'#06202e':'#200a2e';const s=Math.max(1.6,z*0.55);for(const a of ANTS)if(a.c===k)c.fillRect(sx(a.x)-s/2,sy(a.y)-s/2,s,s)}
+  if(z<5){for(let k=0;k<NC;k++){const C0=NCOL[k].rgb;c.fillStyle=night?NCOL[k].c:`rgb(${C0[0]*0.16|0},${C0[1]*0.12|0},${C0[2]*0.12|0})`;const s=Math.max(1.6,z*0.55);for(const a of ANTS)if(a.c===k)c.fillRect(sx(a.x)-s/2,sy(a.y)-s/2,s,s)}
     c.fillStyle='#ff4040';const rs=Math.max(2.4,z*0.8);for(const a of ANTS)if(a.raid)c.fillRect(sx(a.x)-rs/2,sy(a.y)-rs/2,rs,rs);
     c.fillStyle='#b8f070';for(const a of ANTS)if(a.carry)c.fillRect(sx(a.x+Math.cos(a.a)*0.5)-1,sy(a.y+Math.sin(a.a)*0.5)-1,2,2)}
   else{const L=z*0.45;for(const a of ANTS){const X=sx(a.x),Y=sy(a.y);if(X<-20||Y<-20||X>W+20||Y>H+20)continue;c.save();c.translate(X,Y);c.rotate(a.a);c.fillStyle=night?NCOL[a.c].c:'#1c0f06';c.strokeStyle=c.fillStyle;c.lineWidth=Math.max(1,L*0.12);
@@ -89,7 +91,7 @@ const SIM={id:'hivemind',name:'Hivemind',defTool:'food',world:{w:WW,h:WH,wrapX:f
   scens:SCENLIST,
   load(id){clearWorld();(SCENS[id]||SCENS.meadow)();syncPanel()},
   after(){if(!$('home').hidden)return;setTool('food')},
-  step(dt){const ev=Math.exp(-dt*(G.rain?2.5:1)*1.5/G.fade);for(let c=0;c<3;c++){if(!NESTS.some(n=>n.c===c)&&!TOF[c][0])continue;const F=TOF[c],Hh=TOH[c];for(let i=0;i<N;i++){F[i]*=ev;Hh[i]*=ev}}
+  step(dt){const ev=Math.exp(-dt*(G.rain?2.5:1)*1.5/G.fade);for(let c=0;c<NC;c++){if(!NESTS.some(n=>n.c===c)&&!TOF[c][0])continue;const F=TOF[c],Hh=TOH[c];for(let i=0;i<N;i++){F[i]*=ev;Hh[i]*=ev}}
     for(const a of ANTS)antStep(a,dt);fights(dt);
     for(const a of ANTS){if(a.age>a.life&&!a.dead){a.dead=true;a.cause='old age'}if(a.t>80&&!a.carry&&!a.dead){a.dead=true;a.cause='lost'}}
     const before=ANTS.length;ANTS=ANTS.filter(a=>!a.dead);G.deaths+=before-ANTS.length;
@@ -100,7 +102,7 @@ const SIM={id:'hivemind',name:'Hivemind',defTool:'food',world:{w:WW,h:WH,wrapX:f
   frame(dt){for(const p of PARTS)p.age+=dt*1.4;PARTS=PARTS.filter(p=>p.age<1)},
   render,
   stats:()=>[['Ants',ANTS.length],['Gathered',fmtN(Math.round(G.gathered))],['Colonies',NESTS.length],['Day',Math.floor(S.t/DAY)+1]],
-  hud(){const last=HIST[HIST.length-1];if(!last||S.t-last.t>=2)HIST.push({t:S.t,n:[0,1,2].map(antsOf)});if(HIST.length>300)HIST.shift();syncPanel();renderStats();renderInspect()},
+  hud(){const last=HIST[HIST.length-1];if(!last||S.t-last.t>=2)HIST.push({t:S.t,n:CIDX.map(antsOf)});if(HIST.length>300)HIST.shift();syncPanel();renderStats();renderInspect()},
   pick(wx,wy){for(const n of NESTS)if(Math.hypot(n.x-wx,n.y-wy)<n.r*1.3)return{n};let b=null,bd=2.2;for(const a of ANTS){const d=Math.hypot(a.x-wx,a.y-wy);if(d<bd){bd=d;b=a}}return b?{a:b}:null},
   selPos(s){return s.a?[s.a.x,s.a.y]:s.n?[s.n.x,s.n.y]:null},
   pointer(type,wx,wy){HOVER=[wx,wy];const t=S.tool,r=S.brush;if(type==='up'&&t!=='raid')return;
@@ -109,7 +111,7 @@ const SIM={id:'hivemind',name:'Hivemind',defTool:'food',world:{w:WW,h:WH,wrapX:f
     if(t==='nest'){if(type!=='down')return;if(blocked(wx,wy)){toast('Nests need open ground');return}if(NESTS.length>=3){toast('Three colonies is the limit');return}const n=addNest(wx,wy,null,20);if(n){NESTADD++;chEv('nest',{c:n.c});toast(`🏠 The ${NCOL[n.c].n} colony is founded`)}syncPanel();return}
     if(t==='food'){FOODADD+=addFood(wx|0,wy|0,r,6);chEv('food',{})}else if(t==='wall'){addWall(wx|0,wy|0,Math.max(1,r*0.6));WALLADD++;chEv('wall',{})}
     else if(t==='erase'){for(let yy=-r;yy<=r;yy++)for(let xx=-r;xx<=r;xx++){if(Math.hypot(xx,yy)>r)continue;const X=(wx|0)+xx,Y=(wy|0)+yy;if(!inW(X,Y))continue;const i=ix(X,Y);WALL[i]=0;FOOD[i]=0}ERASED++;chEv('erase',{})}
-    else if(t==='spray'){for(let yy=-r*1.5;yy<=r*1.5;yy++)for(let xx=-r*1.5;xx<=r*1.5;xx++){const X=(wx|0)+xx,Y=(wy|0)+yy;if(!inW(X,Y))continue;const i=ix(X,Y);for(let c=0;c<3;c++){TOF[c][i]=0;TOH[c][i]=0}}SPRAYED++;chEv('spray',{})}},
+    else if(t==='spray'){for(let yy=-r*1.5;yy<=r*1.5;yy++)for(let xx=-r*1.5;xx<=r*1.5;xx++){const X=(wx|0)+xx,Y=(wy|0)+yy;if(!inW(X,Y))continue;const i=ix(X,Y);for(let c=0;c<NC;c++){TOF[c][i]=0;TOH[c][i]=0}}SPRAYED++;chEv('spray',{})}},
   hover(wx,wy){HOVER=[wx,wy]},
   find(q){const out=[],add=(label,sub,go)=>out.push({label,sub,go});for(const n of NESTS)if(NCOL[n.c].n.toLowerCase().includes(q)||'nest colony'.includes(q))add(`🏠 ${NCOL[n.c].n} colony`,`${antsOf(n.c)} ants`,()=>{S.sel={n};flyToW(n.x,n.y,12);showTab('insp')});
     if('ant carrying food'.includes(q)){const a=ANTS.find(a=>a.carry);if(a)add('🐜 An ant carrying food','follow it',()=>{S.sel={a};S.follow=true;flyToW(a.x,a.y,20);showTab('insp')})}
@@ -119,7 +121,7 @@ const SIM={id:'hivemind',name:'Hivemind',defTool:'food',world:{w:WW,h:WH,wrapX:f
 };
 function kv(rows){return rows.map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
 function renderStats(force){if($('pane-stats').hidden&&!force)return;$('cStats').innerHTML=kv([['Ants',ANTS.length],['Carrying food',ANTS.filter(a=>a.carry).length],['Food gathered',fmtN(Math.round(G.gathered))],['Born',G.born],['Died',G.deaths],['Lost in fights',G.kills]]);
-  const g=$('graph'),gc=g.getContext('2d'),w=g.width=g.clientWidth*DPR,hh=g.height=g.clientHeight*DPR;gc.clearRect(0,0,w,hh);if(HIST.length>1){const t0=HIST[0].t,t1=HIST[HIST.length-1].t,m=Math.max(10,...HIST.flatMap(p=>p.n));for(let c=0;c<3;c++){if(!HIST.some(p=>p.n[c]))continue;gc.strokeStyle=NCOL[c].c;gc.lineWidth=2*DPR;gc.beginPath();HIST.forEach((p,i)=>{const x=8+(w-16)*(p.t-t0)/Math.max(1e-6,t1-t0),y=hh-6-(hh-12)*p.n[c]/m;i?gc.lineTo(x,y):gc.moveTo(x,y)});gc.stroke()}}
+  const g=$('graph'),gc=g.getContext('2d'),w=g.width=g.clientWidth*DPR,hh=g.height=g.clientHeight*DPR;gc.clearRect(0,0,w,hh);if(HIST.length>1){const t0=HIST[0].t,t1=HIST[HIST.length-1].t,m=Math.max(10,...HIST.flatMap(p=>p.n));for(let c=0;c<NC;c++){if(!HIST.some(p=>p.n[c]))continue;gc.strokeStyle=NCOL[c].c;gc.lineWidth=2*DPR;gc.beginPath();HIST.forEach((p,i)=>{const x=8+(w-16)*(p.t-t0)/Math.max(1e-6,t1-t0),y=hh-6-(hh-12)*p.n[c]/m;i?gc.lineTo(x,y):gc.moveTo(x,y)});gc.stroke()}}
   const L=$('nList');L.textContent='';for(const n of NESTS){const r=document.createElement('button');r.className='sprow';r.innerHTML='<i></i><span></span><b></b>';r.children[0].style.background=NCOL[n.c].c;r.children[1].textContent=`${NCOL[n.c].n} colony`;r.children[2].textContent=`${antsOf(n.c)} ants`;r.onclick=()=>{S.sel={n};flyToW(n.x,n.y,12);showTab('insp')};L.appendChild(r)}}
 function renderInspect(){const s=S.sel;$('inspEmpty').hidden=!!s;$('inspBody').hidden=!s;if(!s)return;const body=$('inspBody');
   if(s.n){const n=s.n;body.innerHTML=`<h2 class="ititle" style="color:${NCOL[n.c].c}">${NCOL[n.c].n} colony</h2><div class="isub">Nest</div><div class="kv">${kv([['Ants',antsOf(n.c)],['Food brought home',Math.round(n.food)],['In the larder',n.store.toFixed(1)],['Ants born here',n.born],['Raiders out',ANTS.filter(a=>a.c===n.c&&a.raid).length]])}</div><p class="note">Every 1.5 food in the larder becomes a new ant.</p>`;return}

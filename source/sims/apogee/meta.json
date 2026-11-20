@@ -1,6 +1,6 @@
 {
  "id": "apogee",
- "icon": "🚀",
+ "icon": "\ud83d\ude80",
  "name": "Apogee",
  "tag": "Build rockets and planes, run a space agency and fly to moons and planets across a whole solar system",
  "url": "https://jacob711-oss.github.io/Simulators/barycenter/rockets/",
@@ -29,6 +29,7 @@
   "three3d.js",
   "terrain.js",
   "main.js",
+  "plan.js",
   "content.js"
  ],
  "text": {
@@ -39,11 +40,11 @@
   "FREE": "Your space agency: build, launch, earn money and science, unlock parts",
   "WATCH": "The autopilot flies a rocket from the launch pad to orbit",
   "FOOT": "An orbit is falling around a world so fast that you keep missing the ground.",
-  "FIND": "Find a part, world or start…",
+  "FIND": "Find a part, world or start\u2026",
   "SCEN_LABEL": "Starts",
   "SCEN_ONE": "start",
   "DATE_K": "Mission",
-  "HINT": "Space stages · W/S throttle · A/D steer · M map",
+  "HINT": "Space stages \u00b7 W/S throttle \u00b7 A/D steer \u00b7 M map",
   "CANVAS_LABEL": "Space around Terra and Luna"
  },
  "libs": [
