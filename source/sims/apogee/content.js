@@ -44,7 +44,7 @@ TSTEPS.push(
  ['Science','Press Crew report to record what your astronaut sees. Each place gives science once.',r=>mv('exp')>0],
  ['Pick a target','In the Flight tab, choose a world in the Target list. It turns gold on the map.',r=>mv('target')>r.n,r=>{r.n=mv('target')}],
  ['Navball','The ball next to the readouts shows where the nose points: blue sky above, brown ground below. The green circle shows which way you are moving.',r=>true],
- ['Build from scratch','In the Rocket tab press Build from scratch. You start with just a capsule; the checklist under your rocket tells you what to add next.',r=>mv('scratch')>r.n,r=>{r.n=mv('scratch')}],
+ ['Build from scratch','In the Rocket tab press Build from scratch. You start with just a capsule; the checklist under your rocket tells you what to add next. Drag parts from the list onto the picture to put them exactly where you want, and drag a part up or down to move it.',r=>mv('scratch')>r.n,r=>{r.n=mv('scratch')}],
  ['Infinite time warp','Time warp now goes past 200k×, up to 2M×, 20M× and ∞, which runs as fast as your computer can. It slows down by itself near worlds, in the air and while engines burn.',()=>!S.paused&&S.speed===Infinity],
  ['Depth','Rockets now fly in 3D. Hold Q to tilt the nose up out of the flat plane, E to tilt it down. Burning while tilted tilts your whole orbit (see Orbit tilt in the Flight tab).',r=>mv('tilt')>r.n,r=>{r.n=mv('tilt')}],
  ['Plan your flight','Open the Flight tab and find Flight plan. Add a step (for example Go to a world: Luna). The fuel check shows if your rocket can make it; Fly the plan lets the autopilot do every step.',r=>mv('fpadd')>r.n,r=>{r.n=mv('fpadd')}],
