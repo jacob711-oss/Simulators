@@ -2384,9 +2384,7 @@ function ensureTimestep(b,quiet){if(!b||b.dead)return;const p=parentOf(b);if(!p)
   const a=-mu/(2*E),e=Math.sqrt(Math.max(0,1+2*E*Math.hypot(...cross(r,v))**2/(mu*mu))),P=2*Math.PI*Math.sqrt(a*a*a/mu);
   if(S.soft>a*(1-Math.min(0.9,e))*0.02){S.soft=Math.max(1e-10,a*(1-Math.min(0.9,e))*0.02);S.dirty=true}
   const need=P*Math.pow(1-Math.min(0.95,e),1.5)/60;if(need<S.dtMax)S.dtMax=Math.max(1e-8,need);
-  if(P/S.speed>30){let fastest=Infinity;for(const q of S.bodies){if(q===b)continue;const pq=parentOf(q);if(!pq)continue;const rq=Math.hypot(q.x-pq.x,q.y-pq.y,q.z-pq.z),vq=Math.hypot(q.vx-pq.vx,q.vy-pq.vy,q.vz-pq.vz),muq=G*(pq.m+q.m),Eq=vq*vq/2-muq/rq;
-      if(Eq<0){const aq=-muq/(2*Eq);fastest=Math.min(fastest,2*Math.PI*Math.sqrt(aq*aq*aq/muq))}}
-    const want=Math.min(P/15,fastest/1.5,100);if(want>S.speed*1.2){setSpeed(want);if(!quiet)toast(`Time sped up to ${fmtSpeed(want)} so you can see ${b.name||'it'} orbit ${p.name||classify(p)} (one orbit takes ${fmtTime(P)})`)}}}
+  /* time speed is yours to control: no automatic speed-up */}
 function moonsOf(b){return S.bodies.filter(q=>q!==b&&parentOf(q)===b)}
 function moveWithMoons(b,fn,carry=true){const ms=carry?moonsOf(b):[],o=[b.x,b.y,b.z,b.vx,b.vy,b.vz];fn();const d=[b.x-o[0],b.y-o[1],b.z-o[2],b.vx-o[3],b.vy-o[4],b.vz-o[5]];
   for(const q of ms){q.x+=d[0];q.y+=d[1];q.z+=d[2];q.vx+=d[3];q.vy+=d[4];q.vz+=d[5];q.trail=[]}b.trail=[]}
@@ -3652,6 +3650,7 @@ var SNAPS=0;
     TSTEPS.push(['Take a picture',`Press the camera button ${where} to save a picture of your world.`,r=>SNAPS>r.n,r=>{r.n=SNAPS}]);
     const o={t:'Photographer',g:'Save a picture of the world with the camera button.',hint:`The camera button is ${where}.`,check:()=>{const ok=typeof evN==='function'?evN('snap')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='snap'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(10,30):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;else o.setup=su;CC(1.02,o)}}catch(e){}
 })();
+
 
 
 
