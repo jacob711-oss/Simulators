@@ -15,3 +15,6 @@
 .fplist li.now{color:#ffd28a;font-weight:600}
 .fplist li.done{opacity:.55;text-decoration:line-through}
 #fpBox .row{display:flex;gap:6px;flex-wrap:wrap}
+
+.pdrag{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-130%);background:rgba(20,24,40,.92);border:1px solid rgba(255,210,58,.7);color:#ffe9a8;font:600 12px 'IBM Plex Mono',monospace;padding:4px 8px;border-radius:6px}
+#parts [data-add]{touch-action:none}
