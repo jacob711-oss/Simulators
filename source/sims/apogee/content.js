@@ -40,7 +40,7 @@ TSTEPS.push(
  ['Science','Press Crew report to record what your astronaut sees. Each place gives science once.',r=>mv('exp')>0],
  ['Pick a target','In the Flight tab, choose a world in the Target list. It turns gold on the map.',r=>mv('target')>r.n,r=>{r.n=mv('target')}],
  ['Navball','The ball next to the readouts shows where the nose points: blue sky above, brown ground below. The green circle shows which way you are moving.',r=>true],
- ['Mountains and sound','Worlds now have real mountains, valleys and craters. Altitude is your height above the average surface; Above the ground is your real height over the hills below, so use that when landing. Turn the engine roar and wind on or off with Sound.',r=>true],
+ ['Mountains and sound','Worlds now have real mountains, valleys and craters. Altitude is your height above the average surface; Above the ground is your real height over the hills below, so use that when landing. Turn the engine roar and wind on or off with Sound. Watch the flames too: a white-hot core, bright shock rings in thick air, a wide faint plume in space, and smoke that stays hanging in the sky behind you.',r=>true],
  ['Whole solar system','Press Whole solar system to see every world around Aster. Use , and . to jump between them.',r=>mv('mapcycle')+mv('map')>r.n,r=>{r.n=mv('mapcycle')+mv('map')}],
  ['Your agency','Open the Agency tab: missions pay money, science unlocks parts, and you can hire astronauts.',r=>(CNT.tab_agency||0)>0],
 );
