@@ -54,10 +54,17 @@ const SCENLIST=[{id:'meadow',name:'Meadow',desc:'One colony and scattered food. 
 /* ---------- panel ---------- */
 let PARTS=[];function FX(x,y,col,small){PARTS.push({x,y,col,age:0,small:!!small})}
 const antsOf=c=>ANTS.filter(a=>a.c===c).length;
-function syncPanel(){const inv=$('inv');if(!inv)return;inv.innerHTML=`<div>🐜 Ants <b>${ANTS.length}</b></div><div>🍯 Food gathered <b>${fmtN(Math.round(G.gathered))}</b></div><div>🏠 Colonies <b>${NESTS.length}</b></div><div>⚔️ Fights lost <b>${G.kills}</b></div><div>🗡️ Food stolen <b>${G.stolen}</b></div><div>💀 Colonies fallen <b>${G.fallen}</b></div>`;
+function syncPanel(){const inv=$('inv');if(!inv)return;{const nc=CIDX.filter(k=>NESTS.some(q=>q.c===k)).length,el=$('ncS');if(el&&document.activeElement!==el)el.value=nc;const v=$('ncV');if(v)v.textContent=nc}inv.innerHTML=`<div>🐜 Ants <b>${ANTS.length}</b></div><div>🍯 Food gathered <b>${fmtN(Math.round(G.gathered))}</b></div><div>🏠 Colonies <b>${NESTS.length}</b></div><div>⚔️ Fights lost <b>${G.kills}</b></div><div>🗡️ Food stolen <b>${G.stolen}</b></div><div>💀 Colonies fallen <b>${G.fallen}</b></div>`;
   $('scV').textContent=Math.round(G.scent*100)+'%';$('evV').textContent=G.fade+' s';$('spV').textContent=Math.round(G.speed*100)+'%';
   const lab={rain:'🌧 Rain',feast:'🍯 Feast',winter:'❄ Winter',raids:'⚔️ Raids'};document.querySelectorAll('[data-ev]').forEach(b=>{const L=lab[b.dataset.ev];if(!L)return;b.setAttribute('aria-pressed',G[b.dataset.ev]);b.textContent=G[b.dataset.ev]?'■ Stop '+L.slice(2).trim().toLowerCase():L})}
 $('scS').oninput=e=>{G.scent=e.target.value/100;chEv('tweak',{});syncPanel()};$('evS').oninput=e=>{G.fade=+e.target.value;chEv('tweak',{});syncPanel()};$('spS').oninput=e=>{G.speed=e.target.value/100;chEv('tweak',{});syncPanel()};
+// choose how many colonies share the world (1 to 10): new nests appear in open ground, extra ones are removed
+function setColonies(n){n=clamp(n|0,1,NC);const alive=()=>CIDX.filter(k=>NESTS.some(q=>q.c===k));let cur=alive();
+  while(cur.length>n){const k=cur[cur.length-1];NESTS=NESTS.filter(q=>q.c!==k);ANTS=ANTS.filter(a=>a.c!==k);TOF[k].fill(0);TOH[k].fill(0);cur=alive()}
+  const spots=[[22,20],[80,12],[138,20],[150,62],[120,90],[40,90],[10,58],[80,55],[110,52],[50,52],[30,40],[132,40],[80,88],[60,20],[100,20]];
+  while(cur.length<n){let best=null,bd=-1;for(const [x,y] of spots){if(!inW(x,y)||WALL[ix(x,y)])continue;const d=Math.min(1e9,...NESTS.map(q=>Math.hypot(q.x-x,q.y-y)));if(d>bd){bd=d;best=[x,y]}}if(!best)break;const nn=addNest(best[0],best[1],null,25);if(!nn)break;NESTADD++;cur=alive()}
+  chEv('colonies',{n:cur.length});syncPanel()}
+$('ncS').oninput=e=>{setColonies(+e.target.value)};
 document.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{const ev=b.dataset.ev;EVN++;chEv('event',{ev});if(ev==='normal'){G.rain=G.feast=G.winter=G.raids=false;toast('All events stopped')}else{G[ev]=!G[ev];if(G[ev])toast({rain:'🌧 Rain washes the scent trails away',feast:'🍯 Feast: food appears everywhere',winter:'❄ Winter: ants slow right down',raids:'⚔️ Raids: big colonies send war parties against their rivals'}[ev])}syncPanel()});
 /* ---------- drawing ---------- */
 const off=document.createElement('canvas');off.width=WW;off.height=WH;const ox=off.getContext('2d'),img=ox.createImageData(WW,WH);
