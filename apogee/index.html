@@ -826,7 +826,7 @@ function stripeTex(fn){const c=document.createElement('canvas');c.width=256;c.he
 /* ---------- setting up the scene ---------- */
 function gl3Init(){if(GL.ok||typeof THREE==='undefined')return;try{
   const cv=document.createElement('canvas');cv.id='gl';cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0';const w2=$('world');w2.parentNode.insertBefore(cv,w2);w2.style.zIndex='1';w2.style.background='transparent';
-  const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,logarithmicDepthBuffer:true,powerPreference:'high-performance'});r.setPixelRatio(DPR);try{const pm=new THREE.PMREMGenerator(r),es=new THREE.Scene(),sm=new THREE.ShaderMaterial({side:THREE.BackSide,vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec3 vP;void main(){float h=normalize(vP).y;vec3 sky=mix(vec3(0.85,0.9,1.0),vec3(0.3,0.5,0.9),clamp(h,0.0,1.0));vec3 gr=mix(vec3(0.42,0.45,0.36),vec3(0.2,0.22,0.18),clamp(-h,0.0,1.0));gl_FragColor=vec4(h>0.0?sky:gr,1.0);}'});es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16),sm));GL.env=pm.fromScene(es,0.03).texture}catch(e){}r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.setSize(W,H,false);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;GL.r=r;
+  const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,logarithmicDepthBuffer:true,powerPreference:'high-performance'});r.setPixelRatio(DPR);try{const pm=new THREE.PMREMGenerator(r),es=new THREE.Scene(),sm=new THREE.ShaderMaterial({side:THREE.BackSide,vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec3 vP;void main(){float h=normalize(vP).y;vec3 sky=mix(vec3(0.85,0.9,1.0),vec3(0.3,0.5,0.9),clamp(h,0.0,1.0));vec3 gr=mix(vec3(0.42,0.45,0.36),vec3(0.2,0.22,0.18),clamp(-h,0.0,1.0));gl_FragColor=vec4(h>0.0?sky:gr,1.0);}'});es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16),sm));GL.env=pm.fromScene(es,0.03).texture}catch(e){}r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.setSize(W,H,false);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=0.82;GL.r=r;
   const sc0=new THREE.Scene();GL.scene=sc0;GL.cam=new THREE.PerspectiveCamera(55,W/H,0.2,4e13);
   GL.sunDir=new THREE.Vector3(0.35,0.42,-1).normalize();const sun=new THREE.DirectionalLight(0xfff3e0,2.6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);{const sc=sun.shadow.camera;sc.left=-90;sc.right=90;sc.top=90;sc.bottom=-90;sc.near=1;sc.far=900}sun.shadow.bias=-0.0004;sun.shadow.normalBias=0.04;void 0;sun.position.copy(GL.sunDir);sc0.add(sun);GL.sun=sun;sc0.add(new THREE.HemisphereLight(0x8aa4d8,0x101018,0.32));
   // stars and the Sun
@@ -1042,19 +1042,27 @@ function buildPatch(b,c,s){const B=BODIES[b],N=200,UV=new Float32Array((N+1)*(N+
   const fn=B.kind==='terra'?terraAt:B.kind==='moon'?lunaAt:WORLDTEX[B.kind],ts=Math.tan(s);let k=0;
   for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const u0=i/N*2-1,v0=j/N*2-1,u=Math.sign(u0)*Math.abs(u0)**1.9,v=Math.sign(v0)*Math.abs(v0)**1.9;let d=[c[0]+(e1[0]*u+e2[0]*v)*ts,c[1]+(e1[1]*u+e2[1]*v)*ts,c[2]+(e1[2]*u+e2[2]*v)*ts];l=Math.hypot(...d);d=d.map(x=>x/l);
     const m=Math.max(Math.abs(u0),Math.abs(v0)),w=m<0.8?1:Math.max(0,1-(m-0.8)/0.2),wf=w*w*(3-2*w);let h=heightAt(b,d[0],d[1],d[2])*wf;if(B.kind==='terra'&&Math.hypot(d[0]-PADDIR[0],d[1]-PADDIR[1],d[2]-PADDIR[2])<0.0075)h-=0.6;
-    const rr0=B.R+h-(1-wf)*15;HH[k/3]=h;const gs=ts*B.R/90;UV[k/3*2]=u*gs;UV[k/3*2+1]=v*gs;P[k]=d[0]*rr0;P[k+1]=d[1]*rr0;P[k+2]=d[2]*rr0;let col=fn(d[0],d[1],d[2]);if(B.kind==='terra'&&h>2600)col=[235,238,242];else if(B.kind==='terra'&&h>1500)col=[col[0]*0.85+30,col[1]*0.8+20,col[2]*0.8+15];
+    const rr0=B.R+h-(1-wf)*15;HH[k/3]=h;const gs=ts*B.R/90;UV[k/3*2]=u*gs;UV[k/3*2+1]=v*gs;P[k]=d[0]*rr0;P[k+1]=d[1]*rr0;P[k+2]=d[2]*rr0;let col=fn(d[0],d[1],d[2]);
     C[k]=col[0]/255;C[k+1]=col[1]/255;C[k+2]=col[2]/255;k+=3}
-  // what the ground is made of: rock shows through on steep slopes, sand along Terra's coasts
-  for(let j=1;j<N;j++)for(let i=1;i<N;i++){const q=j*(N+1)+i,dh=Math.max(Math.abs(HH[q+1]-HH[q-1]),Math.abs(HH[q+N+1]-HH[q-N-1])),sp=Math.hypot(P[(q+1)*3]-P[(q-1)*3],P[(q+1)*3+1]-P[(q-1)*3+1],P[(q+1)*3+2]-P[(q-1)*3+2])||1,sl=dh/sp;
-    if(B.kind==='terra'){if(HH[q]>0.5&&HH[q]<35&&sl<0.08){C[q*3]=0.80;C[q*3+1]=0.74;C[q*3+2]=0.56}else if(sl>0.35&&HH[q]<2600){const r=clamp((sl-0.35)/0.4,0,1);C[q*3]=lerp(C[q*3],0.45,r);C[q*3+1]=lerp(C[q*3+1],0.41,r);C[q*3+2]=lerp(C[q*3+2],0.37,r)}}
-    else if(sl>0.25){const r=clamp((sl-0.25)/0.5,0,1)*0.35;C[q*3]*=1-r;C[q*3+1]*=1-r;C[q*3+2]*=1-r}}
-  // hill shading: light the slopes facing the sun side, darken steep and shadowed ones
-  {const H=new Float32Array((N+1)*(N+1));for(let q=0;q<H.length;q++)H[q]=Math.hypot(P[q*3],P[q*3+1],P[q*3+2]);
-   for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const q=j*(N+1)+i,i0=Math.max(0,i-1),i1=Math.min(N,i+1),j0=Math.max(0,j-1),j1=Math.min(N,j+1);
-     const dx=Math.hypot(P[(j*(N+1)+i1)*3]-P[(j*(N+1)+i0)*3],P[(j*(N+1)+i1)*3+1]-P[(j*(N+1)+i0)*3+1],P[(j*(N+1)+i1)*3+2]-P[(j*(N+1)+i0)*3+2])||1,
-           dy=Math.hypot(P[(j1*(N+1)+i)*3]-P[(j0*(N+1)+i)*3],P[(j1*(N+1)+i)*3+1]-P[(j0*(N+1)+i)*3+1],P[(j1*(N+1)+i)*3+2]-P[(j0*(N+1)+i)*3+2])||1,
-           gx=(H[j*(N+1)+i1]-H[j*(N+1)+i0])/dx,gy=(H[j1*(N+1)+i]-H[j0*(N+1)+i])/dy,sl=Math.hypot(gx,gy),
-           f=clamp((1-sl*0.5-(gx*0.8+gy*0.5)*(B.atm?0.9:1.7))*(B.atm?1:0.85),B.atm?0.62:0.4,1.25);C[q*3]*=f;C[q*3+1]*=f;C[q*3+2]*=f}}
+  // what the ground is made of, from its height, steepness and whether it sits in a hollow or on a ridge
+  const DIR=new Float32Array((N+1)*(N+1)*3);for(let q=0;q<DIR.length/3;q++){const L0=Math.hypot(P[q*3],P[q*3+1],P[q*3+2])||1;DIR[q*3]=P[q*3]/L0;DIR[q*3+1]=P[q*3+1]/L0;DIR[q*3+2]=P[q*3+2]/L0}
+  const mix=(a,b2,f)=>[a[0]+(b2[0]-a[0])*f,a[1]+(b2[1]-a[1])*f,a[2]+(b2[2]-a[2])*f],hx=s=>[parseInt(s.slice(1,3),16)/255,parseInt(s.slice(3,5),16)/255,parseInt(s.slice(5,7),16)/255];
+  const T={grass:hx('#4a7330'),grass2:hx('#6b8a35'),dry:hx('#9a9455'),forest:hx('#24401c'),rock:hx('#5e564b'),rock2:hx('#736859'),snow:hx('#e9edf2'),sand:hx('#c9b787'),water:hx('#1c4a72'),
+    rust:hx('#9a3f1f'),rust2:hx('#c2602f'),rustDust:hx('#d48a57'),rustRock:hx('#4e2416'),moon:hx('#55534f'),moonDark:hx('#3a3937'),moonBright:hx('#7e7c78')};
+  for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const q=j*(N+1)+i,i0=Math.max(0,i-2),i1=Math.min(N,i+2),j0=Math.max(0,j-2),j1=Math.min(N,j+2),qa=j*(N+1)+i0,qb=j*(N+1)+i1,qc=j0*(N+1)+i,qd=j1*(N+1)+i;
+    const sp=Math.hypot(P[qb*3]-P[qa*3],P[qb*3+1]-P[qa*3+1],P[qb*3+2]-P[qa*3+2])||1,sp2=Math.hypot(P[qd*3]-P[qc*3],P[qd*3+1]-P[qc*3+1],P[qd*3+2]-P[qc*3+2])||1,h=HH[q],
+      sl=Math.max(Math.abs(HH[qb]-HH[qa])/sp,Math.abs(HH[qd]-HH[qc])/sp2),curv=(h-(HH[qa]+HH[qb]+HH[qc]+HH[qd])/4)/((sp+sp2)/4+1),x=DIR[q*3],y=DIR[q*3+1],z=DIR[q*3+2];
+    let col=[C[q*3],C[q*3+1],C[q*3+2]];
+    if(B.kind==='terra'){const water=col[2]>col[1]&&col[2]>col[0]&&h<0.5;if(water)col=mix(T.water,[col[0],col[1],col[2]],0.3);else{
+        const n1=vnoise(x*700,y*700,z*700),n2=vnoise(x*260+9,y*260,z*260),n3=fbm(x*1400,y*1400,z*1400,3);col=mix(T.grass,T.grass2,n1);if(n2>0.62)col=mix(col,T.dry,clamp((n2-0.62)*4,0,0.8));if(n3>0.52&&h<1500&&sl<0.45)col=mix(col,T.forest,clamp((n3-0.52)*7,0,1));
+        if(h<30&&sl<0.1)col=mix(col,T.sand,clamp(1-h/30,0,1)*0.9);if(h>1100)col=mix(col,mix(T.rock,T.rock2,n1),clamp((h-1100)/900,0,1));if(sl>0.4)col=mix(col,T.rock,clamp((sl-0.4)/0.35,0,1));
+        if(h>3200){const sn=clamp((h-3200)/300,0,1)*clamp(1-(sl-0.3)/0.25,0,1);col=mix(col,T.snow,sn)}}}
+    else if(B.kind==='rust'){const n1=vnoise(x*400,y*400,z*400),n2=fbm(x*90,y*90,z*90,3);col=mix(T.rust,T.rust2,n1*0.7+n2*0.3);if(curv<-0.02)col=mix(col,T.rustDust,clamp(-curv*8,0,0.7));if(sl>0.3)col=mix(col,T.rustRock,clamp((sl-0.3)/0.4,0,0.85))}
+    else if(B.kind==='moon'){const n1=vnoise(x*500,y*500,z*500),m=fbm(x*1.3+5,y*1.3,z*1.3);col=mix(T.moon,T.moonDark,m>0.56?0.75:n1*0.3);if(curv>0.015)col=mix(col,T.moonBright,clamp(curv*10,0,0.8))}
+    else{const k=0.86;col=[clamp((col[0]-0.5)*1.25+0.5,0,1)*k,clamp((col[1]-0.5)*1.25+0.5,0,1)*k,clamp((col[2]-0.5)*1.25+0.5,0,1)*k];if(sl>0.3){const r=clamp((sl-0.3)/0.4,0,0.4);col=col.map(v=>v*(1-r))}}
+    // hollows a bit darker, ridges a bit brighter (soft shading that works from any viewing angle)
+    const ao=clamp(1+curv*(B.atm?3:5),0.72,1.18);// colours are picked by eye (sRGB); the renderer works in linear light, so convert
+    C[q*3]=Math.pow(clamp(col[0]*ao,0,1),2.2);C[q*3+1]=Math.pow(clamp(col[1]*ao,0,1),2.2);C[q*3+2]=Math.pow(clamp(col[2]*ao,0,1),2.2)}
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b2=a+1,c2=a+N+1,d2=c2+1;I.push(a,c2,b2,b2,c2,d2)}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));g.setAttribute('uv',new THREE.BufferAttribute(UV,2));g.setIndex(I);g.computeVertexNormals();return g}
 // close to a rocky world, hide the smooth far-away globe (it sits at the average height and would cover craters and valleys)
@@ -1064,10 +1072,10 @@ function updatePatch(cb,cam,fx,fy,t){if(!GL.ok)return;const B=BODIES[cb],o=GL.B&
   GL.camAlt=alt;GL.camB=cb;const th=rotAng(cb,t),ct=Math.cos(th),st=Math.sin(th),c=[(ct*wx+st*wz)/r,wy/r,(-st*wx+ct*wz)/r],s=clamp(Math.max(alt,1500)*16,40000,450000)/B.R;
   baseShow(cb,!(alt<20000&&BODIES[cb].kind!=='terra'));const P0=GL.patch;if(P0&&P0.b===cb){const ang=Math.acos(clamp(P0.c[0]*c[0]+P0.c[1]*c[1]+P0.c[2]*c[2],-1,1));if(ang<P0.s*0.06&&s/P0.s>0.6&&s/P0.s<1.6){P0.mesh.visible=true;return}}
   const g=buildPatch(cb,c,s);if(P0){P0.mesh.parent&&P0.mesh.parent.remove(P0.mesh);P0.mesh.geometry.dispose()}
-  const mesh=new THREE.Mesh(g,GL.patchMat||(GL.patchMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.95,metalness:0,side:THREE.DoubleSide,map:grainTex()})));mesh.receiveShadow=true;o.grp.add(mesh);GL.patch={b:cb,c,s,mesh};placeRocks(cb,c,o)}
+  const mesh=new THREE.Mesh(g,GL.patchMat||(GL.patchMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.95,metalness:0,side:THREE.DoubleSide,map:grainTex()})));mesh.receiveShadow=false;o.grp.add(mesh);GL.patch={b:cb,c,s,mesh};placeRocks(cb,c,o)}
 // boulders scattered around (rocky worlds everywhere; on Terra only up in the mountains), on a fixed grid so they don't jump about
 function placeRocks(cb,c,o){const B=BODIES[cb];if(!GL.rocks){const geo=new THREE.DodecahedronGeometry(1,0);GL.rocks=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:0x8a8580,roughness:0.95,flatShading:true}),500);GL.rocks.castShadow=true;GL.rocks.receiveShadow=true;GL.rocks.frustumCulled=false}
-  const R0=GL.rocks;if(R0.parent!==o.grp){R0.parent&&R0.parent.remove(R0);o.grp.add(R0)}const col={terra:0x7d766d,moon:0x9a9896,rust:0x8a4a32,cinder:0x5a4a44,frost:0xcfd8e2,ember:0x4a3a34,rime:0xb8c4cc,veil:0x9a8a6a}[B.kind]||0x8a8580;R0.material.color.setHex(col);
+  const R0=GL.rocks;if(R0.parent!==o.grp){R0.parent&&R0.parent.remove(R0);o.grp.add(R0)}const col={terra:0x4a4540,moon:0x3e3c3a,rust:0x5a2a1a,cinder:0x3a302c,frost:0x9aa6b2,ember:0x30261f,rime:0x86929c,veil:0x6a5c44}[B.kind]||0x55504c;R0.material.color.setHex(col);
   const up=Math.abs(c[1])<0.9?[0,1,0]:[1,0,0];let e1=[c[1]*up[2]-c[2]*up[1],c[2]*up[0]-c[0]*up[2],c[0]*up[1]-c[1]*up[0]],l=Math.hypot(...e1);e1=e1.map(v=>v/l);const e2=[c[1]*e1[2]-c[2]*e1[1],c[2]*e1[0]-c[0]*e1[2],c[0]*e1[1]-c[1]*e1[0]];
   const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),Sc=new THREE.Vector3(),Pn=new THREE.Vector3(),Y=new THREE.Vector3(0,1,0);let n=0;const span=4000/B.R,cell=span/22;
   const gi0=Math.round((c[0]*e1[0]+c[1]*e1[1]+c[2]*e1[2])/cell),gj0=Math.round((c[0]*e2[0]+c[1]*e2[1]+c[2]*e2[2])/cell);
