@@ -853,7 +853,7 @@ function stripeTex(fn){const c=document.createElement('canvas');c.width=256;c.he
 /* ---------- setting up the scene ---------- */
 function gl3Init(){if(GL.ok||typeof THREE==='undefined')return;try{
   const cv=document.createElement('canvas');cv.id='gl';cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0';const w2=$('world');w2.parentNode.insertBefore(cv,w2);w2.style.zIndex='1';w2.style.background='transparent';
-  const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,logarithmicDepthBuffer:true,powerPreference:'high-performance'});r.setPixelRatio(DPR);r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.setSize(W,H,false);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;GL.r=r;
+  const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,logarithmicDepthBuffer:true,powerPreference:'high-performance'});r.setPixelRatio(DPR);try{const pm=new THREE.PMREMGenerator(r),es=new THREE.Scene(),sm=new THREE.ShaderMaterial({side:THREE.BackSide,vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec3 vP;void main(){float h=normalize(vP).y;vec3 sky=mix(vec3(0.85,0.9,1.0),vec3(0.3,0.5,0.9),clamp(h,0.0,1.0));vec3 gr=mix(vec3(0.42,0.45,0.36),vec3(0.2,0.22,0.18),clamp(-h,0.0,1.0));gl_FragColor=vec4(h>0.0?sky:gr,1.0);}'});es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16),sm));GL.env=pm.fromScene(es,0.03).texture}catch(e){}r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.setSize(W,H,false);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;GL.r=r;
   const sc0=new THREE.Scene();GL.scene=sc0;GL.cam=new THREE.PerspectiveCamera(55,W/H,0.2,4e13);
   GL.sunDir=new THREE.Vector3(0.35,0.42,-1).normalize();const sun=new THREE.DirectionalLight(0xfff3e0,2.6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);{const sc=sun.shadow.camera;sc.left=-90;sc.right=90;sc.top=90;sc.bottom=-90;sc.near=1;sc.far=900}sun.shadow.bias=-0.0004;sun.shadow.normalBias=0.04;void 0;sun.position.copy(GL.sunDir);sc0.add(sun);GL.sun=sun;sc0.add(new THREE.HemisphereLight(0x8aa4d8,0x101018,0.32));
   // stars and the Sun
@@ -925,7 +925,7 @@ function gl3Init(){if(GL.ok||typeof THREE==='undefined')return;try{
 const MATS={};function mat(k){if(MATS[k])return MATS[k];const S0={white:{color:0xeceef2,roughness:0.45,metalness:0.15},tank:{map:stripeTex((x,s)=>{x.fillStyle='#e9ebef';x.fillRect(0,0,s,s);x.fillStyle='#c9ccd3';x.fillRect(0,0,s,10);x.fillRect(0,s-10,s,10);x.fillStyle='#e07a32';x.fillRect(s*0.47,0,s*0.06,s);x.fillStyle='#30343c';x.font='bold 34px sans-serif';x.fillText('APOGEE',s*0.08,s*0.55)}),roughness:0.4,metalness:0.25},
   dark:{color:0x3a3d45,roughness:0.5,metalness:0.7},bell:{color:0x5a5e68,roughness:0.35,metalness:0.85,side:THREE.DoubleSide},orange:{color:0xe07a32,roughness:0.6},brown:{color:0x5b3e2a,roughness:0.9},gold:{color:0xd4a64a,roughness:0.3,metalness:0.9},red:{color:0xc94a3f,roughness:0.5,metalness:0.2},glass:{color:0x1f3550,roughness:0.1,metalness:0.6},
   dec:{map:stripeTex((x,s)=>{x.fillStyle='#2f3138';x.fillRect(0,0,s,s);x.fillStyle='#e8c447';for(let i=-s;i<s*2;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i+20,0);x.lineTo(i+20-s,s);x.lineTo(i-s,s);x.fill()}}),roughness:0.6},srb:{map:stripeTex((x,s)=>{x.fillStyle='#f2f2f2';x.fillRect(0,0,s,s);x.fillStyle='#d9534f';x.fillRect(0,s*0.1,s,s*0.07);x.fillRect(0,s*0.8,s,s*0.07)}),roughness:0.5}}[k];
-  if(S0.map)S0.map.encoding=THREE.sRGBEncoding;MATS[k]=new THREE.MeshStandardMaterial(S0);return MATS[k]}
+  if(S0.map)S0.map.encoding=THREE.sRGBEncoding;MATS[k]=new THREE.MeshStandardMaterial(Object.assign(GL.env?{envMap:GL.env,envMapIntensity:0.55}:{},S0));return MATS[k]}
 function lathe(pts,m,seg){return new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r,y])=>new THREE.Vector2(r,y)),seg||40),m)}
 function buildRocket3D(parts,side){const g=new THREE.Group(),L=rocketLen(parts);let y=L/2;const tops=[];
   parts.forEach((p,i)=>{const P=PT[p];const h=P.h,w=P.w||2.4,r=w/2,top=y,bot=y-h;tops.push([top,bot,r]);if(!h){return}let m;
@@ -999,7 +999,7 @@ function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.w
     const dcam=pos.distanceTo(cam.position),px=B0.R/Math.max(1,dcam)*H;if(!o.tex&&px>3&&WORLDTEX[B0.kind]){o.tex=true;o.mesh.material.map=sphereTex(WORLDTEX[B0.kind],B0.R>1e6?1024:768,B0.R>1e6?512:384);o.mesh.material.color.set(0xffffff);o.mesh.material.needsUpdate=true}
     const ol=GL.orbs[i];if(ol){const pp=bodyPos(B0.parent,t);ol.position.copy(P(pp[0],pp[1]));ol.visible=(GL.mode==='map'||GL.dist>B0.orbit*0.05)&&B0.orbit*1.0>GL.dist*0.004;ol.material.color.set(i===G.target?0xffd23a:0x8890a0);ol.material.opacity=i===G.target?0.7:0.28}});
   GL.clouds.rotation.y=OMEGA*t*0.88;GL.atm.position.copy(GL.terra.position);GL.atm.visible=true;GL.atm.material.uniforms.sun.value=GL.sunDir;GL.site.visible=Math.hypot(fx-bodyPos(0,t)[0],fy-bodyPos(0,t)[1])<BODIES[0].R+4e5;
-  updatePatch(cb,cam,fx,fy,t);
+  updatePatch(cb,cam,fx,fy,t);if(typeof nearClouds==='function')nearClouds();
   // rocket and debris
   const live=new Set();const BX=new THREE.Matrix4();const place=(obj,parts,x,y,a,side,z,el)=>{const m=rocketMesh(obj,parts,side);m.visible=true;m.position.copy(P(x,y,z));const ce=Math.cos(el||0),se=Math.sin(el||0),ca=Math.cos(a),sa=Math.sin(a);BX.makeBasis(V3(-sa,0,ca),V3(ca*ce,se,sa*ce),V3(-ca*se,ce,-sa*se));m.quaternion.setFromRotationMatrix(BX);live.add(m);return m};
   if(R&&!R.dead){const m=place(R,R.parts,R.x,R.y,R.a,R.side,R.z,R.el);const fl=m.getObjectByName('flame');const burning=R.lit&&((R.thr>0&&liquid(R)>0&&engines(R).some(i=>PT[R.parts[i]].k==='eng'))||engines(R).some(i=>PT[R.parts[i]].k==='srb'&&R.fuel[i]>0)||(R.thrAcc>0.05&&(R.sfuel||[]).some(f=>f>0)));
@@ -1017,11 +1017,15 @@ function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.w
     {const cn=m.getObjectByName('canopy');cn.visible=R.chute===2;const k=Math.sqrt(chuteArea(rel(R,t).b)/450);cn.scale.set(k,1,k)}if(R.heat>0.08){GL.plasma.visible=true;const q=rel(R,t),vs=Math.hypot(q.vx,q.vy,q.vz||0)||1;GL.plasma.position.copy(m.position).add(V3(q.vx/vs*L*0.5,0,q.vy/vs*L*0.5));GL.plasma.scale.setScalar(w*(2+R.heat*6));GL.plasma.material.opacity=Math.min(1,R.heat*1.6)}else GL.plasma.visible=false;
     // smoke in the air
     if(burning&&!S.paused){const q=rel(R,t),den=rho(q.b,Math.hypot(q.dx,q.dy,q.dz||0)-BODIES[q.b].R);
+      // engine blast kicks up dust on any rocky world when you are close to the ground
+      {const B=BODIES[q.b],rd=radarAlt(R);if(rd<90&&B.kind!=='gas'&&B.kind!=='star'&&!(q.b===0&&R.landed>=0)){const now2=performance.now(),dd=Math.min(0.1,(now2-(GL.dT||now2))/1000);GL.dT=now2;GL.dAcc=(GL.dAcc||0)+dd*34*(1-rd/90)*clamp((R.thrAcc||0)/8,0.3,1.5);let nd=Math.min(6,Math.floor(GL.dAcc));GL.dAcc-=nd;
+        const ra=rotAng(q.b,t),cr=Math.cos(-ra),sr=Math.sin(-ra),rq=Math.hypot(q.dx,q.dy,q.dz),gh=groundH3(q.b,q.dx,q.dy,q.dz,t),kk=(B.R+gh+1.5)/rq,gx0=q.dx*kk,gy0=q.dy*kk,gz=(q.dz||0)*kk,lx0=gx0*cr-gy0*sr,ly0=gx0*sr+gy0*cr,an=Math.atan2(ly0,lx0),dc={moon:[0.72,0.71,0.7],rust:[0.78,0.47,0.32],frost:[0.93,0.96,1],cinder:[0.5,0.44,0.4],ember:[0.42,0.34,0.3],rime:[0.86,0.89,0.93],veil:[0.82,0.72,0.52],terra:[0.74,0.68,0.56]}[B.kind]||[0.7,0.68,0.65];
+        for(let i=0;i<nd;i++){const s=GL.smoke.find(s=>s.age>=1)||GL.smoke.reduce((a,c)=>a.age>c.age?a:c),ph=Math.random()*6.283,sp=rr(15,45)*(1-rd/110);s.age=0;s.b=q.b;s.x=lx0;s.y=ly0;s.z=gz;s.vx=-Math.sin(an)*Math.cos(ph)*sp+Math.cos(an)*rr(1,4);s.vy=Math.cos(an)*Math.cos(ph)*sp+Math.sin(an)*rr(1,4);s.vz=Math.sin(ph)*sp;s.sz=w*0.9;s.grow=4;s.life=B.atm?6:3.5;s.op=0.6;s.col=1;s.rgb=dc;s.s.material.rotation=Math.random()*6.28}}}
       if(den>0.01){const b=q.b,ra=rotAng(b,t),c=Math.cos(-ra),sn=Math.sin(-ra),ex=q.dx-Math.cos(R.a)*(L/2+w),ey=q.dy-Math.sin(R.a)*(L/2+w),lx=ex*c-ey*sn,ly=ex*sn+ey*c,srb=engines(R).some(i=>PT[R.parts[i]].k==='srb'&&R.fuel[i]>0),air=clamp(den/1.2,0,1);
         const now=performance.now(),sdt=Math.min(0.1,(now-(GL.spT||now))/1000);GL.spT=now;const grab=()=>GL.smoke.find(s=>s.age>=1)||GL.smoke.reduce((a,c)=>a.age>c.age?a:c);
         const last=GL.lastEx&&GL.lastEx.b===b?GL.lastEx:{lx,ly};const dist=Math.hypot(lx-last.lx,ly-last.ly);GL.acc=(GL.acc||0)+sdt*20+(dist<w*200?dist/(w*1.6):0);let n=Math.floor(GL.acc);GL.acc-=n;n=R.landed>=0?0:Math.min(n,14);
         for(let k=0;k<n;k++){const s=grab();const f=(k+Math.random())/n;s.age=0;s.life=5+air*4;s.b=b;s.x=last.lx+(lx-last.lx)*f+rr(-0.5,0.5)*w;s.y=last.ly+(ly-last.ly)*f+rr(-0.5,0.5)*w;s.z=(R.z||0)+rr(-0.5,0.5)*w;
-          const ux=-Math.cos(R.a-ra),uy=-Math.sin(R.a-ra),sp=rr(4,12);s.vx=ux*sp;s.vy=uy*sp;s.vz=rr(-1,1);s.sz=w*(1.8+Math.random()*0.9);s.op=R.landed>=0?0.4:0.85;s.grow=(5+air*9);s.col=srb?0.78:0.95;s.s.material.rotation=Math.random()*6.28}
+          const ux=-Math.cos(R.a-ra),uy=-Math.sin(R.a-ra),sp=rr(4,12);s.vx=ux*sp;s.vy=uy*sp;s.vz=rr(-1,1);s.sz=w*(1.8+Math.random()*0.9);s.op=R.landed>=0?0.4:0.85;s.grow=(5+air*9);s.col=srb?0.78:0.95;s.s.material.rotation=Math.random()*6.28;s.rgb=null}
         GL.lastEx={b,lx,ly};
         // lift-off: clouds of exhaust rolling out across the ground
         const ra2=radarAlt(R);GL.acc2=(GL.acc2||0)+sdt*22;let n2=Math.floor(GL.acc2);GL.acc2-=n2;if(R.landed>=0)n2=GL.smoke.filter(s=>s.age<1).length<40?Math.min(n2,2):0;if(ra2<140&&b===0){const ang=Math.atan2(ly,lx),gr=BODIES[b].R+groundH(b,Math.atan2(q.dy,q.dx),t)+2,gx=Math.cos(ang)*gr,gy=Math.sin(ang)*gr;for(let k=0;k<Math.min(n2,5);k++){const s=grab();const dir=Math.random()<0.5?1:-1,sp=rr(10,35)*(1-ra2/160),az=rr(-1,1);s.age=0;s.life=9;s.b=b;s.x=gx;s.y=gy;s.z=rr(-2,2);s.vx=-Math.sin(ang)*sp*dir*Math.sqrt(1-az*az*0.5);s.vy=Math.cos(ang)*sp*dir*Math.sqrt(1-az*az*0.5);s.vz=az*sp;s.sz=w*1.1;s.grow=4+Math.random()*2.5;s.life=6;s.op=0.4;s.col=srb?0.8:0.97;s.s.material.rotation=Math.random()*6.28}}}
@@ -1033,7 +1037,7 @@ function gl3Render(){if(!GL.ok)return false;const t=S.t,r=GL.r;if(r.domElement.w
   {const now=performance.now(),fdt=Math.min(0.1,(now-(GL.lastFT||now))/1000);GL.lastFT=now;const bc={};
   for(const s of GL.smoke){if(s.age>=1){s.s.visible=false;continue}if(!S.paused){s.age+=fdt/(s.life||5);const dr=Math.exp(-fdt*0.9);s.vx*=dr;s.vy*=dr;s.vz*=dr;s.x+=s.vx*fdt;s.y+=s.vy*fdt;s.z+=s.vz*fdt;const l=Math.hypot(s.x,s.y)||1;s.x+=s.x/l*fdt*1.5;s.y+=s.y/l*fdt*1.5}
     const B=bc[s.b]||(bc[s.b]={p:bodyPos(s.b,t),r:rotAng(s.b,t)}),c=Math.cos(B.r),sn=Math.sin(B.r),wx=B.p[0]+s.x*c-s.y*sn,wy=B.p[1]+s.x*sn+s.y*c;
-    s.s.visible=true;s.s.position.copy(P(wx,wy,s.z));s.s.scale.setScalar(Math.min(s.sz*(1+Math.sqrt(s.age)*s.grow),s.sz*9,R&&R.landed>=0?22:45));const fi=Math.min(1,s.age*25);const sz2=s.s.scale.x,dc=s.s.position.distanceTo(GL.cam.position);s.s.material.opacity=fi*Math.pow(1-s.age,1.2)*(s.op||0.85)*clamp((dc-sz2)/(sz2*2),0,1);const g=s.col*(0.85+0.15*(1-s.age));s.s.material.color.setRGB(g,g,g*1.02)}}
+    s.s.visible=true;s.s.position.copy(P(wx,wy,s.z));s.s.scale.setScalar(Math.min(s.sz*(1+Math.sqrt(s.age)*s.grow),s.sz*9,R&&R.landed>=0?22:45));const fi=Math.min(1,s.age*25);const sz2=s.s.scale.x,dc=s.s.position.distanceTo(GL.cam.position);s.s.material.opacity=fi*Math.pow(1-s.age,1.2)*(s.op||0.85)*clamp((dc-sz2)/(sz2*2),0,1);const g=s.col*(0.85+0.15*(1-s.age));if(s.rgb)s.s.material.color.setRGB(s.rgb[0]*g,s.rgb[1]*g,s.rgb[2]*g);else s.s.material.color.setRGB(g,g,g*1.02)}}
   // paths
   const upd=(line,pts)=>{const a=line.geometry.attributes.position,n=Math.min(pts.length,4000);for(let i=0;i<n;i++)a.setXYZ(i,pts[i][0]-PREDREF[0],pts[i][2]||0,pts[i][1]-PREDREF[1]);a.needsUpdate=true;line.geometry.setDrawRange(0,n);line.position.copy(P(PREDREF[0],PREDREF[1]));line.computeLineDistances&&line.material.isLineDashedMaterial&&line.computeLineDistances()};
   if(GL.ver!==PREDV){GL.ver=PREDV;upd(GL.path,PRED);upd(GL.plan,PLANP)}else{GL.path.position.copy(P(PREDREF[0],PREDREF[1]));GL.plan.position.copy(P(PREDREF[0],PREDREF[1]))}
@@ -1047,23 +1051,30 @@ const TER={moon:3200,cinder:4000,veil:2500,rust:5200,rock:700,frost:2400,ember:3
 function rotAng(b,t){const B=BODIES[b];return(B.rot||0)*t+(b===1?B.m0:0)}
 function heightAt(b,x,y,z){const B=BODIES[b],k=B.kind;if(k==='star'||k==='gas')return 0;
   if(k==='terra'){const pd=Math.hypot(x-PADDIR[0],y-PADDIR[1],z-PADDIR[2]),e=fbm(x*1.9+7,y*1.9,z*1.9-3)+Math.exp(-pd*pd*40)*0.35;if(e<0.5)return 0;
-    const h=Math.pow((e-0.5)/0.25,1.6)*3800+(fbm(x*24,y*24,z*24,3)-0.5)*500*Math.min(1,(e-0.5)*12);const m=Math.min(1,(e-0.5)*20),d=(fbm(x*380,y*380,z*380,4)-0.5)*2*(260+Math.max(0,h)*0.35)*m+(vnoise(x*1600,y*1600,z*1600)-0.5)*90*m;return Math.max(0,h+d)*clamp((pd-0.012)/0.02,0,1)}
+    const h=Math.pow((e-0.5)/0.25,1.6)*3800+(fbm(x*24,y*24,z*24,3)-0.5)*500*Math.min(1,(e-0.5)*12);const m=Math.min(1,(e-0.5)*20),d=(fbm(x*380,y*380,z*380,4)-0.5)*2*(260+Math.max(0,h)*0.35)*m+(vnoise(x*1600,y*1600,z*1600)-0.5)*90*m+(vnoise(x*6400,y*6400,z*6400)-0.5)*22*m;return Math.max(0,h+d)*clamp((pd-0.012)/0.02,0,1)}
   const a=TER[k]||2000;let h=(fbm(x*2.6+3,y*2.6,z*2.6)-0.5)*2*a+(fbm(x*11,y*11,z*11,3)-0.5)*a*0.35;const c=vnoise(x*7,y*7,z*7);if(c>0.72){const d=(c-0.72)/0.28;h-=a*0.6*Math.sin(d*Math.PI)*(d<0.8?1:0.3)}
   // close-up detail: ridges and small craters a few km across
-  h+=(fbm(x*300,y*300,z*300,4)-0.5)*a*0.22;const c2=vnoise(x*90,y*90,z*90);if(c2>0.8){const d=(c2-0.8)/0.2;h-=a*0.12*Math.sin(d*Math.PI)}return h}
+  h+=(fbm(x*300,y*300,z*300,4)-0.5)*a*0.22+(vnoise(x*2400,y*2400,z*2400)-0.5)*a*0.02;const c2=vnoise(x*90,y*90,z*90);if(c2>0.8){const d=(c2-0.8)/0.2;h-=a*0.12*Math.sin(d*Math.PI)}return h}
 // ground height under a point of the orbit plane (angle around the world, at time t)
 function groundH(b,ang,t){const p=ang-rotAng(b,t);return heightAt(b,Math.cos(p),0,Math.sin(p))}
 // ground height under any point around a world, in or out of the flat plane (physics x,y is the plane; z is depth)
 function groundH3(b,dx,dy,dz,t){const r=Math.hypot(dx,dy,dz)||1,th=rotAng(b,t),c=Math.cos(th),s=Math.sin(th),lx=(c*dx+s*dy)/r,ly=(-s*dx+c*dy)/r;return heightAt(b,lx,dz/r,ly)}
 function radarAlt(r){const q=rel(r,S.t);return Math.hypot(q.dx,q.dy,q.dz)-BODIES[q.b].R-groundH3(q.b,q.dx,q.dy,q.dz,S.t)}
 /* ---------- the 3D ground near you: a detailed patch of terrain that follows the camera ---------- */
-function buildPatch(b,c,s){const B=BODIES[b],N=150,P=new Float32Array((N+1)*(N+1)*3),C=new Float32Array(P.length),I=[];const up=Math.abs(c[1])<0.9?[0,1,0]:[1,0,0];
+// a fine, repeating grain (pebbles, grass tufts, dust) that makes the ground look detailed up close
+function grainTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.fillStyle='#e8e8e8';x.fillRect(0,0,256,256);for(let i=0;i<9000;i++){const v=170+Math.random()*85|0,s=Math.random()<0.1?3:1.4;x.fillStyle=`rgb(${v},${v},${v})`;x.fillRect(Math.random()*256,Math.random()*256,s,s)}for(let i=0;i<60;i++){x.fillStyle=`rgba(90,90,90,${0.08+Math.random()*0.1})`;x.beginPath();x.arc(Math.random()*256,Math.random()*256,3+Math.random()*10,0,7);x.fill()}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;t.encoding=THREE.sRGBEncoding;return t}
+function buildPatch(b,c,s){const B=BODIES[b],N=200,UV=new Float32Array((N+1)*(N+1)*2),HH=new Float32Array((N+1)*(N+1)),P=new Float32Array((N+1)*(N+1)*3),C=new Float32Array(P.length),I=[];const up=Math.abs(c[1])<0.9?[0,1,0]:[1,0,0];
   let e1=[c[1]*up[2]-c[2]*up[1],c[2]*up[0]-c[0]*up[2],c[0]*up[1]-c[1]*up[0]];let l=Math.hypot(...e1);e1=e1.map(v=>v/l);const e2=[c[1]*e1[2]-c[2]*e1[1],c[2]*e1[0]-c[0]*e1[2],c[0]*e1[1]-c[1]*e1[0]];
   const fn=B.kind==='terra'?terraAt:B.kind==='moon'?lunaAt:WORLDTEX[B.kind],ts=Math.tan(s);let k=0;
   for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const u0=i/N*2-1,v0=j/N*2-1,u=Math.sign(u0)*Math.abs(u0)**1.9,v=Math.sign(v0)*Math.abs(v0)**1.9;let d=[c[0]+(e1[0]*u+e2[0]*v)*ts,c[1]+(e1[1]*u+e2[1]*v)*ts,c[2]+(e1[2]*u+e2[2]*v)*ts];l=Math.hypot(...d);d=d.map(x=>x/l);
     const m=Math.max(Math.abs(u0),Math.abs(v0)),w=m<0.8?1:Math.max(0,1-(m-0.8)/0.2),wf=w*w*(3-2*w);let h=heightAt(b,d[0],d[1],d[2])*wf;if(B.kind==='terra'&&Math.hypot(d[0]-PADDIR[0],d[1]-PADDIR[1],d[2]-PADDIR[2])<0.0075)h-=0.6;
-    const rr0=B.R+h-(1-wf)*15;P[k]=d[0]*rr0;P[k+1]=d[1]*rr0;P[k+2]=d[2]*rr0;let col=fn(d[0],d[1],d[2]);if(B.kind==='terra'&&h>2600)col=[235,238,242];else if(B.kind==='terra'&&h>1500)col=[col[0]*0.85+30,col[1]*0.8+20,col[2]*0.8+15];
+    const rr0=B.R+h-(1-wf)*15;HH[k/3]=h;const gs=ts*B.R/90;UV[k/3*2]=u*gs;UV[k/3*2+1]=v*gs;P[k]=d[0]*rr0;P[k+1]=d[1]*rr0;P[k+2]=d[2]*rr0;let col=fn(d[0],d[1],d[2]);if(B.kind==='terra'&&h>2600)col=[235,238,242];else if(B.kind==='terra'&&h>1500)col=[col[0]*0.85+30,col[1]*0.8+20,col[2]*0.8+15];
     C[k]=col[0]/255;C[k+1]=col[1]/255;C[k+2]=col[2]/255;k+=3}
+  // what the ground is made of: rock shows through on steep slopes, sand along Terra's coasts
+  for(let j=1;j<N;j++)for(let i=1;i<N;i++){const q=j*(N+1)+i,dh=Math.max(Math.abs(HH[q+1]-HH[q-1]),Math.abs(HH[q+N+1]-HH[q-N-1])),sp=Math.hypot(P[(q+1)*3]-P[(q-1)*3],P[(q+1)*3+1]-P[(q-1)*3+1],P[(q+1)*3+2]-P[(q-1)*3+2])||1,sl=dh/sp;
+    if(B.kind==='terra'){if(HH[q]>0.5&&HH[q]<35&&sl<0.08){C[q*3]=0.80;C[q*3+1]=0.74;C[q*3+2]=0.56}else if(sl>0.35&&HH[q]<2600){const r=clamp((sl-0.35)/0.4,0,1);C[q*3]=lerp(C[q*3],0.45,r);C[q*3+1]=lerp(C[q*3+1],0.41,r);C[q*3+2]=lerp(C[q*3+2],0.37,r)}}
+    else if(sl>0.25){const r=clamp((sl-0.25)/0.5,0,1)*0.35;C[q*3]*=1-r;C[q*3+1]*=1-r;C[q*3+2]*=1-r}}
   // hill shading: light the slopes facing the sun side, darken steep and shadowed ones
   {const H=new Float32Array((N+1)*(N+1));for(let q=0;q<H.length;q++)H[q]=Math.hypot(P[q*3],P[q*3+1],P[q*3+2]);
    for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){const q=j*(N+1)+i,i0=Math.max(0,i-1),i1=Math.min(N,i+1),j0=Math.max(0,j-1),j1=Math.min(N,j+1);
@@ -1072,15 +1083,25 @@ function buildPatch(b,c,s){const B=BODIES[b],N=150,P=new Float32Array((N+1)*(N+1
            gx=(H[j*(N+1)+i1]-H[j*(N+1)+i0])/dx,gy=(H[j1*(N+1)+i]-H[j0*(N+1)+i])/dy,sl=Math.hypot(gx,gy),
            f=clamp((1-sl*0.5-(gx*0.8+gy*0.5)*(B.atm?0.9:1.7))*(B.atm?1:0.85),B.atm?0.62:0.4,1.25);C[q*3]*=f;C[q*3+1]*=f;C[q*3+2]*=f}}
   for(let j=0;j<N;j++)for(let i=0;i<N;i++){const a=j*(N+1)+i,b2=a+1,c2=a+N+1,d2=c2+1;I.push(a,c2,b2,b2,c2,d2)}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));g.setIndex(I);g.computeVertexNormals();return g}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));g.setAttribute('uv',new THREE.BufferAttribute(UV,2));g.setIndex(I);g.computeVertexNormals();return g}
 // close to a rocky world, hide the smooth far-away globe (it sits at the average height and would cover craters and valleys)
 function baseShow(cb,show){if(GL.baseHid!=null&&(GL.baseHid!==cb||show)){const o=GL.B[GL.baseHid];if(o&&o.mesh&&o.mesh.material)o.mesh.material.visible=true;GL.baseHid=null}if(!show&&cb>0){const o=GL.B[cb];if(o&&o.mesh&&o.mesh.material){o.mesh.material.visible=false;GL.baseHid=cb}}}
-function updatePatch(cb,cam,fx,fy,t){if(!GL.ok)return;const B=BODIES[cb],o=GL.B&&GL.B[cb];if(!o||B.kind==='star'||B.kind==='gas'){if(GL.patch)GL.patch.mesh.visible=false;baseShow(cb,true);return}
-  const bp=bodyPos(cb,t),wx=fx+cam.position.x-bp[0],wy=cam.position.y+(GL.fz||0),wz=fy+cam.position.z-bp[1],r=Math.hypot(wx,wy,wz),alt=r-B.R;if(alt>150000){if(GL.patch)GL.patch.mesh.visible=false;baseShow(cb,true);return}
-  const th=rotAng(cb,t),ct=Math.cos(th),st=Math.sin(th),c=[(ct*wx+st*wz)/r,wy/r,(-st*wx+ct*wz)/r],s=clamp(Math.max(alt,1500)*16,40000,450000)/B.R;
+function updatePatch(cb,cam,fx,fy,t){if(!GL.ok)return;const B=BODIES[cb],o=GL.B&&GL.B[cb];if(!o||B.kind==='star'||B.kind==='gas'){if(GL.patch)GL.patch.mesh.visible=false;if(GL.rocks)GL.rocks.visible=false;baseShow(cb,true);return}
+  const bp=bodyPos(cb,t),wx=fx+cam.position.x-bp[0],wy=cam.position.y+(GL.fz||0),wz=fy+cam.position.z-bp[1],r=Math.hypot(wx,wy,wz),alt=r-B.R;if(alt>150000){if(GL.patch)GL.patch.mesh.visible=false;if(GL.rocks)GL.rocks.visible=false;baseShow(cb,true);return}
+  GL.camAlt=alt;GL.camB=cb;const th=rotAng(cb,t),ct=Math.cos(th),st=Math.sin(th),c=[(ct*wx+st*wz)/r,wy/r,(-st*wx+ct*wz)/r],s=clamp(Math.max(alt,1500)*16,40000,450000)/B.R;
   baseShow(cb,!(alt<20000&&BODIES[cb].kind!=='terra'));const P0=GL.patch;if(P0&&P0.b===cb){const ang=Math.acos(clamp(P0.c[0]*c[0]+P0.c[1]*c[1]+P0.c[2]*c[2],-1,1));if(ang<P0.s*0.06&&s/P0.s>0.6&&s/P0.s<1.6){P0.mesh.visible=true;return}}
   const g=buildPatch(cb,c,s);if(P0){P0.mesh.parent&&P0.mesh.parent.remove(P0.mesh);P0.mesh.geometry.dispose()}
-  const mesh=new THREE.Mesh(g,GL.patchMat||(GL.patchMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.95,metalness:0,side:THREE.DoubleSide})));mesh.receiveShadow=true;o.grp.add(mesh);GL.patch={b:cb,c,s,mesh}}
+  const mesh=new THREE.Mesh(g,GL.patchMat||(GL.patchMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.95,metalness:0,side:THREE.DoubleSide,map:grainTex()})));mesh.receiveShadow=true;o.grp.add(mesh);GL.patch={b:cb,c,s,mesh};placeRocks(cb,c,o)}
+// boulders scattered around (rocky worlds everywhere; on Terra only up in the mountains), on a fixed grid so they don't jump about
+function placeRocks(cb,c,o){const B=BODIES[cb];if(!GL.rocks){const geo=new THREE.DodecahedronGeometry(1,0);GL.rocks=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:0x8a8580,roughness:0.95,flatShading:true}),500);GL.rocks.castShadow=true;GL.rocks.receiveShadow=true;GL.rocks.frustumCulled=false}
+  const R0=GL.rocks;if(R0.parent!==o.grp){R0.parent&&R0.parent.remove(R0);o.grp.add(R0)}const col={terra:0x7d766d,moon:0x9a9896,rust:0x8a4a32,cinder:0x5a4a44,frost:0xcfd8e2,ember:0x4a3a34,rime:0xb8c4cc,veil:0x9a8a6a}[B.kind]||0x8a8580;R0.material.color.setHex(col);
+  const up=Math.abs(c[1])<0.9?[0,1,0]:[1,0,0];let e1=[c[1]*up[2]-c[2]*up[1],c[2]*up[0]-c[0]*up[2],c[0]*up[1]-c[1]*up[0]],l=Math.hypot(...e1);e1=e1.map(v=>v/l);const e2=[c[1]*e1[2]-c[2]*e1[1],c[2]*e1[0]-c[0]*e1[2],c[0]*e1[1]-c[1]*e1[0]];
+  const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),Sc=new THREE.Vector3(),Pn=new THREE.Vector3(),Y=new THREE.Vector3(0,1,0);let n=0;const span=4000/B.R,cell=span/22;
+  const gi0=Math.round((c[0]*e1[0]+c[1]*e1[1]+c[2]*e1[2])/cell),gj0=Math.round((c[0]*e2[0]+c[1]*e2[1]+c[2]*e2[2])/cell);
+  for(let gi=-14;gi<=14&&n<500;gi++)for(let gj=-14;gj<=14&&n<500;gj++){const hsh=Math.abs(Math.sin((gi+gi0)*127.1+(gj+gj0)*311.7+cb*17.3)*43758.5)%1;if(hsh>0.55)continue;const ox=(hsh*7.3)%1,oy=(hsh*13.7)%1,uu=(gi+ox-0.5)*cell,vv=(gj+oy-0.5)*cell;
+    let d=[c[0]+e1[0]*uu+e2[0]*vv,c[1]+e1[1]*uu+e2[1]*vv,c[2]+e1[2]*uu+e2[2]*vv];const L2=Math.hypot(...d);d=d.map(x=>x/L2);if(B.kind==='terra'&&Math.hypot(d[0]-PADDIR[0],d[1]-PADDIR[1],d[2]-PADDIR[2])<0.008)continue;const h=heightAt(cb,d[0],d[1],d[2]);if(B.kind==='terra'&&h<250)continue;
+    const sz=(1.2+hsh*hsh*14)*(B.kind==='terra'?1.5:1);Pn.set(d[0],d[1],d[2]).multiplyScalar(B.R+h+sz*0.25);Q.setFromUnitVectors(Y,Pn.clone().normalize());Sc.set(sz,sz*(0.5+hsh*0.5),sz*(0.7+ox*0.6));M.compose(Pn,Q,Sc);R0.setMatrixAt(n++,M)}
+  R0.count=n;R0.instanceMatrix.needsUpdate=true;R0.visible=n>0}
 /* ---------- sound: engine roar, wind, bangs (made on the fly, nothing to download) ---------- */
 const SND={on:true,ctx:null,eng:null,wind:null,nb:null};try{SND.on=localStorage.getItem('apogee_sound')!=='off'}catch(e){}
 function sndCtx(){if(!SND.ctx){try{SND.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(SND.ctx.state==='suspended')SND.ctx.resume().catch(()=>{});return SND.ctx}
@@ -1089,11 +1110,19 @@ function sndLoops(){const c=SND.ctx;if(!c||SND.eng)return;const mk=(type,f,q)=>{
 addEventListener('pointerdown',()=>{if(SND.on&&sndCtx())sndLoops()});addEventListener('keydown',()=>{if(SND.on&&sndCtx())sndLoops()});
 function sndTick(){if(!SND.eng)return;const c=SND.ctx,now=c.currentTime,live=SND.on&&$('home').hidden&&!S.paused&&R&&!R.dead;let ge=0,gw=0,fe=420;
   if(live){const q=rel(R,S.t),den=rho(q.b,Math.hypot(q.dx,q.dy)-BODIES[q.b].R),air=clamp(den/1.2,0,1),push=clamp((R.thrAcc||0)/25,0,1);ge=push*(0.12+0.5*Math.sqrt(air))*(GL.dist>3e4?0.4:1);fe=260+push*500+air*200;gw=clamp(Math.sqrt(R.q||0)/220,0,0.35)}
-  SND.eng.g.gain.setTargetAtTime(ge,now,0.08);SND.eng.fl.frequency.setTargetAtTime(fe,now,0.1);SND.wind.g.gain.setTargetAtTime(gw,now,0.2)}
-function sndHit(kind){if(!SND.on||!SND.ctx||!$('home').hidden)return;const c=SND.ctx,t=c.currentTime,s=sndNoise(c),fl=c.createBiquadFilter(),g=c.createGain();const P={stage:[1400,0.25,0.25],boom:[500,1.2,0.9],chute:[2400,0.15,0.18]}[kind]||[900,0.2,0.2];fl.type='lowpass';fl.frequency.value=P[0];g.gain.setValueAtTime(P[2],t);g.gain.exponentialRampToValueAtTime(0.0001,t+P[1]);s.connect(fl).connect(g).connect(c.destination);s.start(t);s.stop(t+P[1]+0.05)}
+  SND.eng.g.gain.setTargetAtTime(ge,now,0.08);SND.eng.fl.frequency.setTargetAtTime(fe,now,0.1);SND.wind.g.gain.setTargetAtTime(gw,now,0.2);
+  // sonic boom as you break the sound barrier in the air
+  if(live){const M=R.mach||0;if(SND.lastM!=null&&SND.lastM<1&&M>=1&&(R.q||0)>500){sndHit('sonic');setTimeout(()=>sndHit('sonic'),130)}SND.lastM=M}}
+function sndHit(kind){if(!SND.on||!SND.ctx||!$('home').hidden)return;const c=SND.ctx,t=c.currentTime,s=sndNoise(c),fl=c.createBiquadFilter(),g=c.createGain();const P={stage:[1400,0.25,0.25],boom:[500,1.2,0.9],chute:[2400,0.15,0.18],sonic:[380,0.45,0.75]}[kind]||[900,0.2,0.2];fl.type='lowpass';fl.frequency.value=P[0];g.gain.setValueAtTime(P[2],t);g.gain.exponentialRampToValueAtTime(0.0001,t+P[1]);s.connect(fl).connect(g).connect(c.destination);s.start(t);s.stop(t+P[1]+0.05)}
 (()=>{const oS=stage;stage=r=>{const n=r?r.staged:0;oS(r);if(r&&r.staged!==n)sndHit('stage')}})();
 (()=>{const oB=boom;boom=(r,why)=>{if(r&&!r.dead)sndHit('boom');return oB(r,why)}})();
 (()=>{const oC=openChute;openChute=r=>{const was=r.chute;oC(r);if(r.chute===2&&was!==2)sndHit('chute')}})();
+
+/* ---------- real clouds over Terra's launch site: you fly up through them ---------- */
+function nearClouds(){const vis=GL.camB===0&&GL.camAlt<40000;if(!GL.nc){if(!vis)return;const g=new THREE.Group(),T=BODIES[0],tex=puffTex(),c=PADDIR,up=[0,1,0];let e1=[c[1]*up[2]-c[2]*up[1],c[2]*up[0]-c[0]*up[2],c[0]*up[1]-c[1]*up[0]],l=Math.hypot(...e1);e1=e1.map(v=>v/l);const e2=[c[1]*e1[2]-c[2]*e1[1],c[2]*e1[0]-c[0]*e1[2],c[0]*e1[1]-c[1]*e1[0]];
+  let sd=11;const RN=()=>(sd=(sd*16807)%2147483647)/2147483647;const mats=[0.95,0.88,0.8].map(v=>new THREE.SpriteMaterial({map:tex,color:new THREE.Color(v,v,v*1.02),transparent:true,opacity:0.8,depthWrite:false,fog:false}));
+  for(let i=0;i<150;i++){const ang=RN()*6.283,dist=(0.006+RN()*0.11),alt=2500+RN()*3500,cu=Math.cos(ang)*dist,cv=Math.sin(ang)*dist,n=3+(RN()*4|0);for(let k=0;k<n;k++){const ou=cu+(RN()-0.5)*0.003,ov=cv+(RN()-0.5)*0.003;let d=[c[0]+e1[0]*ou+e2[0]*ov,c[1]+e1[1]*ou+e2[1]*ov,c[2]+e1[2]*ou+e2[2]*ov];const L=Math.hypot(...d);d=d.map(x=>x/L);const r=T.R+alt+(RN()-0.3)*400,sp=new THREE.Sprite(mats[k%3]);sp.position.set(d[0]*r,d[1]*r,d[2]*r);const sz=500+RN()*900;sp.scale.set(sz*1.6,sz,1);g.add(sp)}}
+  GL.nc=g;GL.B[0].grp.add(g)}GL.nc.visible=vis}
 
 /* ================= Apogee: launching, controls, autopilot, burn planner, panels ================= */
 let PLAN={at:'ap',dv:0},PLANP=[],PLANI={},SELI=-1,PREDT=0;
