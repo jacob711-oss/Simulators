@@ -34,6 +34,15 @@ const PT={
  srb:{nm:'Solid booster',k:'srb',m:1.2,fuel:6.3,thr:270,isp:[205,225],h:7,w:2.2},
  fins:{nm:'Fins',k:'fins',m:0.1,h:0,w:0},
  legs:{nm:'Landing legs',k:'legs',m:0.25,h:0,w:0},
+ probe:{nm:'Probe core (no crew)',k:'pod',m:0.1,h:0.9,w:1.3,crew:0,trq:7},
+ cone2:{nm:'Big nose cone',k:'cone',m:0.2,h:2.6,w:3.6},
+ shield2:{nm:'Big heat shield',k:'shield',m:0.8,h:0.5,w:3.8},
+ adapter:{nm:'Adapter 2.4 to 3.6 m (holds fuel)',k:'tank',m:0.3,fuel:2.2,h:2,w:3.6,w2:2.4},
+ tankXL:{nm:'Huge tank',k:'tank',m:2.4,fuel:20,h:9,w:3.6},
+ vector:{nm:'Vector engine (vacuum, very efficient)',k:'eng',m:0.9,thr:120,isp:[150,380],h:2.2,w:2.4},
+ mammoth:{nm:'Mammoth engine (biggest)',k:'eng',m:9,thr:2600,isp:[295,310],h:3.4,w:3.6},
+ ion:{nm:'Ion engine (tiny push, enormous range)',k:'eng',m:0.25,thr:2,isp:[100,4200],h:0.8,w:1.3},
+ srbL:{nm:'Big solid booster',k:'srb',m:3,fuel:18,thr:700,isp:[210,230],h:12,w:3.0},
 };
 const PRESETS={
  hopper:{nm:'Hopper (up and down)',parts:['chute','pod1','tankS','spark']},
