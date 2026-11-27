@@ -1,12 +1,10 @@
-# Simulators on its own server
+# The Simulators server
 
-This branch (`server`) is the whole Simulators site plus Quasar's server. It runs on Cloudflare Pages:
-- the site is served at the top of your own address
-- `functions/` adds Quasar's web search, page reading and AI relay, plus a file storage area
+This branch (`server`) is the server for the **entire Simulators site**: the hub and every simulator (Barycenter, Apogee, Biosphere, Lithosphere, Troposphere, Catalyst, Abyssal, Interchange, Gridlock, Hivemind, Flux, Seaway, Contrail, Sports, Quasar and the rest). It runs on Cloudflare Pages:
+- the whole site is served from your own address
+- `functions/` adds the site's server features: a file storage area for the site, plus web search, page reading and an AI relay (Quasar uses these by itself)
 
-Quasar finds the server by itself when it runs there.
-
-## 1. Put the site on the server (free, about 5 minutes)
+## 1. Put the whole site on the server (free, about 5 minutes)
 
 1. Make a free Cloudflare account: https://dash.cloudflare.com/sign-up
 2. In the dashboard choose **Workers & Pages**, then **Create**, then the **Pages** tab, then **Connect to Git**.
@@ -16,7 +14,7 @@ Quasar finds the server by itself when it runs there.
    - **Framework preset:** None
    - **Build command:** leave it empty
    - **Build output directory:** `/`
-5. Press **Save and Deploy**. After about a minute your site is live at an address like `https://simulators-xyz.pages.dev`. That is your new link to the whole site.
+5. Press **Save and Deploy**. After about a minute the whole site is live at an address like `https://simulators-xyz.pages.dev`. That is your new link to the whole site: the hub and every simulator.
 
 Every time the site is updated, the `server` branch changes and Cloudflare puts the new version online by itself.
 
