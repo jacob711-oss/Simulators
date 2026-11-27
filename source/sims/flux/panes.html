@@ -1,0 +1,23 @@
+<div class="pane" id="pane-world">
+    <div class="inv" id="inv"></div>
+    <div class="sl"><div class="row"><span class="k">Charge of new pieces</span><span id="qV"></span></div><input type="range" id="qS" min="1" max="5" step="1" value="2"></div>
+    <div class="sl"><div class="row"><span class="k">Mass of new particles</span><span id="mV">1×</span></div><input type="range" id="mS" min="-2" max="2" step="0.05" value="0"></div>
+    <div class="sl"><div class="row"><span class="k">Beam speed</span><span id="vV"></span></div><input type="range" id="vS" min="5" max="60" step="1" value="22"></div>
+    <div class="sl"><div class="row"><span class="k">Magnet strength</span><span id="bV"></span></div><input type="range" id="bS" min="0.2" max="3" step="0.1" value="1"></div>
+    <div class="row"><span class="k">Particle trails</span><button class="btn" id="trBtn" aria-pressed="true">On</button></div>
+    <span class="k">Actions</span>
+    <div class="evs"><button class="btn" data-ev="clearp">🧹 Clear particles</button><button class="btn" data-ev="burst">💥 Particle burst</button><button class="btn" data-ev="flip">🔄 Flip all charges</button><button class="btn" data-ev="freeze">🧊 Freeze free charges</button></div>
+    <span class="k">Views</span>
+    <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Field lines</button><button class="btn" data-view="potential" aria-pressed="false">Voltage</button><button class="btn" data-view="arrows" aria-pressed="false">Arrows</button></div>
+    <p class="note">Field lines start on positive charges and end on negative ones. Where they bunch up, the force is strong. A charge moving through a magnetic field curves sideways, which is how particle accelerators steer their beams.</p>
+  </div>
+  <div class="pane" id="pane-stats" hidden>
+    <div class="kv" id="cStats"></div>
+    <span class="k">Particles over time</span>
+    <canvas id="graph"></canvas>
+    <div class="splist" id="tList"></div>
+  </div>
+  <div class="pane" id="pane-insp" hidden>
+    <div id="inspEmpty"><p class="note">Click a charge, particle, emitter or target to inspect it.</p></div>
+    <div id="inspBody" class="hview" hidden></div>
+  </div>

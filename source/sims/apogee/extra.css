@@ -1,0 +1,20 @@
+.stack{display:flex;flex-direction:column;gap:3px;max-height:230px;overflow:auto}.srow{display:grid;grid-template-columns:1fr auto auto auto;gap:4px;align-items:center;border:1px solid var(--line);border-radius:7px;padding:3px 3px 3px 9px;font-size:13px;cursor:pointer}.srow.on{border-color:var(--flare);background:rgba(var(--accRGB),.1)}.srow .btn{padding:2px 8px;min-height:0}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.pbtn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:6px 8px}.pbtn b{font-size:12.5px;font-weight:600}.pbtn small{font-size:11px;color:var(--dim)}.pbtn[disabled]{opacity:.45}
+.stg{display:flex;flex-direction:column;gap:3px;margin-top:6px}.stg div{display:flex;justify-content:space-between;font-size:12.5px;border-bottom:1px dashed var(--line);padding:2px 0}.stg span{font-family:var(--f-mono);font-size:12px}
+.mlist{display:flex;flex-direction:column;gap:5px}.mlist>div{border:1px solid var(--line);border-radius:8px;padding:6px 9px;display:flex;flex-direction:column;gap:2px;font-size:12.5px}.mlist span{color:var(--ink2)}.mlist small{color:var(--dim);font-family:var(--f-mono)}.mlist .done{opacity:.6}.mlist .lost{opacity:.5;text-decoration:line-through}
+.warn{color:#ff8a6a;font-size:13px;margin:0}.good{color:#8fe39a;font-size:13px;margin:0}
+#apad{position:fixed;inset:0;pointer-events:none;z-index:40;--padB:20px}#apad[hidden]{display:none}#apad button{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(10,14,28,.7);color:#fff;font:700 18px Oxanium,sans-serif;touch-action:none;backdrop-filter:blur(6px)}
+#apad .rot{position:fixed;left:14px;bottom:var(--padB);display:flex;gap:10px}#apad .thr{position:fixed;right:14px;bottom:var(--padB);display:grid;grid-template-columns:64px 90px;grid-template-rows:64px 64px;gap:8px}#apad .thr .stg{grid-column:2;grid-row:1/3;width:90px;height:136px;border-radius:18px;background:rgba(255,120,60,.8);font-size:16px}
+
+.edit{width:100%;height:340px;border-radius:10px;border:1px solid var(--line);display:block;touch-action:none;cursor:crosshair;margin:6px 0}
+/* flight plan list */
+.fplist{margin:6px 0;padding-left:1.4em;display:grid;gap:4px}
+.fplist li{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
+.fplist li .v{margin-left:auto;font-variant-numeric:tabular-nums}
+.fplist li .btn{padding:1px 7px;min-height:0}
+.fplist li.now{color:#ffd28a;font-weight:600}
+.fplist li.done{opacity:.55;text-decoration:line-through}
+#fpBox .row{display:flex;gap:6px;flex-wrap:wrap}
+
+.pdrag{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-130%);background:rgba(20,24,40,.92);border:1px solid rgba(255,210,58,.7);color:#ffe9a8;font:600 12px 'IBM Plex Mono',monospace;padding:4px 8px;border-radius:6px}
+#parts [data-add]{touch-action:none}

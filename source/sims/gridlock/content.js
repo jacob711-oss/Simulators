@@ -1,0 +1,44 @@
+/* ================= Gridlock: home/demo towns, challenges, tutorial ================= */
+{const l0=SIM.load;SIM.load=function(id){const show=!$('home').hidden||document.body.classList.contains('mDemo');if(show)MODE='classic';l0.call(this,id);
+  if(show){G.colours=3;G.auto=true;G.roads=G.bridges=G.tunnels=1e6;for(const b of BL)autoRoad(b);addDest(1);addDest(2);for(let k=0;k<14;k++)addHouse();G.relaxed=true;PAINTED=0}}}
+const trips=()=>G.trips,wk=()=>G.week,tilesUsed=()=>{let n=0;for(let i=0;i<N;i++)if(ROAD[i])n++;return n};
+const tripCh=(t,d,n,sc,hint)=>CC(d,{t,g:`Make ${fmtN(n)} trips in ${SCENLIST.find(s=>s.id===sc).name}.`,hint:hint||'Connect every home to a building of its colour. Use roundabouts where roads meet.',scen:sc,setup:()=>{G.relaxed=false},check:()=>[trips()>=n,trips()/n,`${fmtN(trips())} of ${fmtN(n)} trips`],fail:()=>G.over?'A building overflowed':'',stars:byTime(n*0.7+40,n*1.6+100)});
+CC(1,{t:'First road',g:'Connect a home to the building of its colour and make 1 trip.',hint:'With 🛣️ Road, drag from next to the red home to next to the red building.',scen:'meadow',check:()=>[trips()>=1,trips()>=1?1:0,''],stars:byTime(20,50)});
+CC(1.1,{t:'Busy town',g:'Make 15 trips.',hint:'Every new home needs a road too.',scen:'meadow',setup:()=>{G.relaxed=false},check:()=>[trips()>=15,trips()/15,`${trips()} of 15`],stars:byTime(50,110)});
+CC(1.2,{t:'Over the river',g:'Build a bridge and make 5 trips.',hint:'Paint road across the water: each water tile uses a bridge piece.',scen:'riverside',check:()=>{const b=ROAD.includes(2);return[b&&trips()>=5,(b?0.5:0)+Math.min(0.5,trips()/10),b?`${trips()} of 5 trips`:'No bridge yet']},stars:byTime(40,100)});
+CC(1.3,{t:'Through the hill',g:'Dig a tunnel through a hill.',hint:'Paint road over a hill: each hill tile uses a tunnel piece.',scen:'peaks',check:()=>{const ok=ROAD.includes(3);return[ok,ok?1:0,'']},stars:byTime(20,60)});
+CC(1.4,{t:'Round and round',g:'Build a roundabout on a junction.',hint:'Make roads meet from 3 sides, then use ⭕ Roundabout on the meeting tile.',scen:'meadow',setup:()=>{G.rbs=1},check:()=>{const ok=RB.size>0;return[ok,ok?1:0,'']},stars:byTime(25,60)});
+CC(1.5,{t:'Stop and go',g:'Put traffic lights on 2 junctions.',hint:'🚦 Traffic lights go on tiles where 3 or 4 roads meet.',scen:'meadow',setup:()=>{G.lights=2},check:()=>[LT.size>=2,LT.size/2,`${LT.size} of 2`],stars:byTime(30,80)});
+CC(1.6,{t:'Fast lane',g:'Build a motorway and have a car drive on it.',hint:'With 🛫 Motorway, drag from a road tile to another road tile at least 4 blocks away.',scen:'lakes',setup:()=>{G.mways=1;G.roads+=40;c16=false},check:()=>{const used=CARS.some(c=>{const P=carPos(c);return P&&P[3]});const m=MW.length>0;if(used)c16=true;return[m&&c16,(m?0.5:0)+(c16?0.5:0),m?(c16?'':'Wait for a car to use it'):'No motorway yet']},stars:byTime(40,100)});
+let c16=false;
+tripCh('Meadowfield commute',2,150,'meadow');tripCh('Riverside run',2.2,200,'riverside','Bridges are few: one good crossing is better than many.');tripCh('Highpeak haul',2.6,250,'peaks','Roads round the hills are free; tunnels are short cuts.');tripCh('Twin Lakes traffic',3,300,'lakes');tripCh('Saltbay shuttle',3.4,400,'bay');tripCh('Gridlock legend',4.4,1000,'riverside');
+CC(1.7,{t:'Bus service',g:'Open a bus route and let buses make 30 trips.',hint:'With 🚌 Bus route, drag from a road next to red homes to the road beside the red building.',scen:'meadow',setup:()=>{G.buses=1;G.roads+=40;for(let k=0;k<4;k++)addHouse(0)},check:()=>{const n=CH.events.filter(e=>e.k==='trip'&&e.bus).length;return[n>=30,n/30,`${n} of 30 bus trips`]},stars:byTime(60,150)});
+CC(2.3,{t:'All stops',g:'Run a bus route with at least 4 stops and make 20 bus trips.',hint:'Open a route, then tap the yellow route line to add stops in between, near more homes and buildings.',scen:'meadow',setup:()=>{G.buses=1;G.roads+=60;for(let k=0;k<5;k++)addHouse()},check:()=>{const ok=BUSES.some(r=>r.stops.length>=4),n=CH.events.filter(e=>e.k==='trip'&&e.bus).length;return[ok&&n>=20,(ok?0.3:0.1*Math.max(0,...BUSES.map(r=>r.stops.length-1)))+0.7*Math.min(1,n/20),`${Math.max(0,...BUSES.map(r=>r.stops.length))} stops · ${n} of 20 bus trips`]},stars:byTime(90,200)});
+CC(3.4,{t:'Public transport',g:'Make 100 bus trips with at least 3 bus routes.',hint:'Pick buses as weekly upgrades. Each route needs homes near one stop and their building near the other.',scen:'riverside',setup:()=>{G.buses=3;G.roads+=60;G.relaxed=false},check:()=>{const n=CH.events.filter(e=>e.k==='trip'&&e.bus).length,ok=BUSES.length>=3;return[ok&&n>=100,(ok?0.3:0.1*BUSES.length)+0.7*Math.min(1,n/100),`${BUSES.length} routes · ${n} of 100 bus trips`]},fail:()=>G.over?'A building overflowed':'',stars:byTime(200,420)});
+CC(2.0,{t:'Sound the alarm',g:'Hear an alarm, then calm every building down.',hint:'Let pins pile up, then connect more homes of that colour.',scen:'meadow',setup:()=>{G.relaxed=false;G.rush=true},check:()=>{const a=evN('alarm')>0,calm=BL.every(b=>b.over<0.05);return[a&&calm,a?(calm?1:0.5):0,a?(calm?'All calm':'Now fix the busy building'):'Waiting for an alarm']},fail:()=>G.over?'A building overflowed':'',stars:byTime(90,200)});
+CC(2.4,{t:'Survive 5 weeks',g:'Keep Meadowfield moving until week 6.',hint:'Each week brings 20 road tiles and an upgrade. Watch for red rings.',scen:'meadow',setup:()=>{G.relaxed=false},check:()=>[wk()>=6,(wk()-1)/5,`Week ${wk()}`],fail:()=>G.over?'A building overflowed':'',stars:byTime(240,360)});
+CC(3.6,{t:'Survive 10 weeks',g:'Keep Saltbay moving until week 11.',hint:'Motorways and roundabouts keep big towns flowing.',scen:'bay',setup:()=>{G.relaxed=false},check:()=>[wk()>=11,(wk()-1)/10,`Week ${wk()}`],fail:()=>G.over?'A building overflowed':'',stars:byTime(470,700)});
+CC(2.8,{t:'Rush hour',g:'Make 60 trips in rush hour without gridlock.',hint:'Short roads, roundabouts at junctions.',scen:'meadow',setup:()=>{G.relaxed=false;G.rush=true},check:()=>[trips()>=60,trips()/60,`${trips()} of 60`],fail:()=>G.over?'A building overflowed':'',stars:byTime(90,200)});
+CC(3.0,{t:'Thrifty planner',g:'Make 120 trips using no more than 50 road tiles.',hint:'Erase roads you no longer need with 🧽 Erase.',scen:'meadow',setup:()=>{G.relaxed=false},check:()=>{const u=tilesUsed(),ok=u<=50;return[trips()>=120&&ok,ok?trips()/120:0,ok?`${trips()} of 120 · ${u} tiles`:`${u} tiles: use 50 or fewer`]},fail:()=>G.over?'A building overflowed':'',stars:byTime(150,320)});
+CC(3.2,{t:'Snow day',g:'Make 80 trips in the snow.',hint:'Cars crawl in snow: keep routes short.',scen:'lakes',setup:()=>{G.relaxed=false;G.snow=true},check:()=>[trips()>=80,trips()/80,`${trips()} of 80`],fail:()=>G.over?'A building overflowed':'',stars:byTime(130,280)});
+TSTEPS.push(
+ ['Look around','Right-drag (or two fingers) to move around the town. Scroll or pinch to zoom.',r=>CNT.moved+CNT.zoomed*50>r.m+150,r=>{r.m=CNT.moved+CNT.zoomed*50}],
+ ['Paint a road','With 🛣️ Road, drag across the map to paint road tiles.',r=>PAINTED>=r.n+4,r=>{r.n=PAINTED}],
+ ['Make a trip','Join a home to the building of the same colour. When pins appear, cars drive over. Make 3 trips.',r=>G.trips>=r.d+3,r=>{r.d=G.trips}],
+ ['Erase','Pick 🧽 Erase and drag over a road you do not need. You get the tiles back.',r=>ERASED>r.n,r=>{r.n=ERASED}],
+ ['Speed up','Press 2× next to the time.',()=>!S.paused&&S.speed>=2],
+ ['A new week','Wait for the week to end and pick an upgrade.',r=>UPG>r.n,r=>{r.n=UPG}],
+ ['Junctions','Where 3 or 4 roads meet, cars slow down. Use ⭕ Roundabout or 🚦 Traffic lights on a junction (pick them as upgrades).',r=>RBADD+LTADD>r.n,r=>{r.n=RBADD+LTADD;G.rbs=Math.max(G.rbs,1)}],
+ ['Motorway','Pick 🛫 Motorway and drag from one road tile to another far away.',r=>MWADD>r.n,r=>{r.n=MWADD;G.mways=Math.max(G.mways,1)}],
+ ['Buses','Pick 🚌 Bus route and drag from a road beside some homes to a road beside a building of their colour. One bus carries 6 people at once.',r=>BUSADD>r.n,r=>{r.n=BUSADD;G.buses=Math.max(G.buses,1)}],
+ ['More stops','Tap the yellow bus route line to add a stop in the middle. The bus stops there too.',r=>MIDSTOPS>r.n,r=>{r.n=MIDSTOPS}],
+ ['Alarms','When a building has too many pins an alarm sounds and it glows red. Connect more homes of its colour.',r=>ALARMS>r.n||S.view==='traffic',r=>{r.n=ALARMS}],
+ ['Traffic','Switch to the Traffic view in the Roads tab to see jams.',()=>S.view==='traffic'],
+ ['Other towns','Press Towns in the top bar and pick another town.',r=>CNT.scen>r.n,r=>{r.n=CNT.scen}],
+);
+DEMO.push(
+ ['meadow','Meadowfield','Cars drive from homes to the buildings of their colour and back again.',()=>{setSpeed(2)}],
+ ['riverside','Riverside','Bridges carry the roads over the river.',()=>{setSpeed(2)}],
+ ['peaks','Highpeak','Tunnels cut through the hills. Night falls on the town.',()=>{setSpeed(2);setView('night')}],
+ ['bay','Saltbay','The Traffic view shows where cars bunch up.',()=>{setSpeed(3);setView('traffic')}],
+);

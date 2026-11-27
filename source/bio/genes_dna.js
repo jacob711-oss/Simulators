@@ -1,0 +1,5 @@
+function drawDNA(c,o){const d=Math.min(2,devicePixelRatio||1),w=c.clientWidth||300,h=28;if(c.width!==Math.round(w*d)){c.width=w*d;c.height=h*d}const p=c.getContext('2d');p.setTransform(d,0,0,d,0,0);p.clearRect(0,0,w,h);
+  const G=o.genes,vals=[...GENES.map(([k,,lo,hi])=>[(G[k]??1),1,lo,hi]),[G.fur??0,0,-10,40],[G.heat??0,0,-10,20]],cols=['#ff8a5a','#c9a06a','#7fd0ff','#b48cff','#ff7aa8','#7fe0a8','#e8e8f0','#ffc35a'],n=vals.length+1,bw=w/n;
+  p.strokeStyle='rgba(150,210,170,.35)';p.lineWidth=1.5;p.beginPath();for(let x=0;x<=w;x+=2){p.lineTo(x,h/2+Math.sin(x/9)*9)}p.stroke();p.beginPath();for(let x=0;x<=w;x+=2){p.lineTo(x,h/2-Math.sin(x/9)*9)}p.stroke();
+  vals.forEach(([v,base,lo,hi],j)=>{const t=(v-lo)/(hi-lo),tb=(base-lo)/(hi-lo);p.fillStyle=cols[j];p.globalAlpha=0.35+0.65*clamp(0.5+(t-tb)*2,0,1);p.fillRect(j*bw+2,3,bw-4,h-6)});
+  p.globalAlpha=1;const cc=coatOf(G);p.fillStyle=cc==='white'?'#f0f0ec':cc==='dark'?'#3a2e26':'#a8906f';p.fillRect((n-1)*bw+2,3,bw-4,h-6);p.fillStyle=cc==='dark'?'#fff':'#000';p.font='bold 10px IBM Plex Mono, monospace';p.textAlign='center';p.fillText(G.coat||'NN',(n-0.5)*bw,h/2+3.5);p.textAlign='start'}

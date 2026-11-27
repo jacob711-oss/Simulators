@@ -1,0 +1,43 @@
+{
+ "id": "lithosphere",
+ "icon": "🌋",
+ "name": "Lithosphere",
+ "tag": "Drift continents, raise mountains and set off volcanoes",
+ "url": "/lithosphere/",
+ "color": "#ff8a5c",
+ "title": "Lithosphere Sandbox",
+ "theme": "--voidRGB:10,7,6;--deepRGB:16,10,8;--accRGB:255,138,92;--lineRGB:230,170,140;--panel:rgba(20,12,10,.86);--ink:#f2e8e3;--ink2:#e2d2ca;--dim:#a8968d;",
+ "tabs": [
+  [
+   "world",
+   "World"
+  ],
+  [
+   "planet",
+   "Planet"
+  ],
+  [
+   "insp",
+   "Inspect"
+  ]
+ ],
+ "js": [
+  "sim.js",
+  "content.js"
+ ],
+ "text": {
+  "NAME_A": "Litho",
+  "NAME_B": "sphere",
+  "SUB": "A planet-building sandbox",
+  "TAG": "Drift continents, raise mountains, and watch volcanoes and earthquakes shape a living planet",
+  "FREE": "The full sandbox: push plates, split continents, raise mountains and set off volcanoes",
+  "WATCH": "A tour of drifting plates, colliding continents, island chains and the Ring of Fire",
+  "FOOT": "Simplified but real geology: plate tectonics, subduction, mountain building, hotspots, erosion and isostasy over millions of years.",
+  "FIND": "Find a plate, peak or volcano…",
+  "SCEN_LABEL": "Worlds",
+  "SCEN_ONE": "world",
+  "DATE_K": "Time",
+  "HINT": "Drag to look around · scroll to zoom · click the ground to inspect it",
+  "CANVAS_LABEL": "The planet: drag to look around, scroll to zoom"
+ }
+}

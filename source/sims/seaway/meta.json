@@ -1,0 +1,10 @@
+{"id":"seaway","icon":"🚢","name":"Seaway","tag":"Run the shipping lanes of a sea full of islands and keep the cargo moving","url":"/seaway/","color":"#3ab8e0",
+ "title":"Seaway",
+ "theme":"--voidRGB:3,10,20;--deepRGB:6,16,30;--accRGB:58,184,224;--lineRGB:150,200,230;--panel:rgba(6,16,30,.88);--ink:#ecf6fc;--ink2:#cfe3ef;--dim:#8aa6b8;",
+ "tabs":[["world","Fleet"],["stats","Sea"],["insp","Inspect"]],
+ "js":["sim.js","content.js"],
+ "text":{"NAME_A":"Sea","NAME_B":"way","SUB":"A shipping puzzle","TAG":"Draw shipping lines between island ports. Ships sail round the coasts carrying cargo where it is needed, before a port overflows",
+  "FREE":"Endless sea: every boat, unlimited ships and no game over",
+  "WATCH":"A tour of busy seas: archipelagos, lagoons and straits",
+  "FOOT":"Every week you get a new ship and choose an upgrade. Cargo wants a kind of port, not a particular one: it changes ships to get there.",
+  "FIND":"Find a port, line or upgrade…","SCEN_LABEL":"Seas","SCEN_ONE":"sea","DATE_K":"Week","HINT":"Drag from a port to another to draw a shipping line · right-drag to look around","CANVAS_LABEL":"The sea chart"}}
