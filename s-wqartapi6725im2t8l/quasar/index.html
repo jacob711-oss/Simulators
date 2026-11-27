@@ -88,30 +88,35 @@ textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(
 @media (max-width:820px){aside{position:fixed;inset:0 auto 0 0;z-index:20;transform:translateX(-102%)}body.side aside{transform:none}body.side .scrim{display:block;position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.5)}#menuBtn{display:grid}.hbtn.wide{display:none}}
 @media (max-width:560px){header{padding:10px 12px}h1{font-size:17px}.body{max-width:92%}.bub{font-size:15px}.hero{padding-top:16px}.hero h2{font-size:24px}.mode button span{display:none}.media.grid4{grid-template-columns:1fr 1fr}}
 .prog{margin-top:auto;padding:10px 4px 4px;border-top:1px solid rgba(255,255,255,.08)}.prog .ph{font:600 11px/1 system-ui;text-transform:uppercase;letter-spacing:.08em;color:#9a90b8;margin:2px 6px 8px}.prog p{font-size:12.5px;color:#a99fc4;margin:0 6px 6px}.prog .pr{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:6px 8px;border-radius:8px;color:inherit;text-decoration:none;font-size:13px}.prog .pr:hover{background:rgba(255,255,255,.05)}.prog .pr span{font-size:11px;color:#9a90b8;text-align:right}.prog .pr i{grid-column:1/3;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}.prog .pr em{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#3fd8ff)}.prog .pq{margin:6px 6px 0;width:calc(100% - 12px);padding:7px;border-radius:8px;border:1px solid rgba(180,150,255,.35);background:none;color:#d8ccff;cursor:pointer}.runb{position:absolute;right:62px;top:6px;border:1px solid rgba(120,220,140,.45);background:rgba(40,120,60,.35);color:#c9f5d2;border-radius:6px;padding:2px 8px;font:12px system-ui;cursor:pointer;display:inline-flex;align-items:center;gap:4px}.runb svg{width:11px;height:11px}pre{position:relative}#runDlg{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}#runDlg[hidden]{display:none}.runbox{width:min(980px,100%);height:min(720px,100%);background:#0e0c1a;border:1px solid rgba(180,150,255,.35);border-radius:14px;display:flex;flex-direction:column;overflow:hidden}.runh{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}.runh .capt{flex:1}.runh button{background:none;border:1px solid rgba(255,255,255,.18);color:#ddd;border-radius:7px;padding:4px 10px;cursor:pointer}#runX{font-size:18px;line-height:1;padding:2px 9px}#runF{flex:1;border:0;background:#fff;width:100%}.vchat.on{color:#fff;background:#8b5cf6;border-radius:50%}.memh{font-weight:600;margin:12px 0 6px}.memlist{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow:auto}.memr{display:flex;justify-content:space-between;gap:8px;align-items:center;background:rgba(255,255,255,.05);border-radius:8px;padding:5px 9px;font-size:13px}.memr button{background:none;border:0;color:#bbb;font-size:16px;cursor:pointer}.memclr{align-self:flex-start;margin-top:4px;background:none;border:1px solid rgba(255,120,120,.4);color:#ffb0b0;border-radius:8px;padding:4px 10px;cursor:pointer}
-/* ===== Quasar's face: a green buddy with one big eye ===== */
-.logo,.av{background:none!important;box-shadow:none!important;animation:none!important;border-radius:0!important}
-.qface{width:100%;height:100%;display:block;overflow:visible}
-.qface .head{fill:url(#qfG2)}.qface .chin{fill:#178650}.qface .shine{display:none}
-.qface .sclera{fill:#fdfdfb}.qface .pupil{transition:transform .14s ease-out}.qface .pupil circle.p{fill:#0e2a1f}.qface .pupil circle.g{fill:#fff}
-.qface .lid{fill:#1d9a5b;transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);transition:transform .09s}
-.qface .mouth{fill:none;stroke:#0e2a1f;stroke-width:1.7;stroke-linecap:round;transform-box:fill-box;transform-origin:50% 50%}.qface .dots3{fill:#e9f7ef}
-.qface .happy,.qface .dots3{opacity:0;transition:opacity .2s}.qface .eyeg{transition:opacity .2s}
-.qface.blink .lid{transform:scaleY(1)}
-body[data-face=think] .qf-live .pupil{transform:translate(1.6px,-2.2px)!important}
-body[data-face=think] .qf-live .lid{transform:scaleY(.3)}
-body[data-face=think] .qf-live .dots3{opacity:1}
-body[data-face=think] .qf-live .dots3 circle{animation:qfd 1s infinite}
-body[data-face=think] .qf-live .dots3 circle:nth-child(2){animation-delay:.15s}body[data-face=think] .qf-live .dots3 circle:nth-child(3){animation-delay:.3s}
-@keyframes qfd{0%,100%{opacity:.25}50%{opacity:1}}
-body[data-face=talk] .qf-live .mouth{animation:qft .22s infinite alternate}
-@keyframes qft{from{transform:scaleY(.7)}to{transform:scaleY(1.9)}}
-body[data-face=happy] .qf-live .eyeg{opacity:0}body[data-face=happy] .qf-live .happy{opacity:1}
-body[data-face=happy] .qf-live .mouth{transform:scaleY(1.6)}
-body[data-face=confused] .qf-live .mouth{transform:rotate(-12deg) scaleY(.5)}
-body[data-face=confused] .qf-live .pupil{transform:translate(-1.4px,1.4px)!important}
-.hero .logo.big{width:104px;height:104px;margin:0 auto 8px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35))}
-@keyframes qfb{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.steps .st{font-size:12px;padding:3px 9px;border-radius:6px;background:#1d9a5b1f;border:1px solid #1d9a5b55;color:#bfe9d1}.steps .st.run{animation:qfd 1s infinite}
+/* ===== Quasar's face: the original purple quasar, now alive ===== */
+.logo,.av{background:none!important;box-shadow:none!important;animation:none!important;border-radius:50%!important}
+.qorb{position:relative;display:block;width:100%;height:100%;border-radius:50%;--sp:5s}
+.qorb i{position:absolute;display:block;border-radius:50%;pointer-events:none}
+.qorb .halo{inset:-18%;background:radial-gradient(circle,#7b5cff66 0,#7b5cff22 45%,transparent 70%);animation:qglow 3s ease-in-out infinite}
+.qorb .swirl{inset:0;background:conic-gradient(from 0deg,transparent 0 8%,#b9a6ff 16%,transparent 30%,#3fd8ff 42%,transparent 55%,#c77dff 68%,transparent 82%,#7b5cff 92%,transparent);-webkit-mask:radial-gradient(circle,transparent 20%,#000 32%,#000 52%,transparent 71%);mask:radial-gradient(circle,transparent 20%,#000 32%,#000 52%,transparent 71%);filter:blur(.6px);animation:qspin var(--sp) linear infinite}
+.qorb .swirl.s2{inset:12%;opacity:.85;background:conic-gradient(from 90deg,transparent 0 15%,#3fd8ff 25%,transparent 40%,#e0a8ff 60%,transparent 75%,#7b5cff 88%,transparent);animation:qspin calc(var(--sp)*1.7) linear infinite reverse}
+.qorb .ring{inset:22%;border:1px solid #c9b8ff55;transform:rotateX(68deg);animation:qspin calc(var(--sp)*.8) linear infinite}
+.qorb .core{inset:35%;background:radial-gradient(circle,#fff 0 28%,#e6dcff 45%,#a58bff 68%,#7b5cff00 100%);box-shadow:0 0 10px #c9b8ff,0 0 22px #7b5cff;animation:qpulse 2.4s ease-in-out infinite;transition:transform .2s ease-out}
+.qorb .spark{width:6%;height:6%;left:47%;top:47%;background:#fff;box-shadow:0 0 6px #b9a6ff;animation:qorbit calc(var(--sp)*.9) linear infinite}
+.qorb .spark.k2{width:4.5%;height:4.5%;left:47.75%;top:47.75%;background:#9be8ff;animation-duration:calc(var(--sp)*1.3);animation-delay:-1.1s}
+.qorb .spark.k3{width:4%;height:4%;left:48%;top:48%;background:#e0a8ff;animation-duration:calc(var(--sp)*.65);animation-delay:-.5s;animation-direction:reverse}
+@keyframes qspin{to{transform:rotate(360deg)}}
+@keyframes qpulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.12);filter:brightness(1.25)}}
+@keyframes qglow{0%,100%{opacity:.75}50%{opacity:1}}
+@keyframes qorbit{from{transform:rotate(0) translateX(190%) rotate(0)}to{transform:rotate(360deg) translateX(190%) rotate(-360deg)}}
+.qorb.blink .core{filter:brightness(1.6)}
+body[data-face=think] .qf-live{--sp:1.2s}
+body[data-face=think] .qf-live .core{animation-duration:.9s}
+body[data-face=talk] .qf-live{--sp:2.6s}
+body[data-face=talk] .qf-live .core{animation:qtalk .2s ease-in-out infinite alternate}
+@keyframes qtalk{from{transform:scale(.92)}to{transform:scale(1.22);filter:brightness(1.4)}}
+body[data-face=happy] .qf-live .core{transform:scale(1.35);filter:brightness(1.7);animation:none}
+body[data-face=happy] .qf-live .halo{opacity:1;inset:-30%}
+body[data-face=confused] .qf-live{animation:qwob .5s ease-in-out infinite;filter:saturate(.45)}
+body[data-face=confused] .qf-live .swirl{animation-direction:reverse}
+@keyframes qwob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.hero .logo.big{width:110px;height:110px;margin:0 auto 10px;filter:none}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.steps .st{font-size:12px;padding:3px 9px;border-radius:99px;background:#7b5cff22;border:1px solid #7b5cff55;color:#d9ccff}.steps .st.run{animation:qfd 1s infinite}
 </style><!--SEO-->
 <link rel="canonical" href="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/quasar/">
 <meta name="robots" content="noindex,nofollow">
@@ -176,18 +181,12 @@ How many <span class="seg" id="pCount"><button data-v="1" aria-pressed="true">1<
 const SIMS=[["Barycenter","space, gravity, planets and black holes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/"],["Biosphere","a living world of animals, plants and microbes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/life/"],["Lithosphere","continents, mountains and volcanoes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/"],["Troposphere","weather, winds and hurricanes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/troposphere/"],["Catalyst","atoms, molecules and chemical reactions","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/catalyst/"],["Abyssal","the ocean, from reefs to the deep sea","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/abyssal/"],["Interchange","trains, metros and trams in a growing city","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/interchange/"],["Gridlock","roads, buses and traffic","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/gridlock/"],["Hivemind","ant colonies, scent trails and raids","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/hivemind/"],["Flux","electric charges and magnets","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/flux/"],["Seaway","ships and island ports","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/seaway/"],["Contrail","air traffic control and airports","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/contrail/"]];
 
 // ===== Quasar's face =====
-const FACE=(live)=>`<svg class="qface${live?' qf-live':''}" viewBox="0 0 48 48" aria-hidden="true">
-<defs><linearGradient id="qfG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#23a866"/><stop offset="1" stop-color="#18874f"/></linearGradient></defs><rect class="head" x="4" y="4" width="40" height="40" rx="13"/>
-<g class="eyeg"><ellipse class="sclera" cx="17.5" cy="22" rx="5.2" ry="6"/><ellipse class="sclera" cx="30.5" cy="22" rx="5.2" ry="6"/>
-<g class="pupil"><circle class="p" cx="17.5" cy="22.6" r="2.7"/><circle class="g" cx="18.6" cy="21.3" r=".9"/></g><g class="pupil"><circle class="p" cx="30.5" cy="22.6" r="2.7"/><circle class="g" cx="31.6" cy="21.3" r=".9"/></g>
-<rect class="lid" x="11.8" y="15.6" width="11.4" height="12.8" rx="5.2"/><rect class="lid" x="24.8" y="15.6" width="11.4" height="12.8" rx="5.2"/></g>
-<g class="happy" fill="none" stroke="#0e2a1f" stroke-width="1.8" stroke-linecap="round"><path d="M13.5 23 Q17.5 18.5 21.5 23"/><path d="M26.5 23 Q30.5 18.5 34.5 23"/></g>
-<path class="mouth" d="M20.5 33 Q24 35.2 27.5 33"/><g class="dots3"><circle cx="20" cy="39.5" r="1.1"/><circle cx="24" cy="39.5" r="1.1"/><circle cx="28" cy="39.5" r="1.1"/></g></svg>`;
+const FACE=(live)=>`<span class="qface qorb${live?' qf-live':''}" aria-hidden="true"><i class="halo"></i><i class="swirl"></i><i class="swirl s2"></i><i class="ring"></i><i class="core"></i><i class="spark k1"></i><i class="spark k2"></i><i class="spark k3"></i></span>`;
 try{const hl=document.querySelector('header .logo');if(hl)hl.innerHTML=FACE(true)}catch(e){}
 let FACEST='idle',FACET=null;function face(st,ms){FACEST=st;document.body.dataset.face=st;clearTimeout(FACET);if(ms)FACET=setTimeout(()=>face('idle'),ms)}
 function faceMark(){document.querySelectorAll('.qface.qf-live').forEach(f=>{if(!f.closest('header')&&!f.closest('.hero'))f.classList.remove('qf-live')});const av=[...document.querySelectorAll('.msg.ai .av .qface')].pop();if(av)av.classList.add('qf-live')}
 (function faceLife(){let mx=innerWidth/2,my=0;addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY},{passive:true});
-  (function look(){if(FACEST!=='think')document.querySelectorAll('.qface').forEach(f=>{const r=f.getBoundingClientRect();if(!r.width)return;const dx=mx-(r.left+r.width*0.42),dy=my-(r.top+r.height*0.42),d=Math.hypot(dx,dy)||1,k=Math.min(1,d/220)*3.2;f.querySelectorAll('.pupil').forEach(p=>p.style.transform=`translate(${(dx/d*k*0.55).toFixed(2)}px,${(dy/d*k*0.6).toFixed(2)}px)`)});requestAnimationFrame(look)})();
+  (function look(){if(FACEST!=='think')document.querySelectorAll('.qface').forEach(f=>{const r=f.getBoundingClientRect();if(!r.width)return;const dx=mx-(r.left+r.width*0.42),dy=my-(r.top+r.height*0.42),d=Math.hypot(dx,dy)||1,k=Math.min(1,d/220)*3.2;const c=f.querySelector('.core');if(c&&FACEST==='idle')c.style.translate=`${(dx/d*k*0.5).toFixed(2)}px ${(dy/d*k*0.5).toFixed(2)}px`});requestAnimationFrame(look)})();
   (function blink(){setTimeout(()=>{document.querySelectorAll('.qface').forEach(f=>{f.classList.add('blink');setTimeout(()=>f.classList.remove('blink'),140)});blink()},2400+Math.random()*3500)})()})();
 // ===== tools: Quasar can look things up, read pages, calculate, run code, check the weather and more =====
 let TOOLS_ON=true;try{TOOLS_ON=localStorage.getItem('quasar_tools')!=='off'}catch(e){}
