@@ -113,6 +113,17 @@ function windAt(b,alt,t){const B=BODIES[b];if(!B.atm||alt>B.atm*0.4)return[0,0,0
 function thrustNow(r,dt,alt,b){if(!r.lit||r.dead)return 0;spoolTick(r,dt);let F=0;const p=rho(b,alt)/1.2;for(const i of engines(r)){const P=PT[r.parts[i]],isp=lerp(P.isp[1],P.isp[0],clamp(p,0,1));
     if(P.k==='srb'){if(r.fuel[i]<=0)continue;const md=P.thr/(P.isp[0]*G0);r.fuel[i]=Math.max(0,r.fuel[i]-md*dt);F+=P.thr*isp/P.isp[0]}
     else{if(r.thr<=0)continue;const fl=liquid(r);if(fl<=0)continue;const f=P.thr*r.thr*isp/P.isp[0]*(r.spool??1),md=P.thr*r.thr/(P.isp[0]*G0)*dt;let need=md;for(const j of bottomSec(r)){if(PT[r.parts[j]].k!=='tank'||need<=0)continue;const take=Math.min(r.fuel[j],need*r.fuel[j]/fl+1e-9);r.fuel[j]-=take;need-=take}F+=f}}return F}
+// the mission log: milestones of the flight, with the mission clock
+function mlog(r,txt,big){r.log=r.log||[];r.log.push({t:S.t-(r.t0||0),txt});if(r.log.length>60)r.log.shift();if(big)callout(txt,r.x,r.y,'#9fd8ff');if(typeof sayT==='function'&&big)sayT(txt,2500)}
+function milestones(r,dt,alt,den,F,B0){r.mf=r.mf||{};const f=r.mf;
+  if(r.count>0){const a=Math.ceil(r.count);r.count-=dt;const b=Math.ceil(r.count);if(b<a&&b>0){callout('T-'+b,r.x,r.y,'#ffd23a');if(typeof sndHit==='function')sndHit('chute')}if(r.count<=0){r.count=0;r.noCount=true;stage(r);r.thr=1;mlog(r,'Ignition and lift-off',true)}}
+  if(r.landed>=0)return;const M=r.mach||0;
+  if(den>0.05&&!f.sup&&M>=1){f.sup=1;mlog(r,'Supersonic',true)}
+  if(den>0&&!f.maxq&&(r.maxQ||0)>8000&&(r.q||0)<r.maxQ*0.95&&alt<(B0.atm||0)){f.maxq=1;mlog(r,'Max-Q passed: '+(r.maxQ/1000).toFixed(1)+' kPa',true)}
+  if(B0.atm&&!f['space'+B0.id]&&alt>B0.atm&&r.maxAlt<=B0.atm+50){f['space'+B0.id]=1;mlog(r,B0.id==='terra'?'Space! Above the air':'Above the air of '+B0.nm,true)}
+  const burning=F>0;if(f.burn&&!burning&&r.lit&&alt>1000){mlog(r,liquid(r)<=0&&r.thr>0?'Engine cut-off: out of fuel':'Main engine cut-off',true)}if(!f.burn&&burning&&f.burnSeen)mlog(r,'Engine relit');f.burn=burning;if(burning)f.burnSeen=1;
+  if(!f['orb'+B0.id]){const o=orbitOf(r,S.t);if(o.e<1&&o.pe>(B0.atm||0)+1000&&o.b===r.mfB){f['orb'+B0.id]=1;mlog(r,'Orbit around '+B0.nm+'! '+fmtKm(o.ap)+' by '+fmtKm(o.pe),true)}r.mfB=o.b}
+  const hot=(r.heat||0)>0.25;if(hot&&!f.black){f.black=1;mlog(r,'Radio blackout: plasma around the capsule')}else if(!hot&&f.black&&(r.heat||0)<0.12){f.black=0;mlog(r,'Radio contact again')}}
 function stepRocket(r,dt){if(r.dead)return;if(r.z==null){r.z=0;r.vz=0}if(r.el==null){r.el=0;r.oe=0}const t=S.t,q=rel(r,t),B0=BODIES[q.b],rr=Math.hypot(q.dx,q.dy,q.dz),alt=rr-B0.R,ux=q.dx/rr,uy=q.dy/rr,uz=q.dz/rr,m=rMass(r);
   // steering: your keys, the stability assist or the autopilot. A/D swing the nose round, Q/E tilt it up or down out of the flat plane (depth)
   let cmd=r.blackout?0:DRAG.rot,cmdE=r.blackout?0:(DRAG.tilt||0);if(AP.mode)cmd=apSteer(r)??cmd;const trq=r.parts.reduce((s,p)=>s+(PT[p].trq||0),0)+(r.lit?0.06*PT_thrust(r):0),aC=trq/Math.max(1,m)*0.5;
@@ -128,7 +139,7 @@ function stepRocket(r,dt){if(r.dead)return;if(r.z==null){r.z=0;r.vz=0}if(r.el==n
   if(dt>0.08){r.om=0;r.oe=0;if(tgt!=null)r.a=tgt;else if(cmd)r.a+=cmd*0.6*Math.min(dt,0.3);if(tgtE!=null)r.el=tgtE;else if(cmdE)r.el+=cmdE*0.6*Math.min(dt,0.3)}else{r.om+=(cmd*(aC+(LF?LF.ctrl:0))+aero)*dt;r.om*=Math.exp(-0.6*dt);r.a+=r.om*dt;r.oe+=(cmdE*(aC+(LF?LF.ctrl:0))+aeroE)*dt;r.oe*=Math.exp(-0.6*dt);r.el+=r.oe*dt}
   if(Math.abs(r.el)>Math.PI/2){r.el=Math.sign(r.el)*Math.PI/2;r.oe=0}
   // forces
-  const F=thrustNow(r,dt,alt,q.b),ce=Math.cos(r.el),dx=Math.cos(r.a)*ce,dy=Math.sin(r.a)*ce,dz=Math.sin(r.el);r.thrAcc=F/m;let ax=F*dx/m,ay=F*dy/m,az=F*dz/m,dragA=0;
+  const F=r.count>0?0:thrustNow(r,dt,alt,q.b);try{milestones(r,dt,alt,den,F,B0)}catch(e){}const ce=Math.cos(r.el),dx=Math.cos(r.a)*ce,dy=Math.sin(r.a)*ce,dz=Math.sin(r.el);r.thrAcc=F/m;let ax=F*dx/m,ay=F*dy/m,az=F*dz/m,dragA=0;
   if(LF&&vs>0.5){ax+=LF.ax-vrx/vs*LF.drag;ay+=LF.ay-vry/vs*LF.drag;az+=-vrz/vs*LF.drag;
     // wings also push sideways when the nose is turned out of the plane: that is how a plane turns
     const vz2=vrz/vs,sx=-vrx/vs*vz2,sy=-vry/vs*vz2,sz=1-vz2*vz2,sl=Math.hypot(sx,sy,sz)||1,side=r.q*(LF.area||0)*3.5*clamp(-ae,-0.3,0.3)/1000/m;ax+=sx/sl*side;ay+=sy/sl*side;az+=sz/sl*side}
@@ -154,11 +165,14 @@ function chuteArea(b){const r0=BODIES[b].rho0||1.2;return 450*Math.pow(clamp(1.2
 function openChute(r){if(!has(r,'chute')||r.chute===2)return;r.chute=2;callout('Parachute open',r.x,r.y,'#ffd28a');ev('chute');chEv('chute',{})}
 function boom(r,why){if(r.dead)return;r.dead=why;r.lit=false;r.thr=0;for(let i=0;i<14;i++)PARTS.push({k:'fire',x:r.x+rr(-8,8),y:r.y+rr(-8,8),vx:rr(-15,15),vy:rr(-15,15),age:rr(0,0.3),s:rr(4,12)});callout('BOOM',r.x,r.y,'#ff6a3a');toast(`Your rocket ${why}. Press Revert to try again.`,6000);ev('crash');chEv('crash',{why});if(AP.mode)apOff('')}
 /* ---------- staging ---------- */
-function stage(r){if(!r||r.dead)return;if(!r.lit){r.lit=true;if(r.thr===0)r.thr=1;r.staged++;callout('Ignition!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{});if(r.landed>=0&&PT_thrust(r)===0)toast('There are no engines in this stage');return}
+function stage(r){if(!r||r.dead)return;
+  // a launch from the pad starts with a countdown (press Space again to skip it)
+  if(!r.lit&&r.landed>=0&&r.maxAlt<50&&!r.noCount&&r.parts.some(p=>PT[p].k==='eng'||PT[p].k==='srb')){if(r.count>0){r.count=0;r.noCount=true}else{r.count=5.01;mlog(r,'Countdown started');return}}
+  if(!r.lit){r.lit=true;if(r.thr===0)r.thr=1;r.staged++;callout('Ignition!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{});if(r.landed>=0&&PT_thrust(r)===0)toast('There are no engines in this stage');return}
   const S0=sections(r.parts);if(S0.length<=1){if(has(r,'chute')&&r.chute<2){const q=rel(r,S.t),alt=Math.hypot(q.dx,q.dy,q.dz)-BODIES[q.b].R,vs=Math.hypot(q.vx,q.vy,q.vz);if(rho(q.b,alt)>0&&0.5*rho(q.b,alt)*vs*vs<40000)openChute(r);else{r.chute=1;toast('Parachute armed: it opens by itself when it is safe (low and slow)')}}return}
   const drop=S0[S0.length-1],keep=S0.slice(0,-1).flat(),dropParts=drop.map(i=>r.parts[i]),dropFuel=drop.map(i=>r.fuel[i]);const L=rocketLen(r.parts),Lk=keep.reduce((s,i)=>s+PT[r.parts[i]].h,0),ce=Math.cos(r.el||0),dx=Math.cos(r.a)*ce,dy=Math.sin(r.a)*ce,dz=Math.sin(r.el||0);
   const dcy=(L/2)-Lk-(L-Lk)/2;DEB.push({parts:dropParts,fuel:dropFuel,x:r.x-dx*(L/2-(L-Lk)/2),y:r.y-dy*(L/2-(L-Lk)/2),z:(r.z||0)-dz*(L/2-(L-Lk)/2),vx:r.vx-dx*3,vy:r.vy-dy*3,vz:(r.vz||0)-dz*3,a:r.a,el:r.el||0,om:rr(-0.2,0.2),age:0});if(DEB.length>12)DEB.shift();
-  r.parts=keep.map(i=>r.parts[i]);r.fuel=keep.map(i=>r.fuel[i]);r.x+=dx*(L-Lk)/2;r.y+=dy*(L-Lk)/2;r.z=(r.z||0)+dz*(L-Lk)/2;r.staged++;r.lit=true;callout('Stage!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{})}
+  r.parts=keep.map(i=>r.parts[i]);r.fuel=keep.map(i=>r.fuel[i]);mlog(r,'Stage separation',true);if(typeof sepPuff==='function')sepPuff(r);r.x+=dx*(L-Lk)/2;r.y+=dy*(L-Lk)/2;r.z=(r.z||0)+dz*(L-Lk)/2;r.staged++;r.lit=true;callout('Stage!',r.x,r.y,'#ffd23a');ev('stage');chEv('stage',{})}
 function stepDebris(dt){for(const d of DEB){if(d.dead)continue;d.age+=dt;d.z=d.z||0;d.vz=d.vz||0;const g=gravity(d.x,d.y,S.t,d.z);const b=domBody(d.x,d.y,S.t,d.z),bp=bodyPos(b,S.t),rr0=Math.hypot(d.x-bp[0],d.y-bp[1],d.z),alt=rr0-BODIES[b].R,den=rho(b,alt);let ax=g[0],ay=g[1],az=g[2];
     if(den>0){const bv=bodyVel(b,S.t),vx=d.vx-bv[0],vy=d.vy-bv[1],vs=Math.hypot(vx,vy,d.vz),m=d.parts.reduce((s,p,i)=>s+PT[p].m+(d.fuel[i]||0),0),Fd=0.5*den*vs*vs*0.9*10/1000;if(vs>0.1){ax-=vx/vs*Fd/m;ay-=vy/vs*Fd/m;az-=d.vz/vs*Fd/m}}
     d.vx+=ax*dt;d.vy+=ay*dt;d.vz+=az*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.z+=d.vz*dt;d.a+=d.om*dt;if(alt<0){d.dead=1;for(let i=0;i<5;i++)PARTS.push({k:'fire',x:d.x,y:d.y,vx:rr(-8,8),vy:rr(-8,8),age:rr(0,.3),s:rr(3,7)})}}DEB=DEB.filter(d=>!d.dead&&d.age<900)}
