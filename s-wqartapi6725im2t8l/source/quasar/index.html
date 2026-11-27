@@ -126,6 +126,7 @@ body[data-face=confused] .qf-live .swirl{animation-direction:reverse}
 <label>What should Quasar know about you?<textarea id="pAbout" rows="3" maxlength="800" placeholder="For example: I love space and coding. I'm learning about volcanoes."></textarea></label>
 <label>How should Quasar reply?<textarea id="pStyle2" rows="2" maxlength="400" placeholder="For example: short answers, with examples. Explain things simply."></textarea></label>
 <label class="chk"><input type="checkbox" id="pSpeak"> Read every answer aloud automatically</label>
+<label>Quasar server address (optional). With your own server, Quasar searches and reads the web without browser limits.<input id="pServer" type="url" placeholder="https://quasar-server.yourname.workers.dev" style="width:100%"></label>
 <label class="chk"><input type="checkbox" id="pTrack"> Let Quasar track my progress in the simulators</label>
 <div class="memh">What Quasar remembers about you</div><div id="memList" class="memlist"></div>
 <p class="capt">Saved on this device only. Quasar uses it in every chat.</p>
@@ -176,7 +177,7 @@ Available tools:
 - time {}: the current date and time
 - image {"prompt":"..."}: make a picture (it is shown under your answer)
 - remember {"fact":"..."}: save something about the user for future chats
-Rules: use at most one tool per reply. After a TOOL RESULT message, either use another tool or give your final answer. Never show the TOOL syntax in a final answer. If a tool fails, try another way or answer from what you know and say so.`;
+Always search first for anything current or changeable (news, sport results, prices, releases, who holds a job, today's events), and read a page when the user gives a link. Example: user asks 'who won the last F1 race?' -> you reply exactly: TOOL: {"tool":"search","q":"latest Formula 1 race winner"}\nRules: use at most one tool per reply. After a TOOL RESULT message, either use another tool or give your final answer. Never show the TOOL syntax in a final answer. If a tool fails, try another way or answer from what you know and say so.`;
 function parseTool(t){const m=(t||'').replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').trim().match(/^TOOL:\s*(\{[\s\S]*\})\s*$/);if(!m)return null;try{const o=JSON.parse(m[1]);return o&&o.tool?o:null}catch(e){return null}}
 const TOOLNAME={search:'Searching the web',read:'Reading the page',calc:'Calculating',run:'Running code',weather:'Checking the weather',time:'Checking the time',image:'Drawing a picture',remember:'Remembering'};
 function safeCalc(expr){const e=String(expr||'').replace(/\^/g,'**').replace(/×/g,'*').replace(/÷/g,'/');const names=Object.getOwnPropertyNames(Math);const words=e.match(/[A-Za-z_]+/g)||[];for(const w of words)if(!names.includes(w)&&w!=='Math')throw new Error('unknown name '+w);if(/[^0-9+\-*/%().,\sA-Za-z_eE<>=!&|?:]/.test(e))throw new Error('bad characters');const v=Function('"use strict";const {'+names.join(',')+'}=Math;return ('+e+')')();return typeof v==='number'?(Number.isInteger(v)?String(v):String(+v.toPrecision(12))):String(v)}
@@ -186,7 +187,7 @@ function runJS(code,ms){return new Promise(res=>{const f=document.createElement(
 let TOOLIMG=null;
 async function runTool(c,signal){try{switch(c.tool){
   case'search':{const r=await webSearch(c.q||'',signal);return r.length?r.map((s,i)=>`[${i+1}] ${s.title} (${s.url}): ${s.text}`).join('\n'):'No results.'}
-  case'read':{const u=String(c.url||'');if(!/^https?:\/\//.test(u))return'That is not a web address.';const r=await fetch('https://r.jina.ai/'+u,{signal});if(!r.ok)return'Could not read that page ('+r.status+').';return(await r.text()).slice(0,7000)}
+  case'read':{const u=String(c.url||'');if(!/^https?:\/\//.test(u))return'That is not a web address.';const r=await fetch(SRV()?SRV()+'/read?url='+encodeURIComponent(u):'https://r.jina.ai/'+u,{signal});if(!r.ok)return'Could not read that page ('+r.status+').';return(await r.text()).slice(0,7000)}
   case'calc':return c.expr+' = '+safeCalc(c.expr);
   case'run':return await runJS(c.code||'',4000);
   case'weather':{const g=await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&name='+encodeURIComponent(c.place||''),{signal})).json();const p=g.results&&g.results[0];if(!p)return'Place not found.';
@@ -297,23 +298,33 @@ async function videos(box,q){const w=document.createElement('div');w.innerHTML='
     const more=document.createElement('a');more.className='lnk';more.target='_blank';more.rel='noopener';more.href=yt;more.innerHTML=IC.play+' More on YouTube';w.appendChild(more);scroll()}
   catch(e){w.innerHTML=`<p class="err">Could not load videos right now.</p><a class="lnk" target="_blank" rel="noopener" href="${yt}">${IC.play} Search YouTube instead</a>`}}
 /* ---------- web search: live results from Wikipedia and DuckDuckGo, used as sources ---------- */
-async function webSearch(q,signal){const out=[];const add=(title,url,text)=>{if(url&&!out.some(o=>o.url===url))out.push({title,url,text:(text||'').replace(/<[^>]+>/g,'').slice(0,700)})};
-  const jobs=[(async()=>{const r=await fetch('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=3&prop=extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=6&gsrsearch='+encodeURIComponent(q),{signal});const j=await r.json();
+const SRV=()=>((PREFS&&PREFS.server)||'').trim().replace(/\/+$/,'');
+async function webSearch(q,signal){const out=[];const add=(title,url,text,max)=>{if(url&&!out.some(o=>o.url===url))out.push({title,url,text:(text||'').replace(/<[^>]+>/g,'').slice(0,max||700)})};
+  // your own Quasar server (if you set one up in Settings) searches without any browser limits
+  if(SRV()){try{const r=await fetch(SRV()+'/search?q='+encodeURIComponent(q),{signal});if(r.ok){const j=await r.json();(j.results||[]).forEach(x=>add(x.title,x.url,x.text,900));if(out.length)return out.slice(0,8)}}catch(e){if(signal&&signal.aborted)throw e}}
+  const jobs=[
+    // real web results (DuckDuckGo), read through a free page reader that browsers are allowed to use
+    (async()=>{const r=await fetch('https://r.jina.ai/https://html.duckduckgo.com/html/?q='+encodeURIComponent(q),{signal,headers:{'X-Return-Format':'markdown'}});if(!r.ok)return;const t=await r.text();const re=/\[([^\]]{3,300})\]\((https?:[^)\s]+)\)/g;const M=new Map();let m;
+      while((m=re.exec(t))){let u=m[2];const g=u.match(/[?&]uddg=([^&]+)/);if(g)try{u=decodeURIComponent(g[1])}catch(e){}if(/duckduckgo\.com|r\.jina\.ai/.test(u))continue;const k=u.split('#')[0];if(!M.has(k))M.set(k,{title:m[1].replace(/[*_#]/g,'').trim(),snip:''});else if(!M.get(k).snip)M.get(k).snip=m[1].replace(/[*_#]/g,'').trim()}
+      [...M.entries()].slice(0,6).forEach(([u,v])=>add(v.title,u,v.snip||v.title))})(),
+    // a live search model that reads today's web
+    (async()=>{const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'searchgpt',private:true,messages:[{role:'user',content:'Search the web now (today is '+new Date().toDateString()+') and report the most relevant, up-to-date facts for: '+q+'\nGive short bullet points, each followed by its source URL.'}]}),signal});if(!r.ok)return;const j=await r.json();const c=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;if(c)add('Live web search','https://duckduckgo.com/?q='+encodeURIComponent(q),c,1600)})(),
+    (async()=>{const r=await fetch('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=3&prop=extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=6&gsrsearch='+encodeURIComponent(q),{signal});const j=await r.json();
       Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>a.index-b.index).forEach(p=>add(p.title+' (Wikipedia)',p.fullurl,p.extract))})(),
     (async()=>{const r=await fetch('https://api.duckduckgo.com/?format=json&no_html=1&skip_disambig=1&q='+encodeURIComponent(q),{signal});const j=await r.json();if(j.AbstractText)add(j.Heading||q,j.AbstractURL,j.AbstractText);
       (j.RelatedTopics||[]).slice(0,2).forEach(t=>{if(t.Text&&t.FirstURL)add(t.Text.split(' - ')[0].slice(0,60),t.FirstURL,t.Text)})})()];
-  await Promise.allSettled(jobs.map(p=>Promise.race([p,sleep(6000)])));return out.slice(0,5)}
+  await Promise.allSettled(jobs.map(p=>Promise.race([p,sleep(9000)])));return out.slice(0,9)}
 const wantsSearch=t=>/(search|look up|google|latest|news|today|tonight|this week|this year|right now|current(ly)?|recent(ly)?|who won|price of|weather|score|20[2-9]\d)\b/i.test(t);
 /* ---------- talking to the AI ---------- */
 // streams the answer as it is written (fast), falls back to waiting for the whole reply
-async function askStream(msgs,signal,onText,model,system){const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model||'openai',messages:[{role:'system',content:system||SYSTEM},...msgs],private:true,stream:true}),signal});
+async function askStream(msgs,signal,onText,model,system){const r=await fetch(SRV()?SRV()+'/chat':'https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model||'openai',messages:[{role:'system',content:system||SYSTEM},...msgs],private:true,stream:true}),signal});
   if(!r.ok||!r.body)throw new Error('no stream '+r.status);const rd=r.body.getReader(),dec=new TextDecoder();let buf='',text='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')continue;
       try{const j=JSON.parse(d);const c=j.choices&&j.choices[0]&&(j.choices[0].delta&&j.choices[0].delta.content||j.choices[0].message&&j.choices[0].message.content);if(c){text+=c;onText(text)}}catch(e){}}}
   if(!text)throw new Error('empty');return text}
 let ctrl=null;const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function askAI(msgs,signal,model,system){const body=JSON.stringify({model:model||'openai',messages:[{role:'system',content:system||SYSTEM},...msgs],private:true});
-  for(let attempt=0;attempt<2;attempt++){try{const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body,signal});
+  for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(attempt===0&&SRV()?SRV()+'/chat':'https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body,signal});
       if(r.ok){const j=await r.json();const t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;if(t)return t}}catch(e){if(signal.aborted)throw e}
     if(attempt<1)await sleep(1200)}
   // simpler backup route
@@ -329,7 +340,7 @@ async function reply(q,forced){const H=hist();const body=addAI(),bub=body.queryS
   const mode=forced||(MODE!=='chat'?MODE:wantsImage(q)?'image':wantsVideo(q)?'video':'chat');let m;
   try{if(mode==='image'){const style=STYLE();const p=picPrompt(q)+(style?', '+style:'');m={role:'assistant',content:COUNT()>1?'Here are 4 versions:':'Here is your picture!',img:p,count:COUNT(),size:SIZE(),seed:Math.floor(Math.random()*1e9)}}
     else if(mode==='video'){const v=vidQuery(q);m={role:'assistant',content:`Here are some videos of **${v}**:`,vid:v}}
-    else{const msgs=H.slice(-14).map(x=>({role:x.role,content:x.content}));const na=NEXTATT;NEXTATT=null;
+    else{const msgs=H.slice(-30).map(x=>({role:x.role,content:x.content}));const na=NEXTATT;NEXTATT=null;
       if(na&&msgs.length){msgs[msgs.length-1]={role:'user',content:na.imgs.length?[{type:'text',text:na.text},...na.imgs.map(u=>({type:'image_url',image_url:{url:u}}))]:na.text}}let system=SYSTEM+memPrompt()+(PREFS.about?`\n\nWhat the user has told you about themselves (use it when helpful): ${PREFS.about}`:'')+(PREFS.style?`\n\nHow the user wants you to reply: ${PREFS.style}`:'')+progPrompt(),sources=null;
       if(RESEARCH){const qq=q.replace(/\b(research|deep research|look up)\b/gi,'').trim()||q;bub.innerHTML='<p class="capt">Researching: searching several ways…</p>';const rs=await Promise.all([qq,qq+' explained',qq+' facts history',qq+' latest'].map(x=>webSearch(x,ctrl.signal).catch(()=>[])));sources=[];for(const l of rs)for(const x of l)if(!sources.some(y=>y.url===x.url)&&sources.length<9)sources.push(x);bub.innerHTML=`<p class="capt">Read ${sources.length} sources, writing your report…</p>`;
         system+=`\n\nDEEP RESEARCH MODE. Today is ${new Date().toDateString()}. Write a thorough, well organised report (about 400 to 700 words): start with a 2 to 3 sentence summary, then sections with ## headings and bullet points, and finish with ## Key takeaways. Cite the sources below like [1], [2] after the facts they support. If sources disagree or are thin, say so.\nSources:\n`+sources.map((s,i)=>`[${i+1}] ${s.title} (${s.url}): ${s.text}`).join('\n')}
@@ -345,7 +356,11 @@ async function reply(q,forced){const H=hist();const body=addAI(),bub=body.queryS
       try{if(TOOLS_ON&&!RESEARCH){let convo=msgs.slice();for(let k=0;k<6;k++){talking=false;t=await askStream(convo,ctrl.signal,liveT,MOD,system+TOOLP);const call=parseTool(t);if(!call||k===5)break;
           face('think');const chip=document.createElement('span');chip.className='st run';chip.textContent=(TOOLNAME[call.tool]||call.tool)+(call.q?': '+String(call.q).slice(0,40):call.place?': '+call.place:call.url?': '+String(call.url).replace(/^https?:\/\//,'').slice(0,40):'')+'…';stepsEl.appendChild(chip);bub.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';scroll();
           const res=await runTool(call,ctrl.signal);chip.classList.remove('run');chip.textContent=chip.textContent.replace(/…$/,'')+' ✓';
-          convo=[...convo,{role:'assistant',content:t.trim()},{role:'user',content:`TOOL RESULT (${call.tool}):\n${String(res).slice(0,7000)}\n\nUse another tool if you still need one, otherwise answer my original question now.`}]}}
+          convo=[...convo,{role:'assistant',content:t.trim()},{role:'user',content:`TOOL RESULT (${call.tool}):\n${String(res).slice(0,7000)}\n\nUse another tool if you still need one, otherwise answer my original question now.`}]}
+        // for maths, logic, code and puzzles: Quasar checks its own answer and fixes mistakes before you see it
+        if(t&&!parseTool(t)&&/(\d\s*[-+*\/^%x×÷]\s*\d|solve|equation|calculat|how many|how much|probabilit|percent|prove|code|program|function|bug|error|algorithm|riddle|puzzle|logic|convert|which is (bigger|larger|faster))/i.test(q)){const chip=document.createElement('span');chip.className='st run';chip.textContent='Double-checking…';stepsEl.appendChild(chip);face('think');
+          try{const v=(await askAI([...convo,{role:'assistant',content:t.trim()},{role:'user',content:'Check your answer above very carefully for any mistake in maths, logic, facts or code. Redo any calculation step by step. If it is completely correct, reply with exactly: OK\nIf anything is wrong, reply with the complete corrected answer only (no mention of checking).'}],ctrl.signal,MOD,system)).replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').trim();
+            if(v&&!/^ok\b[.!]?$/i.test(v)&&v.length>20&&!parseTool(v)){t=v;chip.textContent='Corrected a mistake ✓';bub.innerHTML=md(strip(t))}else chip.textContent='Double-checked ✓'}catch(e){if(ctrl.signal.aborted)throw e;chip.remove()}chip.classList.remove('run')}}
         else{face('talk');t=await askStream(msgs,ctrl.signal,live,MOD,system)}}catch(e){if(ctrl.signal.aborted)throw e;try{if(MOD==='openai')throw e;bub.innerHTML='<p class="capt">That model is busy, switching to Fast…</p>';t=await askStream(msgs,ctrl.signal,live,'openai',system)}catch(e2){if(ctrl.signal.aborted)throw e2;bub.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';t=await askAI(msgs,ctrl.signal,null,system);await typeOut(bub,strip(t),ctrl.signal)}}
       bub.classList.remove('caret');t=t.replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').trim();let img=null,vid=null;
       const clean=t.replace(/\[IMAGE:\s*([^\]]+)\]/i,(_,p)=>{img=p.trim();return''}).replace(/\[VIDEO:\s*([^\]]+)\]/i,(_,v)=>{vid=v.trim();return''}).trim();
@@ -387,9 +402,9 @@ let MODE='chat',SEARCH=false,RESEARCH=false;
 const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},lsw=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let PREFS=ls('quasar_prefs',{about:'',style:'',speak:false});
 $('model').value=ls('quasar_model','openai-large');$('model').onchange=()=>lsw('quasar_model',$('model').value);
-$('setBtn').onclick=()=>{$('pAbout').value=PREFS.about||'';$('pStyle2').value=PREFS.style||'';$('pSpeak').checked=!!PREFS.speak;$('pTrack').checked=trackOn();renderMem();$('setDlg').hidden=false;$('pAbout').focus()};
+$('setBtn').onclick=()=>{$('pAbout').value=PREFS.about||'';$('pStyle2').value=PREFS.style||'';$('pSpeak').checked=!!PREFS.speak;$('pServer').value=PREFS.server||'';$('pTrack').checked=trackOn();renderMem();$('setDlg').hidden=false;$('pAbout').focus()};
 $('setDlg').onclick=e=>{if(e.target.id==='setDlg')$('setDlg').hidden=true};
-$('pSave').onclick=()=>{PREFS={about:$('pAbout').value.trim(),style:$('pStyle2').value.trim(),speak:$('pSpeak').checked};lsw('quasar_prefs',PREFS);lsw('quasar_track',$('pTrack').checked);if(!$('pTrack').checked)try{localStorage.removeItem('quasar_activity')}catch(e){}renderProg();$('setDlg').hidden=true};
+$('pSave').onclick=()=>{PREFS={about:$('pAbout').value.trim(),style:$('pStyle2').value.trim(),speak:$('pSpeak').checked,server:$('pServer').value.trim()};lsw('quasar_prefs',PREFS);lsw('quasar_track',$('pTrack').checked);if(!$('pTrack').checked)try{localStorage.removeItem('quasar_activity')}catch(e){}renderProg();$('setDlg').hidden=true};
 $('pClear').onclick=()=>{$('pAbout').value='';$('pStyle2').value=''};
 // the + menu: create an image, find a video, search the web (shown as removable chips, like other AI chats)
 const menu=$('toolMenu'),plus=$('plusBtn');const closeMenu=()=>{menu.hidden=true;plus.setAttribute('aria-expanded','false')};
