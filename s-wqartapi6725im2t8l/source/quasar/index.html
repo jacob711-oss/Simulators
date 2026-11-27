@@ -91,27 +91,27 @@ textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(
 /* ===== Quasar's face: a green buddy with one big eye ===== */
 .logo,.av{background:none!important;box-shadow:none!important;animation:none!important;border-radius:0!important}
 .qface{width:100%;height:100%;display:block;overflow:visible}
-.qface .head{fill:url(#qfG)}.qface .shine{fill:#fff;opacity:.18}
-.qface .sclera{fill:#fff}.qface .pupil{transition:transform .12s ease-out}.qface .pupil circle.p{fill:#111}.qface .pupil circle.g{fill:#fff}
-.qface .lid{fill:#2fae5c;transform-origin:20px 7px;transform:scaleY(0);transition:transform .09s}
-.qface .mouth{fill:none;stroke:#0d3b20;stroke-width:1.8;stroke-linecap:round;transform-origin:24px 30px;transition:d .2s}
+.qface .head{fill:url(#qfG2)}.qface .chin{fill:#178650}.qface .shine{display:none}
+.qface .sclera{fill:#fdfdfb}.qface .pupil{transition:transform .14s ease-out}.qface .pupil circle.p{fill:#0e2a1f}.qface .pupil circle.g{fill:#fff}
+.qface .lid{fill:#1d9a5b;transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);transition:transform .09s}
+.qface .mouth{fill:none;stroke:#0e2a1f;stroke-width:1.7;stroke-linecap:round;transform-box:fill-box;transform-origin:50% 50%}.qface .dots3{fill:#e9f7ef}
 .qface .happy,.qface .dots3{opacity:0;transition:opacity .2s}.qface .eyeg{transition:opacity .2s}
 .qface.blink .lid{transform:scaleY(1)}
-body[data-face=think] .qf-live .pupil{transform:translate(3px,-3px)!important}
-body[data-face=think] .qf-live .lid{transform:scaleY(.35)}
+body[data-face=think] .qf-live .pupil{transform:translate(1.6px,-2.2px)!important}
+body[data-face=think] .qf-live .lid{transform:scaleY(.3)}
 body[data-face=think] .qf-live .dots3{opacity:1}
 body[data-face=think] .qf-live .dots3 circle{animation:qfd 1s infinite}
 body[data-face=think] .qf-live .dots3 circle:nth-child(2){animation-delay:.15s}body[data-face=think] .qf-live .dots3 circle:nth-child(3){animation-delay:.3s}
 @keyframes qfd{0%,100%{opacity:.25}50%{opacity:1}}
 body[data-face=talk] .qf-live .mouth{animation:qft .22s infinite alternate}
-@keyframes qft{from{transform:scaleY(.6)}to{transform:scaleY(2.4)}}
+@keyframes qft{from{transform:scaleY(.7)}to{transform:scaleY(1.9)}}
 body[data-face=happy] .qf-live .eyeg{opacity:0}body[data-face=happy] .qf-live .happy{opacity:1}
-body[data-face=happy] .qf-live .mouth{transform:scaleY(1.8)}
+body[data-face=happy] .qf-live .mouth{transform:scaleY(1.6)}
 body[data-face=confused] .qf-live .mouth{transform:rotate(-12deg) scaleY(.5)}
-body[data-face=confused] .qf-live .pupil{transform:translate(-2px,2px)!important}
-.hero .logo.big{width:110px;height:110px;margin:0 auto 6px;filter:drop-shadow(0 10px 24px #2fae5c66);animation:qfb 3.2s ease-in-out infinite!important}
+body[data-face=confused] .qf-live .pupil{transform:translate(-1.4px,1.4px)!important}
+.hero .logo.big{width:104px;height:104px;margin:0 auto 8px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35))}
 @keyframes qfb{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.steps .st{font-size:12px;padding:3px 9px;border-radius:99px;background:#2fae5c22;border:1px solid #2fae5c55;color:#bff3cf}.steps .st.run{animation:qfd 1s infinite}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}.steps .st{font-size:12px;padding:3px 9px;border-radius:6px;background:#1d9a5b1f;border:1px solid #1d9a5b55;color:#bfe9d1}.steps .st.run{animation:qfd 1s infinite}
 </style></head>
 <body>
 <aside id="side"><div class="top"><button class="hbtn" id="newChat" style="flex:1;justify-content:center">+ New chat</button></div><input id="chatQ" class="chatq" type="search" placeholder="Search chats…" aria-label="Search chats"><div class="list" id="chats"></div><div id="prog" class="prog"></div>
@@ -149,16 +149,18 @@ How many <span class="seg" id="pCount"><button data-v="1" aria-pressed="true">1<
 const SIMS=[["Barycenter","space, gravity, planets and black holes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/"],["Biosphere","a living world of animals, plants and microbes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/life/"],["Lithosphere","continents, mountains and volcanoes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/"],["Troposphere","weather, winds and hurricanes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/troposphere/"],["Catalyst","atoms, molecules and chemical reactions","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/catalyst/"],["Abyssal","the ocean, from reefs to the deep sea","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/abyssal/"],["Interchange","trains, metros and trams in a growing city","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/interchange/"],["Gridlock","roads, buses and traffic","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/gridlock/"],["Hivemind","ant colonies, scent trails and raids","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/hivemind/"],["Flux","electric charges and magnets","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/flux/"],["Seaway","ships and island ports","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/seaway/"],["Contrail","air traffic control and airports","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/contrail/"]];
 
 // ===== Quasar's face =====
-const FACE=(live)=>`<svg class="qface${live?' qf-live':''}" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="qfG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ee38c"/><stop offset="1" stop-color="#27a352"/></linearGradient></defs>
-<rect class="head" x="3" y="3" width="42" height="42" rx="13"/><rect class="shine" x="8" y="6" width="26" height="7" rx="3.5"/>
-<g class="eyeg"><circle class="sclera" cx="20" cy="20" r="9.5"/><g class="pupil"><circle class="p" cx="20" cy="20" r="5.2"/><circle class="g" cx="22" cy="18" r="1.7"/></g><ellipse class="lid" cx="20" cy="15" rx="10.2" ry="10.4"/></g>
-<path class="happy" d="M12 21 Q20 12 28 21" fill="none" stroke="#0d3b20" stroke-width="2.6" stroke-linecap="round"/>
-<path class="mouth" d="M19 31 Q24 34 29 31"/><g class="dots3" fill="#fff"><circle cx="34" cy="10" r="1.6"/><circle cx="38.5" cy="8" r="1.6"/><circle cx="43" cy="6" r="1.6"/></g></svg>`;
+const FACE=(live)=>`<svg class="qface${live?' qf-live':''}" viewBox="0 0 48 48" aria-hidden="true">
+<defs><linearGradient id="qfG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#23a866"/><stop offset="1" stop-color="#18874f"/></linearGradient></defs><rect class="head" x="4" y="4" width="40" height="40" rx="13"/>
+<g class="eyeg"><ellipse class="sclera" cx="17.5" cy="22" rx="5.2" ry="6"/><ellipse class="sclera" cx="30.5" cy="22" rx="5.2" ry="6"/>
+<g class="pupil"><circle class="p" cx="17.5" cy="22.6" r="2.7"/><circle class="g" cx="18.6" cy="21.3" r=".9"/></g><g class="pupil"><circle class="p" cx="30.5" cy="22.6" r="2.7"/><circle class="g" cx="31.6" cy="21.3" r=".9"/></g>
+<rect class="lid" x="11.8" y="15.6" width="11.4" height="12.8" rx="5.2"/><rect class="lid" x="24.8" y="15.6" width="11.4" height="12.8" rx="5.2"/></g>
+<g class="happy" fill="none" stroke="#0e2a1f" stroke-width="1.8" stroke-linecap="round"><path d="M13.5 23 Q17.5 18.5 21.5 23"/><path d="M26.5 23 Q30.5 18.5 34.5 23"/></g>
+<path class="mouth" d="M20.5 33 Q24 35.2 27.5 33"/><g class="dots3"><circle cx="20" cy="39.5" r="1.1"/><circle cx="24" cy="39.5" r="1.1"/><circle cx="28" cy="39.5" r="1.1"/></g></svg>`;
 try{const hl=document.querySelector('header .logo');if(hl)hl.innerHTML=FACE(true)}catch(e){}
 let FACEST='idle',FACET=null;function face(st,ms){FACEST=st;document.body.dataset.face=st;clearTimeout(FACET);if(ms)FACET=setTimeout(()=>face('idle'),ms)}
 function faceMark(){document.querySelectorAll('.qface.qf-live').forEach(f=>{if(!f.closest('header')&&!f.closest('.hero'))f.classList.remove('qf-live')});const av=[...document.querySelectorAll('.msg.ai .av .qface')].pop();if(av)av.classList.add('qf-live')}
 (function faceLife(){let mx=innerWidth/2,my=0;addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY},{passive:true});
-  (function look(){if(FACEST!=='think')document.querySelectorAll('.qface').forEach(f=>{const r=f.getBoundingClientRect();if(!r.width)return;const dx=mx-(r.left+r.width*0.42),dy=my-(r.top+r.height*0.42),d=Math.hypot(dx,dy)||1,k=Math.min(1,d/220)*3.2;const p=f.querySelector('.pupil');if(p)p.style.transform=`translate(${(dx/d*k).toFixed(2)}px,${(dy/d*k).toFixed(2)}px)`});requestAnimationFrame(look)})();
+  (function look(){if(FACEST!=='think')document.querySelectorAll('.qface').forEach(f=>{const r=f.getBoundingClientRect();if(!r.width)return;const dx=mx-(r.left+r.width*0.42),dy=my-(r.top+r.height*0.42),d=Math.hypot(dx,dy)||1,k=Math.min(1,d/220)*3.2;f.querySelectorAll('.pupil').forEach(p=>p.style.transform=`translate(${(dx/d*k*0.55).toFixed(2)}px,${(dy/d*k*0.6).toFixed(2)}px)`)});requestAnimationFrame(look)})();
   (function blink(){setTimeout(()=>{document.querySelectorAll('.qface').forEach(f=>{f.classList.add('blink');setTimeout(()=>f.classList.remove('blink'),140)});blink()},2400+Math.random()*3500)})()})();
 // ===== tools: Quasar can look things up, read pages, calculate, run code, check the weather and more =====
 let TOOLS_ON=true;try{TOOLS_ON=localStorage.getItem('quasar_tools')!=='off'}catch(e){}
