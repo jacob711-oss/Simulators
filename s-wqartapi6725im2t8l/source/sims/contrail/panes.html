@@ -1,0 +1,24 @@
+<div class="pane" id="pane-world">
+    <span class="k">Your stock</span>
+    <div class="inv" id="inv"></div>
+    <div class="row"><span class="k">Relaxed mode (no crashes)</span><button class="btn" id="relaxBtn" aria-pressed="false">Off</button></div>
+    <div class="row"><span class="k">Flight labels</span><button class="btn" id="lblBtn" aria-pressed="true">On</button></div>
+    <span class="k">Events · press again to stop</span>
+    <div class="evs">
+      <button class="btn" data-ev="rush">🛬 Rush hour</button><button class="btn" data-ev="storm">⛈ Storms</button>
+      <button class="btn" data-ev="wind">🌬 Strong wind</button><button class="btn" data-ev="normal">↺ Stop all events</button>
+    </div>
+    <span class="k">Views</span>
+    <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Map</button><button class="btn" data-view="radar" aria-pressed="false">Radar</button><button class="btn" data-view="night" aria-pressed="false">Night</button></div>
+    <p class="note">🟡 Small props need a short (yellow) runway or longer. 🔵 Jets and 🔴 jumbos need a long (blue) runway. 🟢 Helicopters land on helipads or any runway. Planes can land from either end of a runway. Drag a path near a runway end and it locks on, lining the plane up for you. Planes that touch crash, in the air or on the runway.</p>
+  </div>
+  <div class="pane" id="pane-stats" hidden>
+    <div class="kv" id="cStats"></div>
+    <span class="k">Landings over time</span>
+    <canvas id="graph"></canvas>
+    <div class="splist" id="fList"></div>
+  </div>
+  <div class="pane" id="pane-insp" hidden>
+    <div id="inspEmpty"><p class="note">Click a plane or a runway to inspect it.</p></div>
+    <div id="inspBody" class="hview" hidden></div>
+  </div>

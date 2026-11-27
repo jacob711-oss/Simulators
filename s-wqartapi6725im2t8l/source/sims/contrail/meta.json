@@ -1,0 +1,10 @@
+{"id":"contrail","icon":"✈️","name":"Contrail","tag":"Guide planes onto runways, keep them apart and run a busy airport","url":"https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/contrail/","color":"#9fa8ff",
+ "title":"Contrail",
+ "theme":"--voidRGB:6,8,18;--deepRGB:10,13,28;--accRGB:159,168,255;--lineRGB:180,190,240;--panel:rgba(10,13,28,.88);--ink:#eef0ff;--ink2:#d4d8f2;--dim:#959bbc;",
+ "tabs":[["world","Tower"],["stats","Airport"],["insp","Inspect"]],
+ "js":["sim.js","content.js"],
+ "text":{"NAME_A":"Con","NAME_B":"trail","SUB":"An air traffic sandbox","TAG":"You are the control tower. Draw flight paths, line planes up with the right runway, and keep everyone a safe distance apart",
+  "FREE":"Any airport you like: unlimited runways and helipads, and no crashes",
+  "WATCH":"A tour of busy skies: regional strips, a giant hub and island hoppers",
+  "FOOT":"Small planes land on short runways, jets and jumbos on long ones, helicopters on helipads. Two planes too close together is a crash.",
+  "FIND":"Find a flight, runway or tool…","SCEN_LABEL":"Airports","SCEN_ONE":"airport","DATE_K":"Week","HINT":"Drag from a plane to draw its path · right-drag to look around","CANVAS_LABEL":"The airspace"}}

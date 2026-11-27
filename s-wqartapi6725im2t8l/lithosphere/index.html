@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Drift continents, raise mountains, and watch volcanoes and earthquakes shape a living planet">
+<title>Lithosphere Sandbox</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Simulator kit: shared with Barycenter and Biosphere */
+:root{
+  --voidRGB:10,7,6;--deepRGB:16,10,8;--accRGB:255,138,92;--lineRGB:230,170,140;--panel:rgba(20,12,10,.86);--ink:#f2e8e3;--ink2:#e2d2ca;--dim:#a8968d;
+  --void:rgb(var(--voidRGB));
+  --line:rgba(var(--lineRGB),.16);
+  --line-strong:rgba(var(--lineRGB),.34);
+  --flare:#ffc35a;
+  --cool:rgb(var(--accRGB));
+  --danger:#ff6b5a;
+  --f-display:'Oxanium','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --gut:max(16px, env(safe-area-inset-left, 0px));
+  --gutR:max(16px, env(safe-area-inset-right, 0px));
+  --top:calc(env(safe-area-inset-top, 0px) + 12px);
+  --bot:calc(env(safe-area-inset-bottom, 0px) + 12px);
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--void);color:var(--ink);font-family:var(--f-body);overflow:hidden;-webkit-user-select:none;user-select:none}
+#world{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#world.place{cursor:crosshair}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.k{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.v{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.btn{font-family:var(--f-mono);font-size:12px;padding:7px 11px;border:1px solid var(--line-strong);border-radius:7px;color:var(--ink);background:rgba(var(--accRGB),.06);white-space:nowrap}
+.btn:hover{background:rgba(var(--accRGB),.14)}
+.btn[aria-pressed="true"]{background:rgba(var(--accRGB),.22);border-color:var(--cool)}
+.btn.primary{background:rgba(255,195,90,.16);border-color:rgba(255,195,90,.6);color:#ffe6b8}
+.btn.danger{border-color:rgba(255,107,90,.5);color:#ffb1a6}
+.btn.ghost{border-color:transparent;color:var(--dim)}
+input[type=range]{accent-color:var(--cool);width:100%}
+
+/* top bar */
+.hud-top{position:fixed;top:var(--top);left:var(--gut);right:var(--gutR);display:flex;gap:10px;align-items:stretch;z-index:5;pointer-events:none}
+.hud-top>*{pointer-events:auto}
+.brand{padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.1em;margin:0;text-transform:uppercase}.brand h1 b{color:var(--flare)}
+.brand .sub{font-size:11px;color:var(--dim)}
+.time{display:flex;gap:12px;align-items:center;padding:8px 12px}
+#pauseBtn{width:40px;height:40px;border-radius:9px;border:1px solid rgba(255,195,90,.55);background:rgba(255,195,90,.12);font-size:16px}
+.spds{display:flex;gap:3px}.spd{font-family:var(--f-mono);font-size:10px;padding:3px 5px;border-radius:5px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.spd:hover{color:var(--ink)}.spd[aria-pressed="true"]{color:var(--ink);border-color:rgba(255,195,90,.6);background:rgba(255,195,90,.14)}
+.tcol{display:flex;flex-direction:column;gap:4px}
+.right{margin-left:auto;display:flex;gap:10px;align-items:center;padding:8px 10px;flex-wrap:wrap;justify-content:flex-end}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:54px}
+.findwrap{position:relative}
+.find{width:210px;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--ink)}
+.findlist{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9;padding:4px;display:flex;flex-direction:column;gap:2px;max-height:300px;overflow:auto}
+.findlist button{text-align:left;padding:7px 9px;border-radius:6px;font-size:13px}.findlist button:hover,.findlist button.on{background:rgba(var(--accRGB),.14)}
+.findlist small{color:var(--dim);margin-left:6px}
+
+/* tool rail */
+.rail{position:fixed;left:var(--gut);top:calc(var(--top) + var(--hudH,64px) + 10px);bottom:var(--bot);width:86px;overflow-y:auto;overflow-x:hidden;z-index:4;padding:6px;display:flex;flex-direction:column;gap:3px;scrollbar-width:thin}
+.rail h3{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:8px 2px 2px;font-weight:500}
+.tool{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:7px;border:1px solid transparent;font-size:10.5px;color:var(--ink2);line-height:1.1;text-align:center}
+.tool .ico{font-size:19px;line-height:1}
+.tool:hover{background:rgba(var(--accRGB),.1)}.tool[aria-pressed="true"]{background:rgba(255,195,90,.15);border-color:rgba(255,195,90,.55);color:#fff}
+.placeopts{position:fixed;left:calc(var(--gut) + 96px);bottom:var(--bot);z-index:4;padding:8px 12px;display:flex;gap:14px;align-items:center;font-size:12px}
+.placeopts label{display:flex;gap:6px;align-items:center;color:var(--dim)}.placeopts input[type=range]{width:110px}
+.seg{display:flex;gap:3px}.seg button{font-family:var(--f-mono);font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);color:var(--dim)}.seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--cool);background:rgba(var(--accRGB),.16)}
+
+/* dock */
+.dock{position:fixed;right:var(--gutR);top:calc(var(--top) + var(--hudH,64px) + 10px);bottom:var(--bot);width:330px;z-index:4;display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--line)}.tab{flex:1;padding:10px 4px;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border-bottom:2px solid transparent}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--flare)}
+.pane{padding:12px 14px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sl{display:flex;flex-direction:column;gap:4px}.sl .row span:last-child{font-family:var(--f-mono);font-size:12px}
+.evs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.views{display:flex;gap:4px;flex-wrap:wrap}
+.splist{display:flex;flex-direction:column;gap:3px}
+.sprow{display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:center;font-size:12.5px;padding:3px 4px;border-radius:5px}
+.sprow:hover{background:rgba(var(--accRGB),.08)}.sprow i{width:10px;height:10px;border-radius:50%;display:block}.sprow b{font-family:var(--f-mono);font-weight:500;font-size:12px}
+.sprow.zero{opacity:.4}
+#graph{width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.25)}
+.gene{display:grid;grid-template-columns:86px 1fr 46px;gap:8px;align-items:center;font-size:12px}
+.gene .bar{height:6px;border-radius:3px;background:rgba(var(--accRGB),.12);overflow:hidden}.gene .bar span{display:block;height:100%;background:var(--cool)}
+.gene input{margin:0}
+.ititle{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0}
+.isub{font-size:12.5px;color:var(--dim);margin-top:-8px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px}.kv div{border:1px solid var(--line);border-radius:7px;padding:6px 8px}.kv .k{display:block}.kv .v{font-size:13px}
+.note{font-size:12px;color:var(--dim);line-height:1.5;margin:0}
+#iPic{width:100%;height:120px;border-radius:8px;background:rgb(var(--deepRGB));display:block}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--top) + var(--hudH,64px) + 16px);z-index:8;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toasts,.toast{pointer-events:none}
+.toast{font-size:13px;padding:8px 14px;border-radius:99px;background:var(--panel);border:1px solid var(--line-strong);animation:tin .25s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:var(--bot);font-family:var(--f-mono);font-size:11.5px;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:7px 14px;white-space:nowrap;z-index:3;pointer-events:none}
+.zoomb{position:fixed;right:calc(var(--gutR) + 342px);bottom:var(--bot);z-index:4;display:flex;flex-direction:column;gap:4px;padding:4px}
+.zoomb button{width:32px;height:30px;border-radius:6px;border:1px solid var(--line);font-size:15px;color:var(--dim)}.zoomb button:hover{color:var(--ink)}
+
+/* scenarios */
+.scen{position:fixed;right:var(--gutR);top:calc(var(--top) + var(--hudH,64px) + 10px);width:min(520px,calc(100% - 32px));z-index:7;padding:14px;display:flex;flex-direction:column;gap:10px;max-height:calc(100% - 120px);overflow:auto}
+.scgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scb{text-align:left;padding:10px 12px;border-radius:9px;border:1px solid var(--line);display:flex;flex-direction:column;gap:3px}.scb:hover{border-color:var(--cool)}
+.scb b{font-family:var(--f-display);font-weight:500;font-size:15px}.scb span{font-size:12px;color:var(--dim);line-height:1.35}
+
+/* home */
+.home{position:fixed;inset:0;z-index:20;pointer-events:none;background:linear-gradient(90deg,rgba(var(--voidRGB),.93) 0,rgba(var(--voidRGB),.78) 34%,rgba(var(--voidRGB),0) 62%)}
+.hcard{pointer-events:auto;position:absolute;left:var(--gut);top:calc(var(--top) + 16px);bottom:calc(var(--bot) + 16px);width:min(560px,calc(100% - 32px));overflow:auto;display:flex;flex-direction:column;gap:22px;padding:8px 4px}
+.htitle{font-family:var(--f-display);font-weight:700;font-size:clamp(40px,7vw,72px);letter-spacing:.08em;text-transform:uppercase;margin:0;line-height:1}.htitle b{color:var(--flare)}
+.htag{margin:10px 0 0;color:var(--dim);font-size:16px}
+.hacct{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:12px;padding:7px 12px;border-radius:99px;border:1px solid var(--line-strong);background:rgba(var(--deepRGB),.82);color:var(--ink);text-decoration:none}
+.chip:hover{border-color:var(--cool)}.chip b{color:var(--flare);font-weight:600}.chip.other{border-color:rgba(127,178,255,.5);color:#cfe0ff}
+.hview{display:flex;flex-direction:column;gap:12px}
+.hb{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:18px 20px;border-radius:12px;border:1px solid var(--line-strong);background:rgba(var(--deepRGB),.84)}
+.hb:hover{border-color:var(--cool);background:rgba(var(--accRGB),.10)}.hb .ht{font-family:var(--f-display);font-weight:500;font-size:22px}.hb .hd{font-size:13px;color:var(--dim);line-height:1.4}
+.hb.primary{border-color:rgba(255,195,90,.6);background:rgba(40,30,12,.86)}.hb.primary:hover{background:rgba(60,44,14,.92)}
+.hfoot{margin:0;font-size:12px;color:var(--dim);line-height:1.5}
+.hbar{display:flex;align-items:center;gap:14px}.hbar h2{font-family:var(--f-display);font-weight:500;font-size:24px;margin:0;flex:1}.hstars{font-family:var(--f-mono);font-size:12px;color:var(--flare)}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.ct{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:8px 9px;border-radius:8px;border:1px solid var(--line);background:rgba(var(--deepRGB),.86);text-align:left;min-height:70px}
+.ct:hover:not(:disabled){border-color:var(--cool)}.ct:disabled{opacity:.45;cursor:not-allowed}.ct .cn{font-family:var(--f-mono);font-size:10px;color:var(--dim)}.ct .ctt{font-size:11.5px;line-height:1.25}
+.ct .cs{font-size:12px;color:var(--flare);letter-spacing:1px;margin-top:auto}.ct.next{border-color:rgba(255,195,90,.7);box-shadow:0 0 0 1px rgba(255,195,90,.3)}
+body.mHome .hud-top,body.mHome .rail,body.mHome .dock,body.mHome .placeopts,body.mHome .hint,body.mHome .zoomb,body.mHome .scen,body.mHome #chHud,body.mHome .toasts{display:none!important}
+body.mDemo .rail,body.mDemo .dock,body.mDemo .placeopts,body.mDemo .hint,body.mDemo .zoomb,body.mDemo .hud-top{display:none!important}
+.chhud{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bot) + 52px);width:min(600px,calc(100% - 480px));min-width:300px;padding:12px 14px;z-index:6;display:flex;flex-direction:column;gap:6px}
+.chtop{display:flex;justify-content:space-between}.chtitle{font-family:var(--f-display);font-weight:500;font-size:17px}.chgoal{font-size:13px;line-height:1.45;color:var(--ink2)}
+.chbarw{height:6px;border-radius:3px;background:rgba(var(--accRGB),.12);overflow:hidden}#chBar{display:block;height:100%;width:0;background:var(--flare);transition:width .25s}
+.chrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.chprog{font-family:var(--f-mono);font-size:11.5px;color:var(--dim)}.chbtns{display:flex;gap:6px}
+.donebg{pointer-events:auto;display:grid;place-items:center;background:rgba(var(--voidRGB),.6)}
+.donecard{width:min(440px,calc(100% - 32px));padding:24px;text-align:center;display:flex;flex-direction:column;gap:10px}.donecard h2{font-family:var(--f-display);font-weight:500;margin:0}
+.dstars{font-size:34px;color:var(--flare);letter-spacing:4px}.dstars .off{color:rgba(255,255,255,.15)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.democap{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bot) + 10px);width:min(640px,calc(100% - 32px));padding:14px 18px;z-index:21;display:flex;flex-direction:column;gap:6px}
+.democap h2{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0}.democap p{margin:0;font-size:14px;color:var(--ink2)}
+.ovl{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(var(--voidRGB),.6)}
+.obox{width:min(460px,calc(100% - 32px));max-height:min(80vh,640px);overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.obox h2{font-family:var(--f-display);font-weight:500;font-size:22px;margin:0;flex:1}
+.arow{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:8px}.arow.cur{border-color:rgba(255,195,90,.6);background:rgba(40,30,12,.5)}
+.arow .an{flex:1;min-width:0}.arow .as{font-family:var(--f-mono);font-size:11px;color:var(--dim)}
+.arow input,.aform input{font:inherit;font-size:13px;padding:7px 9px;border-radius:7px;border:1px solid var(--line-strong);background:rgba(0,0,0,.35);color:var(--ink);min-width:0}
+.arow input{width:80px}.aform{display:flex;gap:6px;flex-wrap:wrap}.aform input{flex:1 1 120px}
+.endbox{border:1px solid rgba(255,107,90,.45);background:rgba(60,16,12,.35);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:4px}.endbox .k{color:#ffb1a6}.endrow{display:flex;justify-content:space-between;font-size:12.5px;text-align:left;padding:2px 0}.endrow b{font-family:var(--f-mono);font-weight:500;color:#ffb1a6}.endrow.ext{opacity:.6;text-decoration:line-through}
+.endbadge{position:fixed;right:calc(var(--gutR) + 342px);top:calc(var(--top) + var(--hudH,64px) + 12px);z-index:4;padding:7px 12px;border-color:rgba(255,107,90,.55);color:#ffc0b6;font-family:var(--f-mono);font-size:12px}
+@media (max-width:760px){.endbadge{right:var(--gutR);top:auto;bottom:calc(var(--bot) + 230px)}}
+body.mHome .endbadge,body.mDemo .endbadge{display:none!important}
+.dna{width:100%;height:28px;display:block;border-radius:6px;background:rgba(0,0,0,.25)}.fam{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.gsel,.coatsel{font:inherit;font-size:12px;background:rgba(0,0,0,.35);color:var(--ink);border:1px solid var(--line-strong);border-radius:6px;padding:4px 6px}
+.legend{position:fixed;left:calc(var(--gut) + 96px);top:calc(var(--top) + var(--hudH,64px) + 12px);z-index:4;padding:8px 12px;width:220px;display:flex;flex-direction:column;gap:5px}.legend .lbar{height:10px;border-radius:5px}.legend .lticks{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--dim)}
+body.mHome .legend,body.mDemo .legend{display:none!important}@media (max-width:760px){.legend{left:var(--gut);top:auto;bottom:calc(var(--bot) + 190px)}}
+.pbig{font-family:var(--f-display);font-size:54px;line-height:1;color:var(--flare)}
+
+@media (max-width:1600px){.right .stat{display:none}.find{width:170px}}
+@media (max-width:1300px){.brand .sub{display:none}.find{width:140px}.brand{padding:10px}}
+@media (max-width:760px){
+  .hud-top{flex-wrap:wrap}.brand{display:none}.time{flex:1 1 100%}.right{flex:1 1 100%;justify-content:space-between}.findwrap{flex:1 1 100%;order:-1}.find{width:100%;box-sizing:border-box}
+  .rail{top:auto;left:var(--gut);right:var(--gutR);bottom:var(--bot);width:auto;height:64px;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .rail h3{display:none}.tool{min-width:58px}
+  .placeopts{left:var(--gut);bottom:calc(var(--bot) + 72px)}
+  .dock{top:auto;bottom:calc(var(--bot) + 120px);left:var(--gut);right:var(--gutR);width:auto;height:42vh}
+  body:not(.dockOpen) .dock{display:none}
+  .zoomb{right:var(--gutR);bottom:calc(var(--bot) + 120px)}
+  .home{background:rgba(var(--voidRGB),.74)}
+  .chhud{width:auto;min-width:0;left:var(--gut);right:var(--gutR);transform:none;bottom:calc(var(--bot) + 124px);max-height:36vh;overflow:auto}
+  .hint{display:none}
+}
+#dockBtn{display:none}@media (max-width:760px){#dockBtn{display:inline-block}}
+.sprow{text-align:left;width:100%}@media (max-width:760px){#dateSub{display:none}}
+#hAcctBtn,#acctBtn,#hOut,#acct{display:none!important}
+body.dockHidden .dock,body.dockHidden .zoomb{display:none!important}@media (min-width:761px){body.dockHidden #dockBtn{display:inline-block!important}}
+/* phones: compact top bar, big touch targets, nothing covering the panel */
+@media (max-width:760px){
+  .hud-top{gap:6px}
+  .time{padding:6px 8px;gap:8px}#rateTxt{display:none}
+  .time .tcol:last-child .k{display:none}.time .tcol:last-child #dateTxt{font-size:12px;white-space:normal!important;max-width:110px}
+  #pauseBtn{width:44px;height:44px}
+  .spds{flex-wrap:wrap}.spd{padding:7px 8px;font-size:11px;min-width:34px}
+  .right{padding:6px;gap:6px;flex-wrap:nowrap}.findwrap{flex:1 1 120px!important;order:0!important;min-width:0}.find{width:100%!important;font-size:16px!important;padding:8px}
+  .right .btn{padding:8px 9px;font-size:12px}
+  .zoomb{display:none!important}
+  body.dockOpen .legend,body.dockOpen #endBadge{display:none!important}
+  .legend{width:auto;left:var(--gut)!important;right:var(--gutR);top:auto!important;bottom:calc(var(--bot) + 80px)!important}
+  .dock{height:46vh!important;bottom:calc(var(--bot) + 80px)!important}
+  .tab{padding:12px 4px}
+  .tool{min-width:64px;padding:8px 2px}
+  .placeopts{bottom:calc(var(--bot) + 80px)!important;left:var(--gut)!important;right:var(--gutR);flex-wrap:wrap}
+  .chhud{bottom:calc(var(--bot) + 82px)!important}
+  .btn{min-height:34px}
+  input[type=range]{height:28px}
+}
+/* phones: one-row bars */
+@media (max-width:760px){#lineBar,#toolBar{flex-wrap:nowrap!important;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;justify-content:flex-start!important}#lineBar::-webkit-scrollbar,#toolBar::-webkit-scrollbar{display:none}#lineBar>*,#toolBar>*{flex:0 0 auto}}
+.qlog{display:flex;flex-direction:column;gap:2px;font-size:12px}.qlog div{display:flex;justify-content:space-between;padding:2px 4px;border-radius:4px}.qlog b{font-family:var(--f-mono);font-weight:500}
+.pdir{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+
+</style>
+
+<!--SEO-->
+<link rel="canonical" href="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#06080f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 64 64&#x27; width=&#x27;64&#x27; height=&#x27;64&#x27;%3E%3Crect x=&#x27;2&#x27; y=&#x27;2&#x27; width=&#x27;60&#x27; height=&#x27;60&#x27; rx=&#x27;14&#x27; fill=&#x27;%231f2026&#x27;/%3E%3Cg transform=&#x27;rotate(-28 32 32)&#x27; fill=&#x27;none&#x27; stroke=&#x27;%23ec6a3c&#x27; stroke-width=&#x27;3.6&#x27; stroke-linecap=&#x27;round&#x27;%3E%3Cpath d=&#x27;M10 32a22 7 0 0 1 44 0&#x27;/%3E%3Ccircle cx=&#x27;32&#x27; cy=&#x27;32&#x27; r=&#x27;12.5&#x27; fill=&#x27;%231f2026&#x27;/%3E%3Cpath d=&#x27;M54 32a22 7 0 0 1-44 0&#x27;/%3E%3C/g%3E%3C/svg%3E">
+<link rel="manifest" href="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/manifest.webmanifest">
+<link rel="apple-touch-icon" href="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/simulations/og/icon192.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Our Simulations!">
+<meta property="og:title" content="Lithosphere: free online simulator">
+<meta property="og:description" content="Drift continents, raise mountains and set off volcanoes. Free to play in your browser, no download. Challenges, tutorial and saved worlds.">
+<meta property="og:url" content="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/">
+<meta property="og:image" content="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/simulations/og/lithosphere.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lithosphere: free online simulator">
+<meta name="twitter:description" content="Drift continents, raise mountains and set off volcanoes. Free to play in your browser, no download. Challenges, tutorial and saved worlds.">
+<meta name="twitter:image" content="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/simulations/og/lithosphere.jpg">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoGame", "name": "Lithosphere", "description": "Drift continents, raise mountains and set off volcanoes. Free to play in your browser, no download. Challenges, tutorial and saved worlds.", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/", "image": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/simulations/og/lithosphere.jpg", "applicationCategory": "GameApplication", "operatingSystem": "Any (web browser)", "genre": "Simulation", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script>
+<script>(()=>{const go=()=>{if(document.getElementById('shareBtn'))return;const at=document.getElementById('hSims')||document.querySelector('.chips');if(!at)return;
+const b=document.createElement(at.id==='hSims'?'button':'a');b.id='shareBtn';b.className=at.id==='hSims'?'chip':'count';b.href='javascript:void 0';b.type='button';b.innerHTML='<svg width="13" height="13" viewBox="0 0 20 20" style="display:inline-block;vertical-align:-2px;margin-right:5px"><circle cx="15" cy="4.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="15" cy="15.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7.2 8.8l5.6-3M7.2 11.2l5.6 3" stroke="currentColor" stroke-width="1.7"/></svg>Share';
+b.onclick=async e=>{e.preventDefault();const d={title:document.title,text:(document.querySelector('meta[name=description]')||{}).content||document.title,url:location.href.split('#')[0]};
+ try{if(navigator.share){await navigator.share(d);return}}catch(x){if(x&&x.name==='AbortError')return}try{await navigator.clipboard.writeText(d.url);b.lastChild.textContent='Link copied!';setTimeout(()=>b.lastChild.textContent='Share',2000)}catch(x){prompt('Copy this link:',d.url)}};
+if(at.id==='hSims')at.after(b);else at.appendChild(b)};if(document.readyState!=='loading')go();else document.addEventListener('DOMContentLoaded',go);setTimeout(go,1500)})();</script>
+<script>(()=>{if(!('serviceWorker' in navigator)||!(location.protocol==='https:'||location.hostname==='localhost'))return;const i=location.pathname.toLowerCase().indexOf('/simulators/');if(i<0)return;const root=location.pathname.slice(0,i+12)+'s-wqartapi6725im2t8l/';addEventListener('load',()=>navigator.serviceWorker.register(root+'sw.js',{scope:root}).catch(()=>{}))})()</script>
+<!--/SEO-->
+</head>
+<body>
+<canvas id="world" aria-label="The planet: drag to look around, scroll to zoom"></canvas>
+
+<header class="hud-top">
+  <div class="brand panel"><h1>Litho<b>sphere</b></h1><span class="sub">A planet-building sandbox</span></div>
+  <div class="time panel">
+    <button id="pauseBtn" title="Pause or resume (Space)" aria-label="Pause"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></svg></button>
+    <div class="tcol"><span class="k">Time rate</span><div class="spds" id="spds"></div><span class="v" id="rateTxt"></span></div>
+    <div class="tcol"><span class="k">Time</span><span class="v" id="dateTxt" style="white-space:nowrap"></span><span class="v" id="dateSub" style="font-size:11px;color:var(--dim)"></span></div>
+  </div>
+  <div class="right panel">
+    <div id="stats" style="display:contents"></div>
+    <div class="findwrap"><input id="find" class="find" placeholder="Find a plate, peak or volcano…" aria-label="Find a plate, peak or volcano…" autocomplete="off" spellcheck="false"><div id="findList" class="findlist panel" hidden></div></div>
+    <button id="homeBtn" class="btn" title="Back to the home page">⌂ Home</button>
+    <button id="acctBtn" class="btn" title="Account: save your progress on this device">👤</button>
+    <button id="scenBtn" class="btn">Worlds</button>
+    <button id="dockBtn" class="btn">Panel</button>
+  </div>
+</header>
+
+<nav class="rail panel" id="rail" aria-label="Tools"></nav>
+<div class="placeopts panel" id="placeopts" hidden>
+  <label>Brush <input type="range" id="brush" min="1" max="12" value="4"><span id="brushV" class="v">4</span></label>
+  <span id="toolNote" class="note"></span>
+</div>
+
+<aside class="dock panel" id="dock">
+  <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="world" aria-selected="true">World</button><button class="tab" role="tab" data-tab="planet" aria-selected="false">Planet</button><button class="tab" role="tab" data-tab="insp" aria-selected="false">Inspect</button><button class="tab" id="dockClose" title="Close this panel" aria-label="Close panel" style="flex:0 0 40px">✕</button></div>
+  <div class="pane" id="pane-world">
+    <div class="sl"><div class="row"><span class="k">Sea level</span><span id="seaV">+0 m</span></div><input type="range" id="seaS" min="-1500" max="1500" step="10" value="0"></div>
+    <div class="sl"><div class="row"><span class="k">Global temperature</span><span id="tempV">+0 °C</span></div><input type="range" id="tempS" min="-35" max="20" step="0.5" value="0"></div>
+    <div class="sl"><div class="row"><span class="k">Plate speed</span><span id="spdV">100%</span></div><input type="range" id="spdS" min="0" max="400" step="5" value="100"></div>
+    <div class="sl"><div class="row"><span class="k">Erosion</span><span id="eroV">100%</span></div><input type="range" id="eroS" min="0" max="400" step="5" value="100"></div>
+    <div class="sl"><div class="row"><span class="k">Volcanism</span><span id="volV">100%</span></div><input type="range" id="volS" min="0" max="300" step="5" value="100"></div>
+    <span class="k">Events · press again to stop</span>
+    <div class="evs">
+      <button class="btn" data-ev="supervolcano">🌋 Supervolcano</button><button class="btn" data-ev="snowball">❄ Snowball Earth</button>
+      <button class="btn" data-ev="hothouse">☀ Hothouse</button><button class="btn" data-ev="megaquake">💥 Mega-quake</button>
+      <button class="btn" data-ev="meteor">☄ Meteor</button><button class="btn" data-ev="plume">🔥 Mantle plume</button>
+      <button class="btn" data-ev="breakup">✂ Break a continent</button><button class="btn" data-ev="normal">↺ Stop all events</button>
+    </div>
+    <span class="k">Views</span>
+    <div class="views"><button class="btn" data-view="normal" aria-pressed="true">Natural</button><button class="btn" data-view="plates" aria-pressed="false">Plates</button><button class="btn" data-view="elev" aria-pressed="false">Elevation</button><button class="btn" data-view="age" aria-pressed="false">Seafloor age</button><button class="btn" data-view="quake" aria-pressed="false">Earthquakes</button><button class="btn" data-view="temp" aria-pressed="false">Temperature</button></div>
+    <div class="row"><span class="k">Plate boundaries</span><button class="btn" id="bndBtn" aria-pressed="true">On</button></div>
+    <div class="row"><span class="k">Labels</span><button class="btn" id="lblBtn" aria-pressed="true">On</button></div>
+    <p class="note">The surface is broken into plates that drift a few centimetres a year. Where they collide, mountains rise and oceans plunge into trenches; where they pull apart, new seafloor is born. Hotspots punch through from deep below, and rain and ice wear everything down.</p>
+  </div>
+  <div class="pane" id="pane-planet" hidden>
+    <div class="kv" id="pStats"></div>
+    <span class="k">Over time</span>
+    <canvas id="graph"></canvas>
+    <p class="note" id="gKey"></p>
+    <span class="k">Plates · click one to select it</span>
+    <div class="splist" id="plist"></div>
+    <span class="k">Recent earthquakes</span>
+    <div class="qlog" id="qlog"></div>
+  </div>
+  <div class="pane" id="pane-insp" hidden>
+    <div id="inspEmpty"><p class="note">Click anywhere on the planet to inspect the ground there and the plate it rides on.</p></div>
+    <div id="inspBody" class="hview" hidden></div>
+  </div>
+
+</aside>
+<div class="zoomb panel"><button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">−</button><button id="zFit" title="Show everything">⤢</button></div>
+<div id="legend" class="legend panel" hidden><span class="k"></span><div class="lbar"></div><div class="lticks"><span></span><span></span><span></span></div></div>
+<div class="hint" id="hint">Drag to look around · scroll to zoom · click the ground to inspect it</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="scen panel" id="scen" hidden>
+  <div class="row"><span class="k">Choose a world</span><button class="btn ghost" id="scenClose">×</button></div>
+  <div class="scgrid" id="scgrid"></div>
+</div>
+
+<div id="home" class="home" role="dialog" aria-label="Home">
+  <div class="hcard">
+    <div class="hhead"><h1 class="htitle">Litho<b>sphere</b></h1><p class="htag">Drift continents, raise mountains, and watch volcanoes and earthquakes shape a living planet</p>
+      <div class="hacct"><button class="chip" id="hAcctBtn">👤 <span id="hAcctName">Guest</span></button><button class="chip" id="hPlays" title="Total plays by everyone">▶ <b id="hPlaysN">0</b> <span id="hPlaysL">plays</span></button><style>.sims{position:relative;display:inline-block;z-index:70}.hhead{position:relative;z-index:20}.sims>summary{list-style:none;cursor:pointer}.sims>summary::-webkit-details-marker{display:none}
+.sims[open]>summary{background:rgba(255,255,255,.08)}.simsP{position:absolute;left:0;top:calc(100% + 6px);z-index:60;width:min(320px,86vw);padding:8px;border-radius:12px;background:#0c101c;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 40px rgba(0,0,0,.55);display:grid;gap:6px;text-align:left}
+.simsP a{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#e3e8f4;text-decoration:none;font:inherit}
+.simsP a:hover,.simsP a:focus-visible{background:rgba(255,255,255,.08);border-color:var(--sc,#7fe0a8)}.simsP .si{grid-row:span 2;font-size:24px}.simsP b{color:var(--sc,#fff);font-size:14px}.simsP small{color:#8b95ae;font-size:11.5px;line-height:1.3}.simsP .sn{color:#8b95ae;font-size:11px;padding:2px 4px}</style><details class="sims" id="hSims"><summary class="chip" title="Our other simulators">🧪 Try our other simulators ▾</summary><div class="simsP" id="hSimsP"></div></details><script>(()=>{const ME="lithosphere",LIST=[{"id": "barycenter", "icon": "🪐", "name": "Barycenter", "tag": "Gravity, planets, stars and black holes", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/", "color": "#e8b04a"}, {"id": "biosphere", "icon": "🌿", "name": "Biosphere", "tag": "A living world of animals, plants and people", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/life/", "color": "#7fe0a8"}, {"id": "lithosphere", "icon": "🌋", "name": "Lithosphere", "tag": "Drift continents, raise mountains and set off volcanoes", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/", "color": "#ff8a5c"}, {"id": "troposphere", "icon": "🌀", "name": "Troposphere", "tag": "Steer winds, brew hurricanes and change the climate", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/troposphere/", "color": "#60d6e6"}, {"id": "catalyst", "icon": "⚛️", "name": "Catalyst", "tag": "Mix atoms, spark reactions and build molecules", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/catalyst/", "color": "#c48bff"}, {"id": "abyssal", "icon": "🐋", "name": "Abyssal", "tag": "Dive into a living ocean, from coral reefs to the deep sea", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/abyssal/", "color": "#4fa3ff"}, {"id": "interchange", "icon": "🚉", "name": "Interchange", "tag": "Draw the transit lines of a growing city and keep everyone moving", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/interchange/", "color": "#ff5ab4"}, {"id": "gridlock", "icon": "🚗", "name": "Gridlock", "tag": "Draw the roads of a growing town and keep the traffic flowing", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/gridlock/", "color": "#ffd23a"}, {"id": "hivemind", "icon": "🐜", "name": "Hivemind", "tag": "Ant colonies that find food by following each other's scent trails", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/hivemind/", "color": "#ff9a3d"}, {"id": "flux", "icon": "⚡", "name": "Flux", "tag": "Place charges and magnets, and watch the fields bend particles through space", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/flux/", "color": "#5ae0ff"}, {"id": "seaway", "icon": "🚢", "name": "Seaway", "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/seaway/", "color": "#3ab8e0"}, {"id": "contrail", "icon": "✈️", "name": "Contrail", "tag": "Guide planes onto runways, keep them apart and run a busy airport", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/contrail/", "color": "#9fa8ff"}, {"id": "quasar", "icon": "✨", "name": "Quasar AI", "tag": "Our AI: chat, make pictures and find videos", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/quasar/", "color": "#9b7bff"}, {"id": "sports", "icon": "🏆", "name": "Sports", "tag": "Every sport in one place: pick football, cricket, tennis, golf and 11 more, then play, coach or watch", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/sports/", "color": "#ffb547"}, {"id": "apogee", "icon": "🚀", "name": "Apogee", "tag": "Build rockets and planes, run a space agency and fly to moons and planets across a whole solar system", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/rockets/", "color": "#7fb2ff"}],P=document.getElementById('hSimsP'),D=document.getElementById('hSims');
+const draw=l=>{P.textContent='';for(const s of l){if(s.id===ME||!s.url)continue;const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener';a.style.setProperty('--sc',s.color||'#7fe0a8');
+a.innerHTML='<span class="si"></span><b></b><small></small>';a.children[0].textContent=s.icon||'🧪';a.children[1].textContent=s.name;a.children[2].textContent=s.tag||'';P.appendChild(a)}
+const n=document.createElement('a');n.href='https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/simulations/';n.target='_blank';n.rel='noopener';n.className='sn';n.style.cssText='display:block;text-align:center;color:#dfe5f5;font-weight:600';n.textContent='🗂️ See all our simulations →';P.appendChild(n);const rv=document.createElement('a');const me=LIST.find(s=>s.id===ME);rv.href='https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/simulations/?sim='+encodeURIComponent(me?me.name:'')+'#review';rv.target='_blank';rv.rel='noopener';rv.className='sn';rv.style.cssText='display:block;text-align:center;color:#ffd23a;font-weight:600';rv.textContent='✍️ Leave a review';P.appendChild(rv)};draw(LIST);
+try{fetch('https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/sims.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(l=>{if(Array.isArray(l)&&l.length)draw(l.filter(s=>s&&typeof s.name==='string'&&/^https:\/\//.test(s.url||'')))}).catch(()=>{})}catch(e){}
+document.addEventListener('pointerdown',e=>{if(D.open&&!D.contains(e.target))D.open=false});document.addEventListener('keydown',e=>{if(e.key==='Escape')D.open=false})})()</script></div></div>
+    <div id="hMain" class="hview">
+      <button class="hb" id="hChal"><span class="ht">Challenges</span><span class="hd" id="hChalSub">Goals from easy to fiendish</span></button>
+      <button class="hb" id="hDemo"><span class="ht">Demo &amp; tutorial</span><span class="hd">Watch the highlights, or learn the controls step by step</span></button>
+      <button class="hb primary" id="hFree"><span class="ht">Free play</span><span class="hd">The full sandbox: push plates, split continents, raise mountains and set off volcanoes</span></button>
+      <p class="hfoot">Simplified but real geology: plate tectonics, subduction, mountain building, hotspots, erosion and isostasy over millions of years.</p>
+    </div>
+    <div id="hChalView" class="hview" hidden>
+      <div class="hbar"><button class="btn ghost hback">← Back</button><h2>Challenges</h2><span id="hStars" class="hstars"></span></div>
+      <p class="hfoot">Finish a challenge to unlock the next. Faster solutions earn more stars.</p>
+      <div id="hGrid" class="hgrid"></div>
+    </div>
+    <div id="hDemoView" class="hview" hidden>
+      <div class="hbar"><button class="btn ghost hback">← Back</button><h2>Demo &amp; tutorial</h2></div>
+      <button class="hb" id="hWatch"><span class="ht">Watch the demo</span><span class="hd">A tour of drifting plates, colliding continents, island chains and the Ring of Fire</span></button>
+      <button class="hb primary" id="hTut"><span class="ht">Start the tutorial</span><span class="hd">Learn every control step by step; each step completes when you do it</span></button>
+    </div>
+  </div>
+</div>
+<div id="chHud" class="chhud panel" hidden aria-live="polite">
+  <div class="chtop"><span id="chNum" class="k"></span><span id="chTime" class="k"></span></div>
+  <div id="chTitle" class="chtitle"></div>
+  <div id="chGoal" class="chgoal"></div>
+  <div class="chbarw"><span id="chBar"></span></div>
+  <div class="chrow"><span id="chProg" class="chprog"></span><div class="chbtns"><button id="chHint" class="btn">Hint</button><button id="chRestart" class="btn">Restart</button><button id="chExit" class="btn ghost">Exit</button></div></div>
+</div>
+<div id="demoCap" class="democap panel" hidden><span class="k" id="demoStep"></span><h2 id="demoTitle"></h2><p id="demoText"></p><div class="actions"><button class="btn" id="demoNext">Next ›</button><button class="btn ghost" id="demoExit">Exit demo</button></div></div>
+<div id="acct" class="ovl" hidden role="dialog" aria-label="Accounts">
+  <div class="obox panel">
+    <div class="hbar"><h2>Accounts</h2><button class="btn" id="acctClose" aria-label="Close">×</button></div>
+    <p class="hfoot">Your stars, plays and time are saved in this browser on this device. Accounts are shared by all our simulators when they are opened from the same site.</p>
+    <div id="acctList" class="hview" style="gap:6px"></div>
+    <form id="acctForm" class="aform"><input id="acctNew" maxlength="20" placeholder="Your name" autocomplete="off"><input id="acctPin" maxlength="4" inputmode="numeric" placeholder="PIN (optional)" autocomplete="off"><button class="btn primary" type="submit">Create account</button></form>
+    <p class="hfoot" id="acctMsg" aria-live="polite"></p>
+  </div>
+</div>
+<div id="chDone" class="home donebg" hidden role="dialog" aria-label="Challenge result">
+  <div class="donecard panel">
+    <div id="dStars" class="dstars"></div><h2 id="dTitle"></h2><p id="dText" class="hfoot" style="font-size:13px"></p>
+    <div class="actions" style="justify-content:center"><button id="dNext" class="btn primary">Next challenge</button><button id="dRetry" class="btn">Try again</button><button id="dList" class="btn ghost">All challenges</button></div>
+  </div>
+</div>
+
+<script>
+const __STATE_NAMES=["GW", "GH", "N", "KMC", "CMY", "h", "cr", "age", "pl", "bnd", "brel", "up", "dO", "T0", "RAIN", "STR", "PL", "HS", "VOL", "QK", "PARTS", "HIST", "QLOG", "ENV", "EVT", "SEA", "dirtyImg", "dirtyClim", "lastImg", "STAT", "LBL", "idx", "cxOf", "cyOf", "latOf", "lonOf", "wdx", "RS", "NAMES", "VSYL", "vname", "PCOL", "LAND", "RANGES", "ll", "SCENS", "SCENLIST", "plateCm", "tempAt", "cosLat", "AREA", "QUAKES", "ERUPTS", "RIFTS", "PUSHES", "HOTSPOTS", "METEORS", "RAISED", "PLATEED", "EVN", "EVSTOP", "LANDMADE", "SLIDED", "BNDON", "SC3", "IW", "IH", "DET", "hexRGB", "PRGB", "OCEAN", "ELEV", "AGE", "TEMP", "LC", "SC", "TEX", "JOB", "DETS", "VIEW", "BPATH", "TB", "TOOLD", "HOVER", "pushCm", "SIM", "fmtLat", "fmtLon", "INSPK", "compass", "myr", "contCount", "natQ"];
+const SIMLIST=[{"id": "barycenter", "icon": "🪐", "name": "Barycenter", "tag": "Gravity, planets, stars and black holes", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/", "color": "#e8b04a"}, {"id": "biosphere", "icon": "🌿", "name": "Biosphere", "tag": "A living world of animals, plants and people", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/life/", "color": "#7fe0a8"}, {"id": "lithosphere", "icon": "🌋", "name": "Lithosphere", "tag": "Drift continents, raise mountains and set off volcanoes", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/", "color": "#ff8a5c"}, {"id": "troposphere", "icon": "🌀", "name": "Troposphere", "tag": "Steer winds, brew hurricanes and change the climate", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/troposphere/", "color": "#60d6e6"}, {"id": "catalyst", "icon": "⚛️", "name": "Catalyst", "tag": "Mix atoms, spark reactions and build molecules", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/catalyst/", "color": "#c48bff"}, {"id": "abyssal", "icon": "🐋", "name": "Abyssal", "tag": "Dive into a living ocean, from coral reefs to the deep sea", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/abyssal/", "color": "#4fa3ff"}, {"id": "interchange", "icon": "🚉", "name": "Interchange", "tag": "Draw the transit lines of a growing city and keep everyone moving", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/interchange/", "color": "#ff5ab4"}, {"id": "gridlock", "icon": "🚗", "name": "Gridlock", "tag": "Draw the roads of a growing town and keep the traffic flowing", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/gridlock/", "color": "#ffd23a"}, {"id": "hivemind", "icon": "🐜", "name": "Hivemind", "tag": "Ant colonies that find food by following each other's scent trails", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/hivemind/", "color": "#ff9a3d"}, {"id": "flux", "icon": "⚡", "name": "Flux", "tag": "Place charges and magnets, and watch the fields bend particles through space", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/flux/", "color": "#5ae0ff"}, {"id": "seaway", "icon": "🚢", "name": "Seaway", "tag": "Run the shipping lanes of a sea full of islands and keep the cargo moving", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/seaway/", "color": "#3ab8e0"}, {"id": "contrail", "icon": "✈️", "name": "Contrail", "tag": "Guide planes onto runways, keep them apart and run a busy airport", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/contrail/", "color": "#9fa8ff"}, {"id": "quasar", "icon": "✨", "name": "Quasar AI", "tag": "Our AI: chat, make pictures and find videos", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/quasar/", "color": "#9b7bff"}, {"id": "sports", "icon": "🏆", "name": "Sports", "tag": "Every sport in one place: pick football, cricket, tennis, golf and 11 more, then play, coach or watch", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/sports/", "color": "#ffb547"}, {"id": "apogee", "icon": "🚀", "name": "Apogee", "tag": "Build rockets and planes, run a space agency and fly to moons and planets across a whole solar system", "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/rockets/", "color": "#7fb2ff"}],LB_GAME="lithosphere";
+/* ===== simulator kit: core helpers shared by every simulator ===== */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t,rr=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rr(a,b+1)),pick=a=>a[Math.floor(Math.random()*a.length)];
+const mod=(a,n)=>((a%n)+n)%n;
+let W=innerWidth,H=innerHeight,DPR=Math.min(2,devicePixelRatio||1);
+const S={t:0,speed:1,speedI:0,paused:false,sel:null,view:'normal',tool:'select',brush:4,follow:false};
+const cam={x:0,y:0,z:4,ox:0};
+const CNT={moved:0,zoomed:0,scen:0,find:0,tool:0,view:0};const bump=k=>{CNT[k]=(CNT[k]||0)+1};
+function toast(msg,ms=3200){const el=document.createElement('div');el.className='toast panel';el.textContent=msg;const box=$('toasts');box.appendChild(el);while(box.children.length>4)box.firstChild.remove();setTimeout(()=>el.remove(),ms)}
+const fmtN=(v,d=0)=>Number(v).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d});
+/* challenges */
+const CH={active:null,idx:-1,events:[],hold:{},t0:0,real0:0,done:false,failed:'',loading:false,ref:{}};
+function chEv(k,d){if(CH.active&&!CH.done&&!CH.loading)CH.events.push({k,...(d||{}),t:S.t})}
+const evN=k=>CH.events.filter(e=>e.k===k).length;
+const evHas=f=>CH.events.some(f);
+// hold a condition for an amount of simulated time (in the simulator's own time units)
+function hold(key,cond,dur){if(!cond){CH.hold[key]=null;return 0}if(CH.hold[key]==null)CH.hold[key]=S.t;return Math.min(1,(S.t-CH.hold[key])/dur)}
+const realSecs=()=>(performance.now()-CH.real0)/1000;
+const byTime=(t3,t2)=>()=>{const s=realSecs();return s<=t3?3:s<=t2?2:1};
+const CHALS=[];const CC=(diff,o)=>CHALS.push({diff,...o});
+const TSTEPS=[];const DEMO=[];
+const since=()=>S.t-CH.t0;
+
+/* ================= Lithosphere: plates, mountains, volcanoes, earthquakes ================= */
+// The planet is a 360 x 180 grid (one cell per degree, about 111 km). It wraps east-west.
+// Time is in millions of years (Myr). Plate velocities are in cells per Myr: 1 cm/yr = 10 km/Myr = 0.09 cells/Myr.
+const GW=360,GH=180,N=GW*GH,KMC=111,CMY=0.09;
+const h=new Float32Array(N),cr=new Float32Array(N),age=new Float32Array(N),pl=new Int16Array(N),bnd=new Uint8Array(N),brel=new Float32Array(N),up=new Float32Array(N),dO=new Uint16Array(N),T0=new Float32Array(N),RAIN=new Float32Array(N),STR=new Float32Array(N);
+let PL=[],HS=[],VOL=[],QK=[],PARTS=[],HIST=[],QLOG=[];
+const ENV={sea:0,temp:0,speed:1,erosion:1,heat:1,dust:0,snow:0,hot:0};
+const EVT={supervolcano:false,snowball:false,hothouse:false};
+let SEA=0,dirtyImg=true,dirtyClim=true,lastImg=0,STAT={land:0,peak:0,peakI:0,deep:0,deepI:0,cont:0,isl:0,ice:0,avgT:15,vol:0,old:0,landIce:0,contCells:0},LBL=true;
+const idx=(x,y)=>y*GW+mod(Math.round(x),GW);
+const cxOf=i=>i%GW,cyOf=i=>(i/GW)|0;
+const latOf=y=>90-(y+0.5)*180/GH,lonOf=x=>(x+0.5)*360/GW-180;
+const wdx=dx=>{dx=mod(dx,GW);return dx>GW/2?dx-GW:dx};
+let RS=1;function seed(s){RS=s>>>0||1}function R(){RS|=0;RS=RS+0x6D2B79F5|0;let t=Math.imul(RS^RS>>>15,1|RS);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+const NAMES=['Aurora','Borealis','Cinder','Dorado','Ember','Fjordia','Gale','Halcyon','Ionia','Jadeite','Kestrel','Lumen','Marrow','Nimbus','Onyx','Pyre','Quill','Rhea','Solace','Tundria','Umber','Vesper','Wren','Zephyr','Basalta','Corvid','Drift','Echo'];
+const VSYL=['Ka','Lo','Mau','Te','Ri','Sha','Vel','Ok','Na','Pu','Is','Hal','Ar','Tor','Ven','Ul'];
+const vname=()=>'Mount '+pick(VSYL)+pick(VSYL).toLowerCase()+pick(['a','o','i','an','ur','eth','is']);
+const PCOL=['#e8735a','#5aa0e8','#e8c45a','#7fd18a','#c07fe8','#5ad6d0','#e85a9e','#a7b85a','#e89a5a','#7f8fe8','#d8e85a','#5ae88f','#e85a5a','#5a7fe8','#e8d0a0','#a0e8d0'];
+
+/* ---------- noise ---------- */
+function fbm(oct,base,pers){const out=new Float32Array(N);let amp=1,tot=0;
+  for(let o=0;o<oct;o++){const nx=Math.max(2,Math.round(GW/(base/2**o))),sp=GW/nx,ny=Math.ceil(GH/sp)+2,L=new Float32Array(nx*ny);for(let k=0;k<L.length;k++)L[k]=R()*2-1;
+    for(let y=0;y<GH;y++){const fy=y/sp,y0=Math.floor(fy),ty=fy-y0,sy=ty*ty*(3-2*ty);for(let x=0;x<GW;x++){const fx=x/sp,x0=Math.floor(fx),tx=fx-x0,sx=tx*tx*(3-2*tx),xa=x0%nx,xb=(x0+1)%nx;
+      const a=L[y0*nx+xa],b=L[y0*nx+xb],c=L[(y0+1)*nx+xa],d=L[(y0+1)*nx+xb];out[y*GW+x]+=amp*((a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy)}}
+    tot+=amp;amp*=pers}
+  for(let i=0;i<N;i++)out[i]/=tot;return out}
+function quantile(arr,q){const s=Float32Array.from(arr).sort();return s[Math.floor(clamp(q,0,1)*(s.length-1))]}
+
+/* ---------- world building ---------- */
+function newPlate(vx,vy,name){const id=PL.length;PL.push({id,name:name||NAMES[id%NAMES.length],vx,vy,ax:0,ay:0,col:PCOL[id%PCOL.length],n:0,cx:0,cy:0,cont:0});return id}
+function randVel(cm){const a=R()*Math.PI*2,s=(cm??(2+R()*5))*CMY;return[Math.cos(a)*s,Math.sin(a)*s*0.7]}
+function voronoi(seeds,warp){const wn=fbm(4,60,0.55),wn2=fbm(3,40,0.5);
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const i=y*GW+x;let best=1e9,bp=0;const wx=x+wn[i]*warp,wy=y+wn2[i]*warp*0.7;
+    for(const s of seeds){const dx=wdx(wx-s.x),dy=wy-s.y,d=Math.sqrt(dx*dx+dy*dy)/(s.w||1);if(d<best){best=d;bp=s.p}}pl[i]=bp}}
+function setCrust(mask,land){for(let i=0;i<N;i++){const c=mask[i];cr[i]=c>0?1:0;const y=cyOf(i);
+  if(c>0){h[i]=150+Math.min(1600,c*2600)+Math.max(0,land[i])*900}else{age[i]=20+R()*30+Math.abs(land[i])*140;h[i]=-2500-3000*Math.sqrt(Math.min(age[i],160)/160)}
+  if(c>0)age[i]=200+R()*800}}
+function clearWorld(){PL=[];HS=[];VOL=[];QK=[];PARTS=[];HIST=[];QLOG=[];Object.assign(ENV,{sea:0,temp:0,speed:1,erosion:1,heat:1,dust:0,snow:0,hot:0});EVT.supervolcano=EVT.snowball=EVT.hothouse=false;STR.fill(0);bnd.fill(0);syncWorldUI()}
+function genEarth(sd,landFrac,nPl,opts={}){seed(sd);clearWorld();const n=fbm(6,120,0.52),m=fbm(4,50,0.5);
+  const lat=y=>Math.abs((y+.5)/GH*2-1);for(let i=0;i<N;i++){n[i]=n[i]+0.25*m[i]-(opts.poleLow?0.25*Math.max(0,lat(cyOf(i))-0.75):0)}
+  const thr=landFrac>0?quantile(n,1-landFrac):9;const mask=new Float32Array(N);for(let i=0;i<N;i++)mask[i]=n[i]-thr;setCrust(mask,m);
+  const seeds=[];for(let k=0;k<nPl;k++){const [vx,vy]=randVel();seeds.push({x:R()*GW,y:15+R()*(GH-30),p:newPlate(vx,vy),w:0.7+R()*0.7})}voronoi(seeds,22);finish()}
+function finish(){for(const p of PL){p.ax=p.ay=0}countPlates();for(const p of PL){if(p.cont>0.5){p.vx*=0.6;p.vy*=0.6}}dirtyImg=dirtyClim=true;updateClimate();computeStats();HIST=[];sampleHist(true)}
+function blob(cx,cy,rx,ry,noise,amp){const out=new Float32Array(N);for(let i=0;i<N;i++){const x=cxOf(i),y=cyOf(i),dx=wdx(x-cx)/rx,dy=(y-cy)/ry;out[i]=1-Math.sqrt(dx*dx+dy*dy)+noise[i]*(amp??0.5)}return out}
+/* ---------- the real Earth: continents, mountain ranges, the major plates and their real speeds ---------- */
+const LAND=[
+ [[-168,66],[-162,70],[-140,70],[-125,70],[-95,72],[-80,73],[-62,66],[-55,52],[-66,45],[-70,41],[-76,35],[-81,31],[-80,25],[-82,28],[-90,30],[-97,27],[-97,21],[-87,21],[-88,16],[-83,10],[-79,9],[-80,8],[-86,12],[-92,15],[-105,20],[-110,24],[-112,29],[-117,32],[-124,40],[-124,48],[-135,58],[-150,60],[-160,58],[-166,62]],
+ [[-50,60],[-42,60],[-20,70],[-18,80],[-35,83],[-60,82],[-72,78],[-55,70]],
+ [[-79,9],[-72,12],[-60,10],[-50,0],[-35,-6],[-39,-15],[-48,-26],[-58,-35],[-65,-42],[-68,-55],[-74,-52],[-73,-40],[-71,-30],[-70,-18],[-76,-14],[-81,-5],[-80,0]],
+ [[-10,36],[-9,43],[-2,47],[-5,48],[2,51],[8,54],[10,57],[5,62],[15,69],[28,71],[45,68],[60,69],[70,73],[90,76],[110,77],[140,72],[160,70],[180,68],[180,65],[170,60],[160,55],[155,60],[142,53],[140,46],[130,42],[127,35],[122,31],[121,25],[110,20],[106,10],[104,1],[100,7],[98,15],[94,17],[90,22],[86,20],[80,15],[77,8],[73,18],[70,22],[66,25],[57,25],[52,24],[55,17],[44,12],[43,16],[35,28],[33,31],[35,36],[27,37],[26,40],[23,38],[19,40],[16,38],[18,40],[12,44],[8,44],[3,43],[-4,37]],
+ [[-17,21],[-16,12],[-12,7],[-4,5],[8,4],[9,1],[13,-12],[12,-18],[15,-27],[18,-34],[25,-34],[33,-26],[35,-18],[40,-15],[40,-3],[44,2],[51,11],[44,11],[38,18],[33,29],[32,31],[20,32],[10,37],[-6,36],[-10,30],[-13,27]],
+ [[114,-22],[122,-18],[130,-12],[136,-12],[137,-16],[142,-11],[146,-19],[153,-26],[151,-34],[147,-38],[140,-38],[135,-35],[130,-32],[116,-35],[114,-26]],
+ [[-180,-78],[-150,-77],[-120,-73],[-90,-72],[-60,-64],[-58,-63],[-40,-75],[0,-70],[40,-69],[70,-67],[100,-66],[140,-67],[170,-72],[180,-78],[180,-90],[-180,-90]],
+ [[-5,50],[1,51],[2,53],[-2,57],[-5,58],[-6,55],[-3,54]],[[130,31],[135,34],[140,35],[142,40],[141,45],[145,44],[140,42],[136,36],[131,34]],[[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+ [[95,5],[106,-6],[104,-5],[96,2]],[[109,1],[117,7],[119,1],[116,-4],[110,-3]],[[131,-1],[141,-3],[150,-10],[141,-9],[133,-4]],[[172,-35],[178,-38],[174,-41],[167,-46],[171,-44]],[[-24,64],[-14,65],[-16,66],[-22,66]],[[120,18],[122,14],[124,10],[126,7],[122,10]]];
+const RANGES=[[[70,35],[80,32],[88,28],[95,28]],[[-80,8],[-78,-2],[-70,-20],[-70,-33],[-72,-50]],[[-150,62],[-125,55],[-115,45],[-108,37],[-106,32]],[[5,45],[10,46.5],[16,47]],[[40,42],[48,41]],[[-84,35],[-72,44]],[[60,52],[60,66]],[[44,38],[56,33],[60,30]],[[100,30],[104,24]],[[140,-38],[150,-30],[146,-18]],[[-8,32],[8,35]],[[36,8],[38,-5]],[[-50,72],[-30,72]],[[30,-90],[30,-80]]];
+const ll=(lon,lat)=>[(lon+180)/360*GW,(90-lat)/180*GH];
+function inPoly(x,y,P){let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const [xi,yi]=P[i],[xj,yj]=P[j];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))c=!c}return c}
+function genRealEarth(){seed(42);clearWorld();const n=fbm(5,40,0.55),m=fbm(4,20,0.5),polys=LAND.map(P=>P.map(([a,b])=>[a,b]));
+  for(let i=0;i<N;i++){const lon=lonOf(cxOf(i)),lat=latOf(cyOf(i));let land=false;for(const P of polys)if(inPoly(lon,lat,P)){land=true;break}
+    if(land){cr[i]=1;h[i]=250+Math.max(0,n[i])*900+Math.max(0,m[i])*400;age[i]=500}else{cr[i]=0;age[i]=30+Math.abs(n[i])*200;h[i]=-2500-3000*Math.sqrt(Math.min(age[i],160)/160)}}
+  // continental shelves: shallow sea around the coasts
+  for(let i=0;i<N;i++)if(cr[i]<.5){const x=cxOf(i),y=cyOf(i);for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const j=idx(x+dx,clamp(y+dy,0,GH-1));if(cr[j]>.5){h[i]=-150;cr[i]=0.55;break}}}
+  for(const L of RANGES)for(let k=0;k<L.length-1;k++){const [a,b]=ll(...L[k]),[c,d]=ll(...L[k+1]),st=Math.ceil(Math.hypot(c-a,d-b)*2);for(let q=0;q<=st;q++){const x=a+(c-a)*q/st,y=b+(d-b)*q/st;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const r=Math.hypot(dx,dy);if(r>3)continue;const j=idx(x+dx,clamp(Math.round(y+dy),0,GH-1));if(cr[j]>.5)h[j]=Math.max(h[j],(5200+n[j]*1500)*(1-r/3.5))}}}
+  const PLATES=[['Pacific',-6,4,[[-150,0],[-170,30],[-130,-30],[-160,-45],[175,15],[-140,40]]],['North American',-2,0,[[-100,45],[-40,40],[-150,68],[-40,70],[150,65]]],['South American',-2.5,0.5,[[-60,-15],[-25,-25]]],
+    ['Eurasian',1,0.3,[[60,55],[100,50],[15,50],[-15,50],[125,40],[95,10]]],['African',1.5,2,[[20,0],[0,-20],[50,-25],[-15,10]]],['Indo-Australian',2,6,[[78,20],[135,-25],[90,-20],[165,-30],[110,-10]]],
+    ['Antarctic',0.5,0,[[0,-75],[120,-72],[-90,-72],[-150,-68],[60,-58],[-30,-60]]],['Nazca',7,1,[[-90,-20]]],['Cocos',5,5,[[-97,8]]],['Caribbean',1,0,[[-72,15]]],['Philippine',-5,3,[[133,17]]],['Arabian',2,3,[[47,23]]]];
+  const seeds=[];for(const [nm,ve,vn,pts] of PLATES){const id=newPlate(ve*CMY,-vn*CMY,nm);for(const [lo,la] of pts){const [x,y]=ll(lo,la);seeds.push({x,y,p:id,w:1})}}
+  for(let i=0;i<N;i++){const x=cxOf(i),y=cyOf(i);let best=1e9,bp=0;for(const sd of seeds){const dx=wdx(x-sd.x),dy=y-sd.y,d=dx*dx+dy*dy;if(d<best){best=d;bp=sd.p}}pl[i]=bp}
+  for(const [nm,lo,la] of [['Hawaii',-155,19],['Iceland',-18,64],['Yellowstone',-110,44.5],['Galápagos',-91,-0.5],['Réunion',55.5,-21]]){const [x,y]=ll(lo,la);HS.push({x:Math.round(x),y:Math.round(y),str:1,name:nm})}
+  finish();for(const p of PL){const o=PLATES.find(q=>q[0]===p.name);if(o){p.vx=o[1]*CMY;p.vy=-o[2]*CMY}}}
+const SCENS={
+  real:()=>genRealEarth(),
+  earth:()=>genEarth(7,0.3,11),
+  pangaea:()=>{seed(21);clearWorld();const n=fbm(5,70,0.55),m=fbm(4,40,0.5),b=blob(180,92,95,52,n,0.55);const mask=new Float32Array(N);for(let i=0;i<N;i++)mask[i]=b[i]>0?0.05+b[i]*0.6:-1;setCrust(mask,m);
+    const seeds=[];const k=6;for(let j=0;j<k;j++){const a=j/k*Math.PI*2+0.3,r=42;const x=180+Math.cos(a)*r,y=92+Math.sin(a)*r*0.55;seeds.push({x,y,p:newPlate(Math.cos(a)*3.2*CMY,Math.sin(a)*2.2*CMY),w:1})}
+    for(let j=0;j<4;j++){const x=j*90+20,y=j%2?30:150;seeds.push({x,y,p:newPlate(wdx(180-x)>0?1.5*CMY:-1.5*CMY,(92-y)/60*1.5*CMY),w:1.3})}voronoi(seeds,14);finish()},
+  collide:()=>{seed(5);clearWorld();const n=fbm(5,50,0.55),m=fbm(4,40,0.5),A=blob(115,108,38,26,n,0.4),B=blob(250,78,70,36,n,0.4);const mask=new Float32Array(N);for(let i=0;i<N;i++)mask[i]=Math.max(A[i],B[i])>0?0.05+Math.max(A[i],B[i])*0.5:-1;setCrust(mask,m);
+    const p0=newPlate(7*CMY,-0.8*CMY,'Indus'),p1=newPlate(-0.3*CMY,0,'Asiana'),p2=newPlate(-1*CMY,2*CMY),p3=newPlate(1.5*CMY,-1*CMY),p4=newPlate(-2*CMY,-1*CMY);
+    voronoi([{x:128,y:108,p:p0,w:1.1},{x:250,y:72,p:p1,w:1.5},{x:40,y:40,p:p2,w:1},{x:330,y:150,p:p3,w:1},{x:60,y:160,p:p4,w:1}],10);finish()},
+  hawaii:()=>{genEarth(33,0.18,8);for(let i=0;i<N;i++)if(cr[i]<.5&&wdx(cxOf(i)-200)>-70&&wdx(cxOf(i)-200)<80&&cyOf(i)>40&&cyOf(i)<150)pl[i]=0;PL[0].vx=-7*CMY;PL[0].vy=-1.6*CMY;PL[0].name='Pacifica';countPlates();HS.push({x:205,y:100,str:1,name:'Great Hotspot'})},
+  ring:()=>{seed(12);clearWorld();const n=fbm(5,60,0.55),m=fbm(4,40,0.5);const ring=new Float32Array(N);for(let i=0;i<N;i++){const dx=wdx(cxOf(i)-180)/120,dy=(cyOf(i)-90)/68,d=Math.sqrt(dx*dx+dy*dy);ring[i]=0.22-Math.abs(d-1)*1.2+n[i]*0.45}
+    const mask=new Float32Array(N);for(let i=0;i<N;i++)mask[i]=ring[i];setCrust(mask,m);const seeds=[{x:180,y:90,p:newPlate(-0.6*CMY,0.4*CMY,'Pacifica'),w:2.3}];
+    for(let j=0;j<8;j++){const a=j/8*Math.PI*2;const x=180+Math.cos(a)*150,y=90+Math.sin(a)*80;seeds.push({x,y,p:newPlate(-Math.cos(a)*3*CMY,-Math.sin(a)*2*CMY),w:1})}voronoi(seeds,12);finish()},
+  young:()=>{genEarth(3,0,9);HS.push({x:80,y:70,str:1,name:'Hotspot A'},{x:200,y:115,str:1,name:'Hotspot B'},{x:300,y:80,str:1,name:'Hotspot C'})},
+  iceland:()=>{seed(9);clearWorld();const n=fbm(5,60,0.55),m=fbm(4,40,0.5),A=blob(95,85,40,60,n,0.45),B=blob(275,90,42,60,n,0.45);const mask=new Float32Array(N);for(let i=0;i<N;i++)mask[i]=Math.max(A[i],B[i])>0?0.05+Math.max(A[i],B[i])*0.5:-1;setCrust(mask,m);
+    for(let i=0;i<N;i++)if(cr[i]<.5){const d=Math.abs(wdx(cxOf(i)-185));age[i]=d*2.2;h[i]=-2500-3000*Math.sqrt(Math.min(age[i],160)/160)}
+    const p0=newPlate(-2.2*CMY,0,'Laurentia'),p1=newPlate(2.2*CMY,0,'Eurasia');for(let i=0;i<N;i++)pl[i]=wdx(cxOf(i)-185+Math.sin(cyOf(i)/14)*4)<0?p0:p1;HS.push({x:185,y:55,str:1.2,name:'Iceland plume'});finish()},
+};
+const SCENLIST=[{id:'real',name:'Earth (real map)',desc:'Our planet as it is today: real continents, mountain ranges and the 12 major plates moving at their real speeds.'},{id:'earth',name:'Earth-like',desc:'Eleven plates and scattered continents, like our own planet.'},{id:'pangaea',name:'Pangaea',desc:'One supercontinent, just starting to break apart.'},
+  {id:'collide',name:'Collision course',desc:'A small continent races toward a big one. Watch a giant mountain range rise.'},{id:'hawaii',name:'Island chain',desc:'A fast ocean plate slides over a hotspot, leaving a trail of volcanic islands.'},
+  {id:'ring',name:'Ring of Fire',desc:'A great ocean ringed by trenches, volcanoes and earthquakes.'},{id:'young',name:'Young planet',desc:'All ocean, three hotspots. Islands and the first continents are born.'},
+  {id:'iceland',name:'Opening ocean',desc:'Two continents drift apart along a mid-ocean ridge with a plume beneath it.'}];
+
+/* ---------- plates ---------- */
+function countPlates(){for(const p of PL){p.n=0;p.sx=0;p.sy=0;p.sc=0;p.cc=0;p.yy=0}for(let i=0;i<N;i++){const p=PL[pl[i]];if(!p)continue;p.n++;const a=cxOf(i)/GW*Math.PI*2;p.sx+=Math.cos(a);p.sy+=Math.sin(a);p.yy+=cyOf(i);if(cr[i]>.5)p.cc++}
+  for(const p of PL){if(p.n){p.cx=mod(Math.atan2(p.sy,p.sx)/(Math.PI*2)*GW,GW);p.cy=p.yy/p.n;p.cont=p.cc/p.n}}}
+const plateCm=p=>Math.hypot(p.vx,p.vy)/CMY*ENV.speed;
+function shiftPlate(p,dx,dy,list){const mv=[];if(list){for(const i of list)if(pl[i]===p)mv.push(i)}else for(let i=0;i<N;i++)if(pl[i]===p)mv.push(i);const n=mv.length;if(!n)return;
+  const mh=new Float32Array(n),mc=new Float32Array(n),ma=new Float32Array(n);let coll=0;
+  const vm=VOL.filter(v=>pl[v.i]===p);for(let k=0;k<n;k++){const i=mv[k];mh[k]=h[i];mc[k]=cr[i];ma[k]=age[i];pl[i]=-1}
+  for(let k=0;k<n;k++){const i=mv[k],x=i%GW,y=(i/GW)|0,ny=y+dy;if(ny<0||ny>=GH)continue;const j=ny*GW+mod(x+dx,GW),q=pl[j];
+    if(q<0){pl[j]=p;h[j]=mh[k];cr[j]=mc[k];age[j]=ma[k];continue}
+    const mC=mc[k]>.5,tC=cr[j]>.5;
+    if(mC&&tC){h[j]=Math.min(9200,Math.max(h[j],mh[k])+90);cr[j]=1;age[j]=Math.max(age[j],ma[k]);pl[j]=p;coll++}
+    else if(mC&&!tC){pl[j]=p;h[j]=mh[k];cr[j]=mc[k];age[j]=ma[k]}
+    else if(!mC&&tC){/* oceanic crust dives under the continent */}
+    else if(ma[k]<age[j]){pl[j]=p;h[j]=Math.max(mh[k],h[j]);cr[j]=mc[k];age[j]=ma[k]}}
+  // gaps left behind fill with brand-new seafloor (a mid-ocean ridge)
+  for(let k=0;k<n;k++){const i=mv[k];if(pl[i]>=0)continue;const x=i%GW,y=(i/GW)|0,nb=[];
+    for(const j of [y*GW+mod(x+1,GW),y*GW+mod(x-1,GW),y>0?i-GW:-1,y<GH-1?i+GW:-1])if(j>=0&&pl[j]>=0)nb.push(pl[j]);
+    pl[i]=nb.length?nb[Math.floor(Math.random()*nb.length)]:p;h[i]=-2500;cr[i]=0;age[i]=0}
+  for(const v of vm){const x=v.i%GW,y=(v.i/GW)|0,ny=y+dy,j=ny*GW+mod(x+dx,GW);if(ny<0||ny>=GH||pl[j]!==p){v.dead=true;continue}v.i=j}
+  if(vm.length)VOL=VOL.filter(v=>!v.dead);
+  if(coll>2){const P=PL[p];P.vx*=0.985;P.vy*=0.985}
+  dirtyImg=true}
+function movePlates(dt){const sp=ENV.speed;let L=null;const need=PL.some(p=>p.n&&(Math.abs(p.ax+p.vx*dt*sp)>=1||Math.abs(p.ay+p.vy*dt*sp)>=1));if(need){L=PL.map(()=>[]);for(let i=0;i<N;i++){const q=pl[i];if(q>=0&&L[q])L[q].push(i)}}
+  for(const p of PL){if(!p.n)continue;p.ax+=p.vx*dt*sp;p.ay+=p.vy*dt*sp;let g=0;
+  while(Math.abs(p.ax)>=1&&g++<4){const s=Math.sign(p.ax);p.ax-=s;shiftPlate(p.id,s,0,L&&g===1?L[p.id]:null)}
+  while(Math.abs(p.ay)>=1&&g++<8){const s=Math.sign(p.ay);p.ay-=s;shiftPlate(p.id,0,s)}}}
+function stepAlong(i,d,k){const x=i%GW,y=(i/GW)|0;if(d===0)return y*GW+mod(x+k,GW);const ny=y+k;return ny<0||ny>=GH?-1:ny*GW+x}
+function nearVolcano(i,r){const x=cxOf(i),y=cyOf(i);return VOL.some(v=>Math.abs(wdx(cxOf(v.i)-x))<=r&&Math.abs(cyOf(v.i)-y)<=r)}
+function addVolcano(i,kind,name){if(VOL.length>=150){let k=VOL.findIndex(v=>v.ext);if(k<0&&kind!=='arc')k=VOL.findIndex(v=>v.kind==='arc');if(k>=0)VOL.splice(k,1);else return null}const v={i,kind,name:name||vname(),act:0,ext:false,last:S.t,born:S.t,erupts:0};VOL.push(v);return v}
+function tect(dt){bnd.fill(0);brel.fill(0);up.fill(0);const sp=ENV.speed;
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const i=y*GW+x,P=pl[i];
+    for(let d=0;d<2;d++){const j=d?(y+1<GH?i+GW:-1):(y*GW+(x+1)%GW);if(j<0)continue;const Q=pl[j];if(Q===P)continue;const a=PL[P],b=PL[Q];if(!a||!b)continue;
+      const rel=(d?(a.vy-b.vy):(a.vx-b.vx))*sp,sh=Math.abs(d?(a.vx-b.vx):(a.vy-b.vy))*sp,m=Math.abs(rel);
+      const t=rel>0.04?1:rel<-0.04?2:sh>0.05?3:0,mm=Math.max(m,t===3?sh:0);if(!t)continue;
+      if(mm>brel[i]||!bnd[i]){brel[i]=mm;bnd[i]=t}if(mm>brel[j]||!bnd[j]){brel[j]=mm;bnd[j]=t}
+      if(t===1)converge(i,j,d,rel,dt);else if(t===2&&cr[i]>.5&&cr[j]>.5){const f=Math.min(1.5,m/0.4);h[i]-=60*f*dt;h[j]-=60*f*dt;if(h[i]<-300)h[i]=-300;if(h[j]<-300)h[j]=-300}
+      STR[i]+=mm*dt*(t===2?0.25:1);STR[j]+=mm*dt*(t===2?0.25:1)}}
+  // hotspots: plumes of hot rock build volcanoes on whatever plate passes over them
+  for(const s of HS){const i=idx(s.x,s.y),c=cr[i]>.5,cap=c?3200:4300+ENV.sea;for(const [k,f] of [[0,1],[1,.5],[-1,.5],[GW,.5],[-GW,.5]]){const j=i+k;if(j<0||j>=N)continue;if(h[j]<cap*(f===1?1:0.8))h[j]+=(c?160:520)*f*s.str*ENV.heat*dt;if(!c)cr[j]=Math.min(.45,cr[j])}
+    if(!nearVolcano(i,2)){const v=addVolcano(i,'hotspot');if(v)v.hs=s}}
+  for(let i=0;i<N;i++){
+    if(cr[i]<.5){const tg=-2500-3000*Math.sqrt(Math.min(age[i],160)/160);h[i]+=(tg-h[i])*Math.min(1,(h[i]>tg?0.016:0.09)*dt)}
+    else{const base=260;if(h[i]>base)h[i]-=(h[i]-base)*Math.min(1,0.03*ENV.erosion*dt);else h[i]+=(base-h[i])*Math.min(1,0.012*dt)}
+    if(up[i]){h[i]+=up[i]*dt;if(h[i]>9200)h[i]=9200}
+    age[i]+=dt;STR[i]*=Math.exp(-dt*0.05)}
+  // gentle smoothing: landslides and sediment spread high ground out
+  const k=Math.min(0.25,0.05*ENV.erosion*dt);if(k>0)for(let y=1;y<GH-1;y++){const r=y*GW;for(let x=0;x<GW;x++){const i=r+x,hi=h[i];if(hi<-1500&&bnd[i])continue;const av=(h[r+(x+1)%GW]+h[r+(x+GW-1)%GW]+h[i-GW]+h[i+GW])*0.25;h[i]+=(av-hi)*k*(hi>0?1:0.3)}}
+  dirtyImg=true}
+function converge(i,j,d,rel,dt){const ci=cr[i]>.5,cj=cr[j]>.5,f=Math.min(1.6,rel/0.4);
+  if(ci&&cj){for(let k=0;k<4;k++){const a=stepAlong(i,d,-k),b=stepAlong(j,d,k),w=270*f*(1-k*0.2);if(a>=0&&pl[a]===pl[i])up[a]+=w;if(b>=0&&pl[b]===pl[j])up[b]+=w}return}
+  const sub=ci?j:cj?i:(age[i]>age[j]?i:j),over=sub===i?j:i,dir=over===j?1:-1,tr=-6500-4200*Math.min(1,f);
+  if(h[sub]>tr)h[sub]+=(tr-h[sub])*Math.min(1,dt*0.9);
+  const oc=cr[over]>.5;for(let k=2;k<=4;k++){const c=stepAlong(over,d,dir*k);if(c<0||pl[c]!==pl[over])continue;up[c]+=(oc?165:85)*f*ENV.heat;if(!oc)cr[c]=Math.min(1,cr[c]+dt*0.0045*f)}
+  if(Math.random()<dt*0.014*f*ENV.heat){const c=stepAlong(over,d,dir*3);if(c>=0&&pl[c]===pl[over]&&!nearVolcano(c,6))addVolcano(c,'arc')}}
+
+/* ---------- climate ---------- */
+function updateSea(){const g=ENV.temp+ENV.hot-ENV.dust-ENV.snow;SEA=ENV.sea+(g<0?Math.max(-130,g*13):Math.min(70,g*6))}
+function updateClimate(){updateSea();const q=new Int32Array(N);let qh=0,qt=0;dO.fill(65535);for(let i=0;i<N;i++)if(h[i]<SEA){dO[i]=0;q[qt++]=i}
+  while(qh<qt){const i=q[qh++],x=i%GW,y=(i/GW)|0,dv=dO[i]+1;if(dv>60)continue;for(const j of [y*GW+(x+1)%GW,y*GW+(x+GW-1)%GW,y>0?i-GW:-1,y<GH-1?i+GW:-1])if(j>=0&&dO[j]>dv){dO[j]=dv;q[qt++]=j}}
+  const g=ENV.temp+ENV.hot-ENV.dust-ENV.snow;
+  for(let y=0;y<GH;y++){const lat=Math.abs((y+.5)/GH*2-1),t=28-50*Math.pow(lat,1.6)+g,belt=clamp(0.25+0.8*Math.exp(-((lat/0.13)**2))+0.6*Math.exp(-(((lat-0.52)/0.14)**2))-0.22*Math.exp(-(((lat-0.27)/0.07)**2)),0.03,1.1);
+    for(let x=0;x<GW;x++){const i=y*GW+x;T0[i]=t;RAIN[i]=belt*Math.exp(-Math.min(dO[i],60)/16)*(g>8?1.2:1)}}
+  dirtyClim=false;dirtyImg=true}
+const tempAt=i=>T0[i]-6.5*Math.max(0,h[i]-SEA)/1000;
+function biome(i){const hh=h[i]-SEA;if(hh<0)return tempAt(i)<-1.8?'Sea ice':hh>-200?'Shallow sea':hh>-3000?'Ocean':hh>-6500?'Deep ocean':'Ocean trench';
+  const T=tempAt(i),r=RAIN[i];if(T<-9)return'Ice sheet';if(hh>3500&&T<-3)return'Snowy peaks';if(hh>2500)return'Bare mountains';if(T<-2)return'Tundra';if(T<5)return r>.25?'Boreal forest':'Cold steppe';if(r<.16)return T>10?'Desert':'Cold desert';if(r<.38)return T>18?'Savanna':'Grassland';if(T>21&&r>.55)return'Rainforest';return'Forest'}
+
+/* ---------- stats ---------- */
+const cosLat=new Float32Array(GH);for(let y=0;y<GH;y++)cosLat[y]=Math.cos(latOf(y)*Math.PI/180);
+let AREA=0;for(let y=0;y<GH;y++)AREA+=cosLat[y]*GW;
+function components(minSize){const seen=new Uint8Array(N),q=new Int32Array(N),out=[];
+  for(let s=0;s<N;s++){if(seen[s]||h[s]<SEA)continue;let qh=0,qt=0,cnt=0,area=0,sx=0,sy=0,sc=0;q[qt++]=s;seen[s]=1;
+    while(qh<qt){const i=q[qh++];cnt++;const x=i%GW,y=(i/GW)|0;area+=cosLat[y];const a=x/GW*Math.PI*2;sx+=Math.cos(a);sy+=Math.sin(a);sc+=y;
+      for(const j of [y*GW+(x+1)%GW,y*GW+(x+GW-1)%GW,y>0?i-GW:-1,y<GH-1?i+GW:-1])if(j>=0&&!seen[j]&&h[j]>=SEA){seen[j]=1;q[qt++]=j}}
+    out.push({n:cnt,area,cx:mod(Math.atan2(sy,sx)/(Math.PI*2)*GW,GW),cy:sc/cnt,i:s})}
+  return out}
+function computeStats(){let land=0,ice=0,landIce=0,tw=0,pk=-1e9,pi=0,dp=1e9,di=0,old=0,cc=0;
+  for(let i=0;i<N;i++){const y=(i/GW)|0,w=cosLat[y],T=tempAt(i),lnd=h[i]>=SEA;tw+=T*w;if(lnd){land+=w;if(T<-9){ice+=w;landIce+=w}}else if(T<-1.8)ice+=w;
+    if(h[i]>pk){pk=h[i];pi=i}if(h[i]<dp){dp=h[i];di=i}if(cr[i]<.5&&age[i]>old)old=age[i];if(cr[i]>.5)cc++}
+  if(!STAT.comps||(STAT.ck=(STAT.ck||0)+1)%4===0){const comps=components();STAT.cont=comps.filter(c=>c.n>=150).length;STAT.isl=comps.filter(c=>c.n<150).length;STAT.comps=comps}
+  Object.assign(STAT,{land:land/AREA,ice:ice/AREA,landIce:land?landIce/land:0,avgT:tw/AREA,peak:pk-SEA,peakI:pi,deep:dp-SEA,deepI:di,old,vol:VOL.filter(v=>!v.ext).length,contCells:cc})}
+function sampleHist(force){const last=HIST[HIST.length-1];if(!force&&last&&S.t-last.t<Math.max(0.25,S.speed*0.6))return;HIST.push({t:S.t,land:STAT.land,peak:STAT.peak,temp:STAT.avgT});if(HIST.length>240)HIST.shift()}
+
+/* ---------- quakes, eruptions, particles ---------- */
+function quake(i,M,nat){const x=cxOf(i)+0.5,y=cyOf(i)+0.5,ocean=h[i]<SEA;QK.push({x,y,m:M,age:0});if(QK.length>60)QK.shift();
+  QLOG.unshift({m:M,t:S.t,where:`${Math.abs(latOf(cyOf(i))).toFixed(0)}°${latOf(cyOf(i))>=0?'N':'S'} ${Math.abs(lonOf(cxOf(i))).toFixed(0)}°${lonOf(cxOf(i))>=0?'E':'W'}`,ocean,nat});if(QLOG.length>12)QLOG.pop();
+  for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const j=(cyOf(i)+dy)*GW+mod(cxOf(i)+dx,GW);if(j>=0&&j<N)STR[j]*=0.2}
+  chEv('quake',{m:M,nat:!!nat,ocean});QUAKES++;if(M>=7.8&&ocean){QK.push({x,y,m:M,age:0,tsu:true});chEv('tsunami',{m:M});toast(`🌊 Magnitude ${M.toFixed(1)} undersea earthquake: a tsunami spreads across the ocean`)}
+  else if(M>=8)toast(`💥 Magnitude ${M.toFixed(1)} earthquake`)}
+function erupt(v,big){v.act=1;v.last=S.t;v.erupts++;const x=cxOf(v.i)+0.5,y=cyOf(v.i)+0.5;const n=big?140:18;
+  for(let k=0;k<n;k++){const a=Math.random()*Math.PI*2,s=(big?rr(1,9):rr(0.3,2.2));PARTS.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-(big?0:0.6),life:big?rr(2,5):rr(0.8,2),max:3,c:Math.random()<0.45?'#ff7a2a':Math.random()<.5?'#ffcf5a':'#8a7f78',s:big?rr(1.5,4):rr(1,2.2)})}
+  if(PARTS.length>2500)PARTS.splice(0,PARTS.length-2500);if(h[v.i]<SEA+5500)h[v.i]+=big?400:40;chEv('erupt',{big:!!big,user:v.kind==='user'});ERUPTS++}
+let QUAKES=0,ERUPTS=0,RIFTS=0,PUSHES=0,HOTSPOTS=0,METEORS=0,RAISED=0,PLATEED=0,EVN=0,EVSTOP=0,LANDMADE=0;
+function frameEvents(dtR){if(S.paused||!$('home').hidden&&false)return;
+  // earthquakes: picked along active plate boundaries, sized by the Gutenberg-Richter law (big ones are rare)
+  if(Math.random()<dtR*1.6*Math.min(3,0.3+S.speed/2)){for(let tries=0;tries<40;tries++){const i=Math.floor(Math.random()*N);if(!bnd[i])continue;const t=bnd[i],rel=brel[i];if(Math.random()>Math.min(1,rel/0.5+STR[i]*0.1))continue;
+      let M=5+(-Math.log10(Math.random()+1e-9))/0.62+Math.min(0.6,STR[i]*0.05);M=Math.min(t===1?9.5:t===3?8.2:6.8,M);quake(i,M,true);break}}
+  for(const v of VOL){if(v.ext)continue;if(Math.random()<dtR*0.035*ENV.heat*(v.kind==='user'?6:1))erupt(v,false);if(v.act>0)v.act=Math.max(0,v.act-dtR*0.6)}
+  for(const q of QK)q.age+=dtR;QK=QK.filter(q=>q.age<(q.tsu?7:3.2));
+  for(const p of PARTS){p.x+=p.vx*dtR;p.y+=p.vy*dtR;p.vy+=0.6*dtR;p.vx*=0.985;p.life-=dtR}PARTS=PARTS.filter(p=>p.life>0)}
+function volcanoUpkeep(){for(const v of VOL){if(v.ext)continue;let active=v.kind==='user'?S.t-v.born<6:false;
+    if(!active&&v.hs)active=HS.includes(v.hs)&&Math.abs(wdx(cxOf(v.i)-v.hs.x))<=2&&Math.abs(cyOf(v.i)-v.hs.y)<=2;
+    if(!active){const x=cxOf(v.i),y=cyOf(v.i);for(let dy=-5;dy<=5&&!active;dy++)for(let dx=-5;dx<=5;dx++){const j=(y+dy)*GW+mod(x+dx,GW);if(j>=0&&j<N&&bnd[j]===1){active=true;break}}}
+    if(active)v.last=S.t;else if(S.t-v.last>8){v.ext=true;v.extT=S.t}}
+  VOL=VOL.filter(v=>!(v.ext&&S.t-v.extT>60))}
+
+/* ---------- player actions ---------- */
+function brushCells(wx,wy,r,f){const cx=Math.floor(wx),cy=Math.floor(wy);for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const d=Math.hypot(dx,dy)/(r+0.5);if(d>1)continue;const y=cy+dy;if(y<0||y>=GH)continue;f(y*GW+mod(cx+dx,GW),1-d*d)}dirtyImg=true;dirtyClim=true;quickRedraw(wx,wy,r+2)}
+function meteor(wx,wy,R0){const R=R0||8;brushCells(wx,wy,Math.ceil(R*1.4),(i,f)=>{const d=Math.sqrt(1-f);if(d<0.7)h[i]=Math.min(h[i],SEA-200-2400*(1-d/0.7))+(-800);else h[i]+=900*(1-Math.abs(d-0.85)/0.15)});
+  for(let k=0;k<260;k++){const a=Math.random()*Math.PI*2,s=rr(2,14);PARTS.push({x:wx,y:wy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rr(1,3.5),max:3,c:pick(['#ffd28a','#ff8a4a','#a89a90','#fff2d0']),s:rr(1.5,3.5)})}
+  ENV.dust=Math.max(ENV.dust,R*0.9);METEORS++;chEv('meteor',{});QK.push({x:wx,y:wy,m:9,age:0});updateSea();dirtyClim=true}
+function splitPlate(ax,ay,bx,by){const mx=ax+wdx(bx-ax)/2,my=(ay+by)/2,mi=idx(mx,clamp(Math.floor(my),0,GH-1)),p=pl[mi];const P=PL[p];if(!P)return false;
+  const lx=wdx(bx-ax),ly=by-ay,len=Math.hypot(lx,ly);if(len<4)return false;const nxv=-ly/len,nyv=lx/len;const side=[];let a=0,b=0;
+  for(let i=0;i<N;i++){if(pl[i]!==p)continue;const s=wdx(cxOf(i)+0.5-ax)*ly-(cyOf(i)+0.5-ay)*lx;if(s>0){side.push(i);a++}else b++}
+  if(a<40||b<40)return false;const q=newPlate(P.vx+nxv*-2.5*CMY,P.vy+nyv*-2.5*CMY);P.vx+=nxv*1.5*CMY;P.vy+=nyv*1.5*CMY;for(const i of side)pl[i]=q;
+  // a rift valley opens along the line
+  const steps=Math.ceil(len);for(let k=0;k<=steps;k++){const x=ax+lx*k/steps,y=ay+ly*k/steps;if(y<0||y>=GH)continue;const i=idx(x,Math.floor(y));if(cr[i]>.5)h[i]=Math.max(-200,h[i]-500)}
+  countPlates();RIFTS++;chEv('rift',{p,q});dirtyImg=true;return true}
+function largestContinent(){STAT.comps=null;computeStats();const c=(STAT.comps||[]).filter(c=>c.n>=150).sort((a,b)=>b.n-a.n)[0];return c}
+function doEvent(ev){EVN++;chEv('event',{ev});
+  if(ev==='normal'){if(EVT.supervolcano||EVT.snowball||EVT.hothouse||ENV.dust>0.5)EVSTOP++;EVT.supervolcano=EVT.snowball=EVT.hothouse=false;ENV.dust=0;ENV.snow=0;ENV.hot=0;toast('All events stopped');syncEvents();dirtyClim=true;return}
+  if(ev in EVT&&EVT[ev]){EVT[ev]=false;if(ev==='supervolcano')ENV.dust=0;if(ev==='snowball')ENV.snow=0;if(ev==='hothouse')ENV.hot=0;EVSTOP++;chEv('stop',{ev});toast('Stopped');syncEvents();dirtyClim=true;return}
+  if(ev==='supervolcano'){let best=null;for(const s of HS){const i=idx(s.x,s.y);if(cr[i]>.5)best=i}if(best==null){const c=[];for(let i=0;i<N;i+=7)if(cr[i]>.5&&h[i]>SEA)c.push(i);best=c.length?pick(c):Math.floor(Math.random()*N)}
+    const v=addVolcano(best,'user','Supervolcano');if(v){erupt(v,true);erupt(v,true);flyToW(cxOf(best)+.5,cyOf(best)+.5,Math.max(cam.z,4));}ENV.dust=Math.max(ENV.dust,7);EVT.supervolcano=true;toast('🌋 A supervolcano erupts! Ash cools the whole planet for a while.')}
+  else if(ev==='snowball'){EVT.snowball=true;EVT.hothouse=false;ENV.hot=0;toast('❄ Snowball Earth: the planet freezes over')}
+  else if(ev==='hothouse'){EVT.hothouse=true;EVT.snowball=false;ENV.snow=0;toast('☀ Hothouse: the ice melts and the seas rise')}
+  else if(ev==='megaquake'){let bi=-1,bv=0;for(let i=0;i<N;i++)if(bnd[i]===1&&brel[i]>bv&&(h[i]<SEA)){bv=brel[i];bi=i}if(bi<0)for(let i=0;i<N;i++)if(bnd[i]&&brel[i]>bv){bv=brel[i];bi=i}if(bi<0)bi=Math.floor(Math.random()*N);quake(bi,9.3,false);flyToW(cxOf(bi),cyOf(bi),Math.max(cam.z,4))}
+  else if(ev==='meteor'){const x=Math.random()*GW,y=30+Math.random()*(GH-60);meteor(x,y,11);flyToW(x,y,Math.max(cam.z,3.5));toast('☄ A giant meteor strikes!')}
+  else if(ev==='plume'){const s={x:Math.random()*GW,y:30+Math.random()*(GH-60),str:1,name:'Plume '+(HS.length+1)};HS.push(s);HOTSPOTS++;flyToW(s.x,s.y,Math.max(cam.z,3.5));toast('🔥 A new mantle plume rises beneath the crust')}
+  else if(ev==='breakup'){const c=largestContinent();if(!c){toast('There is no continent to break');return}const a=Math.random()*Math.PI;const L=40;if(splitPlate(c.cx-Math.cos(a)*L,c.cy-Math.sin(a)*L*0.6,c.cx+Math.cos(a)*L,c.cy+Math.sin(a)*L*0.6)){toast('✂ A rift tears the biggest continent apart');flyToW(c.cx,c.cy)}else toast('That continent would not split; try again')}
+  syncEvents();dirtyClim=true}
+function syncEvents(){document.querySelectorAll('[data-ev]').forEach(b=>{const ev=b.dataset.ev;if(!(ev in EVT))return;const on=EVT[ev];b.setAttribute('aria-pressed',on);b.textContent=on?'■ Stop '+(ev==='supervolcano'?'eruption':ev==='snowball'?'freeze':'hothouse'):({supervolcano:'🌋 Supervolcano',snowball:'❄ Snowball Earth',hothouse:'☀ Hothouse'})[ev]})}
+function syncWorldUI(){const set=(id,v,t)=>{const e=$(id);if(e){e.value=v;$(id.replace('S','V')).textContent=t}};
+  set('seaS',ENV.sea,(ENV.sea>=0?'+':'')+ENV.sea+' m');set('tempS',ENV.temp,(ENV.temp>=0?'+':'')+ENV.temp+' °C');set('spdS',Math.round(ENV.speed*100),Math.round(ENV.speed*100)+'%');set('eroS',Math.round(ENV.erosion*100),Math.round(ENV.erosion*100)+'%');set('volS',Math.round(ENV.heat*100),Math.round(ENV.heat*100)+'%');syncEvents()}
+let SLIDED=0;
+for(const [id,k,f,t] of [['seaS','sea',v=>v,v=>(v>=0?'+':'')+v+' m'],['tempS','temp',v=>v,v=>(v>=0?'+':'')+v+' °C'],['spdS','speed',v=>v/100,v=>v+'%'],['eroS','erosion',v=>v/100,v=>v+'%'],['volS','heat',v=>v/100,v=>v+'%']])
+  $(id).addEventListener('input',e=>{const v=+e.target.value;ENV[k]=f(v);$(id.replace('S','V')).textContent=t(v);SLIDED++;chEv('slider',{k});dirtyClim=true;updateSea()});
+document.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>doEvent(b.dataset.ev));
+let BNDON=true;$('bndBtn').onclick=()=>{BNDON=!BNDON;$('bndBtn').setAttribute('aria-pressed',BNDON);$('bndBtn').textContent=BNDON?'On':'Off';BNDT++;legendFor(S.view)};let BNDT=0;
+$('lblBtn').onclick=()=>{LBL=!LBL;$('lblBtn').setAttribute('aria-pressed',LBL);$('lblBtn').textContent=LBL?'On':'Off'};
+
+/* ---------- rendering ---------- */
+const SC3=3,IW=GW*SC3,IH=GH*SC3;const img=document.createElement('canvas');img.width=IW;img.height=IH;const ig=img.getContext('2d');const ID=ig.createImageData(IW,IH);
+// fine fractal detail, so coastlines and mountains look natural instead of following the grid
+const DET=(()=>{const out=new Float32Array(IW*IH);let amp=1,tot=0;for(const sp of [9,4.5,2.25,1.2]){const nx=Math.round(IW/sp),ny=Math.ceil(IH/sp)+2,L=new Float32Array(nx*ny);for(let k=0;k<L.length;k++)L[k]=Math.random()*2-1;
+  for(let y=0;y<IH;y++){const fy=y*nx/IW,y0=Math.floor(fy),ty=fy-y0,sy=ty*ty*(3-2*ty);for(let x=0;x<IW;x++){const fx=x*nx/IW,x0=Math.floor(fx),tx=fx-x0,sx=tx*tx*(3-2*tx),xa=x0%nx,xb=(x0+1)%nx,a=L[y0*nx+xa],b=L[y0*nx+xb],c=L[(y0+1)*nx+xa],d=L[(y0+1)*nx+xb];out[y*IW+x]+=amp*((a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy)}}tot+=amp;amp*=0.55}
+  for(let i=0;i<out.length;i++)out[i]/=tot;return out})();
+const hexRGB=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
+const PRGB=PCOL.map(hexRGB);
+function ramp(stops,v){if(v<=stops[0][0])return stops[0][1];for(let k=1;k<stops.length;k++)if(v<=stops[k][0]){const [a,ca]=stops[k-1],[b,cb]=stops[k],t=(v-a)/(b-a);return[ca[0]+(cb[0]-ca[0])*t,ca[1]+(cb[1]-ca[1])*t,ca[2]+(cb[2]-ca[2])*t]}return stops[stops.length-1][1]}
+const OCEAN=[[-11000,[4,8,26]],[-7000,[8,22,52]],[-4500,[14,44,90]],[-2500,[22,76,128]],[-600,[36,116,160]],[-120,[64,160,186]],[0,[110,196,200]]];
+const ELEV=[[-10000,[30,10,60]],[-6000,[30,40,120]],[-3000,[40,90,170]],[-500,[90,160,210]],[0,[150,210,220]],[1,[60,130,70]],[500,[130,170,80]],[1500,[200,180,100]],[3000,[170,110,70]],[5000,[230,220,215]],[8000,[255,255,255]]];
+const AGE=[[0,[230,50,40]],[20,[240,150,40]],[50,[230,230,70]],[90,[80,200,120]],[130,[60,120,220]],[200,[90,50,170]]];
+const TEMP=[[-40,[220,230,255]],[-20,[120,150,240]],[0,[90,200,230]],[12,[120,210,120]],[22,[240,210,90]],[32,[240,110,60]],[45,[180,30,40]]];
+function landRGB(i,hh,T){const r=RAIN[i];let c;
+  if(T<-9)return[236,242,247];
+  if(T<-2)c=[140,146,128];else if(T<5)c=r>.25?[52,92,64]:[150,150,115];else if(r<.16)c=T>10?[214,184,124]:[176,160,130];else if(r<.38)c=T>18?[182,166,92]:[128,158,84];else if(T>21&&r>.55)c=[34,104,52];else c=[62,120,62];
+  if(hh>1800){const t=clamp((hh-1800)/2200,0,1);c=[c[0]+(138-c[0])*t,c[1]+(124-c[1])*t,c[2]+(110-c[2])*t]}
+  if(T<-3&&hh>1200){const t=clamp((-3-T)/5,0,1);c=[c[0]+(240-c[0])*t,c[1]+(244-c[1])*t,c[2]+(248-c[2])*t]}
+  return c}
+const LC=new Float32Array(N*3),SC=new Float32Array(N*3),TEX=new Float32Array(N);for(let i=0;i<N;i++){const x=Math.sin(i*12.9898+78.233)*43758.5453;TEX[i]=0.94+0.12*(x-Math.floor(x))}
+function cellColors(i0,i1){const v=S.view;if(i0==null){i0=0;i1=N}
+  for(let i=i0;i<i1;i++){const hh=h[i]-SEA,T=T0[i]-6.5*Math.max(0,hh)/1000,o=i*3;let L,Sx;
+    if(v==='elev'){L=ramp(ELEV,Math.max(1,hh));Sx=ramp(ELEV,Math.min(0,hh))}
+    else if(v==='age'){L=[120,112,106];Sx=cr[i]<.5?ramp(AGE,age[i]):[120,112,106]}
+    else if(v==='temp'){L=Sx=ramp(TEMP,T)}
+    else{L=landRGB(i,Math.max(0,hh),T);Sx=ramp(OCEAN,Math.min(0,hh));if(T0[i]<-1.8){const t=clamp((-1.8-T0[i])/4,0,0.92);Sx=[Sx[0]+(226-Sx[0])*t,Sx[1]+(236-Sx[1])*t,Sx[2]+(243-Sx[2])*t]}}
+    if(v==='plates'){const pc=PRGB[pl[i]%PRGB.length]||[128,128,128],m=c=>{const g=(c[0]+c[1]+c[2])/3;return[g*0.45+pc[0]*0.55,g*0.45+pc[1]*0.55,g*0.45+pc[2]*0.55]};L=m(L);Sx=m(Sx);const bt=bnd[i];if(bt){L=Sx=bt===1?[255,70,50]:bt===2?[90,230,255]:[255,220,70]}}
+    else if(v==='quake'){const st=bnd[i]?Math.min(1,brel[i]*1.4+STR[i]*0.06):0,f=c=>{const g=(c[0]+c[1]+c[2])/3*0.55;return st>0?[g+(255-g)*st,g+(120-g)*st*0.6,g*(1-st)]:[g,g,g]};L=f(L);Sx=f(Sx)}
+    const tx=1;LC[o]=L[0]*tx;LC[o+1]=L[1]*tx;LC[o+2]=L[2]*tx;SC[o]=Sx[0];SC[o+1]=Sx[1];SC[o+2]=Sx[2]}}
+let JOB=null;const imgPrev=document.createElement('canvas');imgPrev.width=IW;imgPrev.height=IH;const pg=imgPrev.getContext('2d');let FADE=0;
+// colour of one point of the map: gx, gy are continuous cell coordinates; dt is fine detail noise and dd its slope
+function shadePix(gx,gy,dt,dd,d,o,flat,natural,wx2,wy2){if(wx2!==undefined){gx+=wx2;gy+=wy2}gy=clamp(gy,0,GH-1.001);const y0=Math.floor(gy),ty=gy-y0,y1=Math.min(GH-1,y0+1),x0=Math.floor(gx),tx=gx-x0,xa=mod(x0,GW),xb=mod(x0+1,GW);
+  const ia=y0*GW+xa,ib=y0*GW+xb,ic=y1*GW+xa,ie=y1*GW+xb,a=h[ia],b=h[ib],c=h[ic],e=h[ie];
+  const w0=(1-tx)*(1-ty),w1=tx*(1-ty),w2=(1-tx)*ty,w3=tx*ty;
+  const hv=a*w0+b*w1+c*w2+e*w3,gr=Math.max(Math.abs(a-b),Math.abs(a-c),Math.abs(b-e),Math.abs(c-e)),hh=hv-SEA+dt*(gr*0.75+260),land=hh>=0,C=land?LC:SC;
+  const r=C[ia*3]*w0+C[ib*3]*w1+C[ic*3]*w2+C[ie*3]*w3,g=C[ia*3+1]*w0+C[ib*3+1]*w1+C[ic*3+1]*w2+C[ie*3+1]*w3,bl=C[ia*3+2]*w0+C[ib*3+2]*w1+C[ic*3+2]*w2+C[ie*3+2]*w3;
+  // hillshade from the local slope (light from the north-west), plus fine texture from the detail noise
+  let sh=1;if(!flat){const sl=-1.5*(((b-a)*(1-ty)+(e-c)*ty)+((c-a)*(1-tx)+(e-b)*tx))/(land?1100:3000);sh=clamp(1+sl*(land?0.6:0.12)+dd*(land?(natural?0.9+Math.max(0,hv-SEA)/2500:0.5):0.15),0.55,1.45)}
+  if(land&&hh<70&&natural){const t=1-hh/70;d[o]=(r+(205-r)*t*0.35)*sh;d[o+1]=(g+(190-g)*t*0.35)*sh;d[o+2]=(bl+(150-bl)*t*0.35)*sh;d[o+3]=255;return}
+  if(!land&&hh>-90&&natural){const t=1+hh/90;d[o]=r+(150-r)*t*0.45;d[o+1]=g+(215-g)*t*0.45;d[o+2]=bl+(220-bl)*t*0.45;d[o+3]=255;return}
+  d[o]=r*sh;d[o+1]=g*sh;d[o+2]=bl*sh;d[o+3]=255}
+function renderRows(r0,r1){const d=ID.data,v=S.view,flat=v==='age'||v==='temp'||v==='plates',natural=v==='normal';
+  for(let py=r0;py<r1;py++)for(let px=0;px<IW;px++){const pi=py*IW+px,dt=DET[pi],dd=(dt-DET[pi+1>=IW*IH?pi:pi+1]+dt-DET[pi+IW<IW*IH?pi+IW:pi]);shadePix((px+0.5)/SC3-0.5,(py+0.5)/SC3-0.5,dt,dd,d,pi*4,flat,natural,dt*0.8,DET[(pi+IW*40)%(IW*IH)]*0.8)}}
+// sharp close-ups: when zoomed in, the part of the map on screen is redrawn at full screen resolution
+const DETS=(x,y)=>{x=mod(x,IW);y=clamp(y,0,IH-1.001);const x0=Math.floor(x),y0=Math.floor(y),tx=x-x0,ty=y-y0,x1=(x0+1)%IW,y1=Math.min(IH-1,y0+1);return(DET[y0*IW+x0]*(1-tx)+DET[y0*IW+x1]*tx)*(1-ty)+(DET[y1*IW+x0]*(1-tx)+DET[y1*IW+x1]*tx)*ty};
+const VIEW={c:document.createElement('canvas'),job:null,ready:null,key:''};
+function viewWanted(){return cam.z>=SC3*1.25}
+function startView(){const q=Math.min(DPR,Math.sqrt(900000/(W*H))),vw=Math.ceil(W*q),vh=Math.ceil(H*q),wx0=wxOf(0),wy0=Math.max(0,wyOf(0)),wy1=Math.min(GH,wyOf(H));if(wy1<=wy0)return;
+  const ph=Math.max(1,Math.round((wy1-wy0)/(wyOf(H)-wyOf(0))*vh));const id=new ImageData(vw,ph);VIEW.job={id,vw,vh:ph,wx0,wy0,ww:W/cam.z,wh:wy1-wy0,row:0,v:S.view,ver:lastImg}}
+function stepView(now){if(!viewWanted()){VIEW.job=null;return}if(now-(VIEW.lastT||0)>1500)VIEW.tk=lastImg;const key=[Math.round(cam.x*4),Math.round(cam.y*4),Math.round(cam.z*20),S.view,VIEW.tk].join();
+  if(key!==VIEW.key&&!VIEW.job&&now-(VIEW.moved||0)>140){VIEW.key=key;VIEW.lastT=now;startView()}if(key!==VIEW.keySeen){VIEW.keySeen=key;VIEW.moved=now}
+  const J=VIEW.job;if(!J)return;const d=J.id.data,flat=J.v==='age'||J.v==='temp'||J.v==='plates',natural=J.v==='normal',t0=performance.now(),sx2=J.ww/J.vw,sy2=J.wh/J.vh,f=SC3,e=1/SC3;
+  while(J.row<J.vh&&performance.now()-t0<(S.paused?9:3)){const py=J.row++,wy=J.wy0+(py+0.5)*sy2;for(let px=0;px<J.vw;px++){const wx=J.wx0+(px+0.5)*sx2,X=wx*f-0.5,Y=wy*f-0.5;
+      const fine=0.3*DETS(X*4.3+17,Y*4.3+5),dt=DETS(X,Y)+fine,dd=2*dt-DETS(X+1,Y)-DETS(X,Y+1)-2*fine*0.6;
+      shadePix(wx-0.5,wy-0.5,dt,dd,d,(py*J.vw+px)*4,flat,natural,(dt+DETS(X*2.1+3,Y*2.1+9)*0.5)*0.85,(DETS(X+5.7,Y+40)+DETS(X*2.1+31,Y*2.1+2)*0.5)*0.85)}}
+  if(J.row>=J.vh){VIEW.c.width=J.vw;VIEW.c.height=J.vh;VIEW.c.getContext('2d').putImageData(J.id,0,0);VIEW.ready={wx0:J.wx0,wy0:J.wy0,ww:J.ww,wh:J.wh,v:J.v};VIEW.job=null}}
+// instant feedback: repaint only the patch that was just edited, in both the map and the sharp close-up
+function quickRedraw(wx,wy,r){const v=S.view,flat=v==='age'||v==='temp'||v==='plates',natural=v==='normal';const y0=clamp(Math.floor(wy-r),0,GH-1),y1=clamp(Math.ceil(wy+r),0,GH-1);
+  for(let y=y0;y<=y1;y++)cellColors(y*GW,(y+1)*GW);
+  const py0=Math.max(0,y0*SC3),py1=Math.min(IH,(y1+1)*SC3);
+  for(const k of [0]){const xs=Math.floor(wx-r),xe=Math.ceil(wx+r);const px0=xs*SC3,pw=(xe-xs+1)*SC3,ph=py1-py0,tmp=new ImageData(pw,ph),d=tmp.data;
+    for(let py=py0;py<py1;py++)for(let q=0;q<pw;q++){const pxg=mod(px0+q,IW),pi=py*IW+pxg,dt=DET[pi],dd=(dt-DET[pi+1>=IW*IH?pi:pi+1]+dt-DET[pi+IW<IW*IH?pi+IW:pi]);shadePix((pxg+0.5)/SC3-0.5,(py+0.5)/SC3-0.5,dt,dd,d,((py-py0)*pw+q)*4,flat,natural,dt*0.8,DET[(pi+IW*40)%(IW*IH)]*0.8);const o=pi*4,o2=((py-py0)*pw+q)*4;ID.data[o]=d[o2];ID.data[o+1]=d[o2+1];ID.data[o+2]=d[o2+2];ID.data[o+3]=255}
+    const bx=mod(px0,IW);for(const off of [bx,bx-IW]){ig.putImageData(tmp,off,py0);pg.putImageData(tmp,off,py0)}}
+  FADE=0;
+  const R0=VIEW.ready;if(viewWanted()&&R0&&R0.v===S.view){const vw=VIEW.c.width,vh=VIEW.c.height,sxp=R0.ww/vw,syp=R0.wh/vh;
+    for(const k of [-1,0,1]){const cxw=wx+k*GW;let qx0=Math.floor((cxw-r-R0.wx0)/sxp),qx1=Math.ceil((cxw+r-R0.wx0)/sxp),qy0=Math.floor((wy-r-R0.wy0)/syp),qy1=Math.ceil((wy+r-R0.wy0)/syp);
+      qx0=clamp(qx0,0,vw);qx1=clamp(qx1,0,vw);qy0=clamp(qy0,0,vh);qy1=clamp(qy1,0,vh);if(qx1<=qx0||qy1<=qy0)continue;const tw=qx1-qx0,th=qy1-qy0,tmp=new ImageData(tw,th),d=tmp.data,f=SC3;
+      for(let py=qy0;py<qy1;py++){const wyy=R0.wy0+(py+0.5)*syp;for(let px=qx0;px<qx1;px++){const wxx=R0.wx0+(px+0.5)*sxp,X=wxx*f-0.5,Y=wyy*f-0.5,fine=0.3*DETS(X*4.3+17,Y*4.3+5),dt=DETS(X,Y)+fine,dd=2*dt-DETS(X+1,Y)-DETS(X,Y+1)-2*fine*0.6;
+        shadePix(wxx-0.5,wyy-0.5,dt,dd,d,((py-qy0)*tw+px-qx0)*4,flat,natural,(dt+DETS(X*2.1+3,Y*2.1+9)*0.5)*0.85,(DETS(X+5.7,Y+40)+DETS(X*2.1+31,Y*2.1+2)*0.5)*0.85)}}
+      VIEW.c.getContext('2d').putImageData(tmp,qx0,qy0)}}}
+let BPATH=null;function buildBPaths(){BPATH=[new Path2D(),new Path2D(),new Path2D()];const segs=[[],[],[]];
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const i=y*GW+x,t=bnd[i];if(!t)continue;const p0=pl[i],jr=y*GW+(x+1)%GW,jd=y<GH-1?i+GW:-1;if(pl[jr]!==p0)segs[t-1].push([x+1,y,x+1,y+1]);if(jd>=0&&pl[jd]!==p0)segs[t-1].push([x,y+1,x+1,y+1])}
+  segs.forEach((L,k)=>{const adj=new Map(),key=(x,y)=>x+','+y,used=new Uint8Array(L.length);L.forEach((s0,n)=>{for(const [x,y] of [[s0[0],s0[1]],[s0[2],s0[3]]]){const kk=key(x,y);if(!adj.has(kk))adj.set(kk,[]);adj.get(kk).push(n)}});
+    for(let n=0;n<L.length;n++){if(used[n])continue;used[n]=1;let pts=[[L[n][0],L[n][1]],[L[n][2],L[n][3]]];
+      for(const dir of [1,0]){for(;;){const end=dir?pts[pts.length-1]:pts[0],nx=(adj.get(key(end[0],end[1]))||[]).find(m=>!used[m]);if(nx==null)break;used[nx]=1;const q=L[nx],o=(q[0]===end[0]&&q[1]===end[1])?[q[2],q[3]]:[q[0],q[1]];if(dir)pts.push(o);else pts.unshift(o)}}
+      if(pts.length>3){const m=[pts[0]];for(let j=0;j<pts.length-1;j++){const [ax,ay]=pts[j],[bx,by]=pts[j+1];if(Math.abs(bx-ax)>2){m.push(pts[j+1]);continue}m.push([(ax+bx)/2,(ay+by)/2])}m.push(pts[pts.length-1]);pts=m}
+      for(let it=0;it<3&&pts.length>2;it++){const o=[pts[0]];for(let j=0;j<pts.length-1;j++){const [ax,ay]=pts[j],[bx,by]=pts[j+1];if(Math.abs(bx-ax)>2){o.push(pts[j+1]);continue}o.push([ax*0.75+bx*0.25,ay*0.75+by*0.25],[ax*0.25+bx*0.75,ay*0.25+by*0.75])}o.push(pts[pts.length-1]);pts=o}
+      const P=BPATH[k];P.moveTo(pts[0][0],pts[0][1]);for(let j=1;j<pts.length;j++){if(Math.abs(pts[j][0]-pts[j-1][0])>2)P.moveTo(pts[j][0],pts[j][1]);else P.lineTo(pts[j][0],pts[j][1])}}})}
+function finishImage(){BPATH=null;pg.clearRect(0,0,IW,IH);pg.drawImage(img,0,0);ig.putImageData(ID,0,0);FADE=performance.now();lastImg=FADE}
+// full redraw at once (used when the view changes or the world loads)
+function renderImage(){if(dirtyClim)updateClimate();cellColors();renderRows(0,IH);finishImage();pg.clearRect(0,0,IW,IH);pg.drawImage(img,0,0);dirtyImg=false;JOB=null}
+// otherwise a few rows each frame, so drawing never stalls the animation
+function stepImage(now){if(!JOB){if(!dirtyImg||now-lastImg<(S.paused?60:200))return;if(dirtyClim)updateClimate();JOB={cell:0,row:0};dirtyImg=false}
+  const t0=performance.now();while(JOB.cell<N&&performance.now()-t0<2.2){cellColors(JOB.cell,Math.min(N,JOB.cell+6000));JOB.cell+=6000}
+  while(JOB.cell>=N&&JOB.row<IH&&performance.now()-t0<2.2){renderRows(JOB.row,Math.min(IH,JOB.row+12));JOB.row+=12}if(JOB.row>=IH){finishImage();JOB=null}}
+function legendFor(v){if(v==='elev')setLegend('Elevation','linear-gradient(90deg,#1e0a3c,#285aaa,#96d2dc,#3c8246,#c8b464,#aa6e46,#fff)',['−10 km','sea level','+8 km']);
+  else if(v==='age')setLegend('Age of the seafloor','linear-gradient(90deg,#e63228,#f09628,#e6e646,#50c878,#3c78dc,#5a32aa)',['new','90 Myr','200 Myr']);
+  else if(v==='temp')setLegend('Average temperature','linear-gradient(90deg,#dce6ff,#7896f0,#5ac8e6,#78d278,#f0d25a,#f06e3c,#b41e28)',['−40 °C','12 °C','45 °C']);
+  else if(v==='plates')setLegend('Plate boundaries','linear-gradient(90deg,#ff4632 0 33%,#5ae6ff 33% 66%,#ffdc46 66%)',['colliding','spreading','sliding']);
+  else if(v==='quake')setLegend('Earthquake stress','linear-gradient(90deg,#444,#ff7a00,#ff3c00)',['calm','','high']);
+  else if(BNDON)setLegend('Plate boundaries','linear-gradient(90deg,#ff4632 0 33%,#5ae6ff 33% 66%,#ffdc46 66%)',['colliding','spreading','sliding']);else setLegend(null)}
+function render(c,now){c.fillStyle='rgb('+getComputedStyle(document.documentElement).getPropertyValue('--voidRGB')+')';c.fillRect(0,0,W,H);
+  stepImage(now);
+  const z=cam.z,x0=sx(0),y0=sy(0),ww=GW*z;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  const COVD=(()=>{if(!viewWanted()||!VIEW.ready||VIEW.ready.v!==S.view)return false;const R0=VIEW.ready;for(const k of [-1,0,1]){const X=sx(R0.wx0+k*GW),Xe=sx(R0.wx0+R0.ww+k*GW);if(X<=0.5&&Xe>=W-0.5&&(R0.wy0<=0.01||sy(R0.wy0)<=0.5)&&(R0.wy0+R0.wh>=GH-0.01||sy(R0.wy0+R0.wh)>=H-0.5))return true}return false})();
+  const k0=Math.floor((-x0)/ww)-1,k1=Math.ceil((W-x0)/ww)+1,fa=clamp((now-FADE)/320,0,1);if(!COVD)for(let k=k0;k<=k1;k++){if(fa<1)c.drawImage(imgPrev,x0+k*ww,y0,ww,GH*z);c.globalAlpha=fa<1?fa:1;c.drawImage(img,x0+k*ww,y0,ww,GH*z);c.globalAlpha=1}
+  stepView(now);if(viewWanted()&&VIEW.ready&&VIEW.ready.v===S.view){const R0=VIEW.ready;for(const k of [-1,0,1]){const X=sx(R0.wx0+k*GW),Xe=sx(R0.wx0+R0.ww+k*GW);if(Xe<0||X>W)continue;c.drawImage(VIEW.c,X,sy(R0.wy0),Xe-X,sy(R0.wy0+R0.wh)-sy(R0.wy0))}}
+  // plate boundaries drawn as crisp lines on every view: red = colliding, cyan = spreading, yellow = sliding past
+  if(BNDON&&S.view!=='plates'){if(!BPATH)buildBPaths();const lw=Math.max(2.5,Math.min(4.5,z*0.5))/z,cols=['rgba(255,80,60,.9)','rgba(100,230,255,.9)','rgba(255,215,70,.9)'];c.lineCap='round';c.lineJoin='round';
+    for(let k=k0;k<=k1;k++){const ox=x0+k*ww;if(ox>W||ox+ww<0)continue;c.save();c.translate(ox,y0);c.scale(z,z);c.lineWidth=lw;BPATH.forEach((P,q)=>{c.strokeStyle=cols[q];c.stroke(P)});c.restore()}}
+  // poles fade
+  const wrapX=x=>{let X=sx(x);X=X-Math.floor((X-(-ww/2))/ww)*ww;return X};
+  const each=(x,f)=>{const X=wrapX(x);for(let k=-1;k<=Math.ceil(W/ww)+1;k++){const XX=X+k*ww;if(XX>-60&&XX<W+60)f(XX)}};
+  // plate arrows and names
+  if(S.view==='plates'){c.lineWidth=2.5;c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='center';for(const p of PL){if(p.n<60)continue;const L=Math.hypot(p.vx,p.vy)/CMY*ENV.speed*6*Math.min(2,z/3),a=Math.atan2(p.vy,p.vx),Y=sy(p.cy+.5);
+      each(p.cx+.5,X=>{c.strokeStyle='rgba(255,255,255,.9)';c.fillStyle='rgba(255,255,255,.9)';c.beginPath();c.moveTo(X,Y);const ex=X+Math.cos(a)*L,ey=Y+Math.sin(a)*L;c.lineTo(ex,ey);c.stroke();c.beginPath();c.moveTo(ex+Math.cos(a)*8,ey+Math.sin(a)*8);c.lineTo(ex+Math.cos(a+2.5)*7,ey+Math.sin(a+2.5)*7);c.lineTo(ex+Math.cos(a-2.5)*7,ey+Math.sin(a-2.5)*7);c.fill();
+        if(LBL){c.fillStyle='rgba(0,0,0,.55)';const tw=c.measureText(p.name).width+10;c.fillRect(X-tw/2,Y-24,tw,16);c.fillStyle='#fff';c.fillText(p.name,X,Y-12)}})}}
+  // hotspots
+  for(const s of HS){const Y=sy(s.y+.5);each(s.x+.5,X=>{const r=Math.max(5,z*1.6);c.strokeStyle='rgba(255,120,40,.85)';c.setLineDash([3,3]);c.lineWidth=1.5;c.beginPath();c.arc(X,Y,r,0,7);c.stroke();c.setLineDash([]);c.fillStyle='rgba(255,90,30,.25)';c.beginPath();c.arc(X,Y,r,0,7);c.fill()})}
+  // volcanoes
+  const vs=clamp(z*0.9,3,9);for(const v of VOL){const Y=sy(cyOf(v.i)+.5);each(cxOf(v.i)+.5,X=>{c.fillStyle=v.ext?'rgba(120,110,100,.8)':v.act>0?'#ff6a2a':'#c0503a';c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1;c.beginPath();c.moveTo(X,Y-vs);c.lineTo(X+vs*.8,Y+vs*.5);c.lineTo(X-vs*.8,Y+vs*.5);c.closePath();c.fill();c.stroke();
+    if(v.act>0){c.fillStyle=`rgba(255,140,60,${v.act*0.35})`;c.beginPath();c.arc(X,Y-vs*.3,vs*2.2*v.act+2,0,7);c.fill()}
+    if(LBL&&z>=11&&!v.ext){c.font='11px "IBM Plex Sans",sans-serif';c.textAlign='left';c.fillStyle='rgba(255,230,210,.9)';c.fillText(v.name,X+vs+2,Y+3)}})}
+  // quakes and tsunamis
+  for(const q of QK){const Y=sy(q.y);each(q.x,X=>{if(q.tsu){const r=q.age*z*9;c.strokeStyle=`rgba(140,220,255,${Math.max(0,1-q.age/7)})`;c.lineWidth=3;c.beginPath();c.arc(X,Y,r,0,7);c.stroke();c.beginPath();c.arc(X,Y,r*0.75,0,7);c.stroke();return}
+    const r=(q.m-4)*(1+q.age*2.2)*Math.max(2,z*0.8),al=Math.max(0,1-q.age/3.2);c.strokeStyle=`rgba(255,${q.m>=7?80:200},60,${al})`;c.lineWidth=q.m>=7?3:1.5;c.beginPath();c.arc(X,Y,r,0,7);c.stroke();
+    if(q.age<1.2&&q.m>=6){c.fillStyle=`rgba(255,240,200,${al})`;c.font='600 11px "IBM Plex Mono",monospace';c.textAlign='center';c.fillText('M'+q.m.toFixed(1),X,Y-r-3)}})}
+  for(const p of PARTS){const Y=sy(p.y);each(p.x,X=>{c.globalAlpha=Math.min(1,p.life/p.max*1.5);c.fillStyle=p.c;c.fillRect(X-p.s/2,Y-p.s/2,p.s,p.s)})}c.globalAlpha=1;
+  // highest peak and deepest trench markers
+  if(LBL&&STAT.peak>0){const i=STAT.peakI,Y=sy(cyOf(i)+.5);each(cxOf(i)+.5,X=>{c.fillStyle='#fff';c.font='600 11px "IBM Plex Mono",monospace';c.textAlign='center';c.fillText('▲ '+fmtN(Math.round(STAT.peak))+' m',X,Y-8)})}
+  // selection
+  if(S.sel){const i=S.sel.i,Y=sy(cyOf(i));each(cxOf(i),X=>{c.strokeStyle='#ffc35a';c.lineWidth=2;const s=Math.max(8,z);c.strokeRect(X-1,Y-1,s+2,s+2);c.beginPath();c.moveTo(X+s/2,Y-10);c.lineTo(X+s/2,Y-3);c.moveTo(X+s/2,Y+s+3);c.lineTo(X+s/2,Y+s+10);c.moveTo(X-10,Y+s/2);c.lineTo(X-3,Y+s/2);c.moveTo(X+s+3,Y+s/2);c.lineTo(X+s+10,Y+s/2);c.stroke()})}
+  // tool previews
+  if(TOOLD&&TOOLD.kind==='line'){c.strokeStyle='#ff5a5a';c.lineWidth=3;c.setLineDash([8,6]);c.beginPath();c.moveTo(sx(TOOLD.ax),sy(TOOLD.ay));c.lineTo(sx(TOOLD.ax+wdx(TOOLD.bx-TOOLD.ax)),sy(TOOLD.by));c.stroke();c.setLineDash([])}
+  if(TOOLD&&TOOLD.kind==='push'){const X0=sx(TOOLD.ax),Y0=sy(TOOLD.ay),X1=sx(TOOLD.ax+wdx(TOOLD.bx-TOOLD.ax)),Y1=sy(TOOLD.by),cm=pushCm();c.strokeStyle='#fff';c.lineWidth=3;c.beginPath();c.moveTo(X0,Y0);c.lineTo(X1,Y1);c.stroke();c.fillStyle='#fff';c.font='600 12px "IBM Plex Mono",monospace';c.textAlign='left';c.fillText(cm.toFixed(1)+' cm/yr',X1+8,Y1)}
+  if(HOVER&&S.tool!=='select'&&TB[S.tool]&&TB[S.tool].brush){const r=(S.brush+0.5)*z;c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1;c.beginPath();c.arc(sx(HOVER[0]),sy(HOVER[1]),r,0,7);c.stroke()}
+}
+
+/* ---------- tools ---------- */
+const TB={raise:{brush:1},lower:{brush:1},continent:{brush:1},ocean:{brush:1},quake:{brush:1},meteor:{brush:1}};
+let TOOLD=null,HOVER=null;
+const pushCm=()=>TOOLD?clamp(Math.hypot(wdx(TOOLD.bx-TOOLD.ax),TOOLD.by-TOOLD.ay)*0.5,0,20):0;
+function applyBrush(t,wx,wy){const r=S.brush;
+  if(t==='raise'){brushCells(wx,wy,r,(i,f)=>{h[i]=Math.min(9000,h[i]+(h[i]<SEA-300?700:350)*f);if(h[i]>SEA-300){if(cr[i]<.6)LANDMADE++;cr[i]=Math.max(cr[i],.6)}});RAISED++}
+  else if(t==='lower'){brushCells(wx,wy,r,(i,f)=>{h[i]=Math.max(-11000,h[i]-(h[i]>SEA+300?600:450)*f);if(h[i]<SEA-1500)cr[i]=Math.min(cr[i],.4)});RAISED++}
+  else if(t==='continent'){brushCells(wx,wy,r,(i,f)=>{if(cr[i]<.6)LANDMADE++;cr[i]=1;h[i]=Math.max(h[i],SEA+150+250*f);age[i]=Math.max(age[i],50)});RAISED++}
+  else if(t==='ocean'){brushCells(wx,wy,r,(i,f)=>{cr[i]=0;h[i]=Math.min(h[i],SEA-3000*f-500);age[i]=0});RAISED++}
+  chEv('brush',{t})}
+const SIM={id:'lithosphere',name:'Lithosphere',budget:9,world:{w:GW,h:GH,wrapX:true,maxZ:40,followZ:6},home:'earth',freeScen:'earth',tutScen:'earth',defSpeed:2,homeSpeed:2,inspectTab:'insp',
+  speeds:[['10k yr',0.01],['100k',0.1],['1 Myr',1],['5 Myr',5],['20 Myr',20]],
+  fmtRate:v=>v<1?`${fmtN(v*1e6/1000)} thousand years / s`:`${fmtN(v,v<10?1:0)} million years / s`,
+  dateTxt:()=>S.t<1?`${fmtN(S.t*1e6/1000,0)} thousand years`:`${fmtN(S.t,S.t<10?2:S.t<100?1:0)} million years`,
+  dateSub:()=>`${STAT.avgT.toFixed(0)} °C average · sea ${SEA>=0?'+':''}${Math.round(SEA)} m`,
+  stepSize:sp=>clamp(sp/45,0.002,0.45),
+  tools:[['',[['select','👆','Inspect']]],['Plates',[['push','➡️','Push plate','Drag on a plate in the direction it should move. Longer drags push it faster.'],['rift','✂️','Rift','Drag a line across a plate to tear it in two. A new ocean opens along the line.']]],
+    ['Land',[['raise','⛰️','Raise','Paint to push the ground up. Raised seafloor becomes new land.',1],['lower','🕳️','Lower','Paint to dig the ground down.',1],['continent','🟫','Continent','Paint continental crust: light rock that floats high and makes land.',1],['ocean','🟦','Ocean','Paint heavy oceanic crust that sinks into a sea basin.',1]]],
+    ['Forces',[['volcano','🌋','Volcano','Click to start a volcano. It erupts and builds a cone.'],['hotspot','🔥','Hotspot','Click to place a mantle plume. Plates passing over it get a chain of volcanoes.'],['quake','💥','Quake','Click to set off an earthquake. Brush size sets the magnitude.',1],['meteor','☄️','Meteor','Click to drop a meteor. Brush size sets its size.',1]]]],
+  scens:SCENLIST,
+  load(id){(SCENS[id]||SCENS.earth)();for(let k=0;k<6;k++)tect(0.05);countPlates();computeStats();volcanoUpkeep();HIST=[];sampleHist(true);syncWorldUI();legendFor(S.view)},
+  after(){renderImage()},
+  step(dt){movePlates(dt);tect(dt);
+    if(EVT.snowball)ENV.snow=Math.min(38,ENV.snow+dt*12);if(EVT.hothouse)ENV.hot=Math.min(12,ENV.hot+dt*4);
+    if(ENV.dust>0){ENV.dust=Math.max(0,ENV.dust-dt*2.2);if(ENV.dust<0.3&&EVT.supervolcano){EVT.supervolcano=false;syncEvents()}}
+    this.acc=(this.acc||0)+dt;if(this.acc>Math.max(0.2,S.speed*0.15)){this.acc=0;dirtyClim=true;volcanoUpkeep();countPlates()}},
+  frame(dt){frameEvents(dt)},
+  render,
+  stats:()=>[['Land',Math.round(STAT.land*100)+'%'],['Plates',PL.filter(p=>p.n>0).length],['Highest',fmtN(Math.round(STAT.peak))+' m'],['Volcanoes',STAT.vol]],
+  hud(){computeStats();sampleHist();renderPlanet();renderInspect()},
+  pick(wx,wy){const y=Math.floor(wy);if(y<0||y>=GH)return null;return{i:idx(Math.floor(wx),y)}},
+  selPos:s=>[cxOf(s.i)+.5,cyOf(s.i)+.5],
+  pointer(type,wx,wy){const t=S.tool;HOVER=[wx,wy];
+    if(t==='rift'||t==='push'){if(type==='down')TOOLD={kind:t==='rift'?'line':'push',ax:wx,ay:wy,bx:wx,by:wy};else if(type==='drag'&&TOOLD){TOOLD.bx=wx;TOOLD.by=wy}
+      else if(type==='up'&&TOOLD){const d=TOOLD;TOOLD=null;if(t==='rift'){if(!splitPlate(d.ax,d.ay,wx,wy))toast('Drag a longer line right across one plate');else toast('✂ The plate tears in two: a rift valley opens')}
+        else{const i=idx(Math.floor(d.ax),clamp(Math.floor(d.ay),0,GH-1)),P=PL[pl[i]],dx=wdx(wx-d.ax),dy=wy-d.ay,L=Math.hypot(dx,dy);if(!P)return;if(L<1){P.vx=P.vy=0;toast(`${P.name} plate stopped`)}else{const cm=clamp(L*0.5,0,20);P.vx=dx/L*cm*CMY;P.vy=dy/L*cm*CMY;toast(`${P.name} plate now moves ${cm.toFixed(1)} cm a year`)}PUSHES++;PLATEED++;chEv('push',{p:P.id,cm:plateCm(P)});S.sel={i}}}
+      return}
+    if(type==='up')return;
+    if(t==='volcano'&&type==='down'){const i=idx(Math.floor(wx),clamp(Math.floor(wy),0,GH-1));const v=addVolcano(i,'user');if(v){brushCells(wx,wy,2,(j,f)=>{h[j]=Math.max(h[j],SEA-400)+500*f;cr[j]=Math.max(cr[j],0.45)});erupt(v,false);toast(`🌋 ${v.name} is erupting`)}return}
+    if(t==='hotspot'&&type==='down'){if(HS.length>=14){toast('That is the most hotspots a planet can hold');return}HS.push({x:Math.floor(wx),y:clamp(Math.floor(wy),2,GH-3),str:1,name:'Hotspot '+(HS.length+1)});HOTSPOTS++;chEv('hotspot',{});toast('🔥 Hotspot placed: speed up time to watch volcanoes form');return}
+    if(t==='quake'&&type==='down'){const i=idx(Math.floor(wx),clamp(Math.floor(wy),0,GH-1));quake(i,Math.min(9.6,6+S.brush*0.3),false);return}
+    if(t==='meteor'&&type==='down'){meteor(wx,wy,2+S.brush*0.9);return}
+    if(TB[t]&&TB[t].brush&&(type==='down'||type==='drag'))applyBrush(t,wx,wy)},
+  hover(wx,wy){HOVER=[wx,wy]},
+  viewChanged:v=>{legendFor(v);renderImage()},
+  toolChanged:()=>{TOOLD=null},
+  find(q){const out=[];const add=(label,sub,go)=>out.push({label,sub,go});
+    if('highest mountain peak everest'.includes(q)||q.includes('high')||q.includes('mount')&&!VOL.some(v=>v.name.toLowerCase().includes(q)))add('Highest mountain',fmtN(Math.round(STAT.peak))+' m',()=>{const i=STAT.peakI;S.sel={i};flyToW(cxOf(i)+.5,cyOf(i)+.5,6);showTab('insp')});
+    if('deepest trench ocean'.includes(q)||q.includes('trench')||q.includes('deep'))add('Deepest trench',fmtN(Math.round(-STAT.deep))+' m deep',()=>{const i=STAT.deepI;S.sel={i};flyToW(cxOf(i)+.5,cyOf(i)+.5,6);showTab('insp')});
+    for(const p of PL)if(p.n&&p.name.toLowerCase().includes(q))add(p.name+' plate',`${plateCm(p).toFixed(1)} cm/yr · ${Math.round(p.cont*100)}% continent`,()=>{const i=idx(p.cx,Math.floor(p.cy));S.sel={i};flyToW(p.cx,p.cy,3);setView('plates');showTab('insp')});
+    for(const v of VOL)if(v.name.toLowerCase().includes(q))add(v.name,v.ext?'extinct volcano':'active volcano',()=>{S.sel={i:v.i};flyToW(cxOf(v.i)+.5,cyOf(v.i)+.5,7);showTab('insp')});
+    for(const s of HS)if(s.name.toLowerCase().includes(q))add(s.name,'hotspot',()=>flyToW(s.x,s.y,5));
+    for(const [,items] of SIM.tools)for(const [id,ico,name] of items)if(id!=='select'&&(name.toLowerCase().includes(q)||id.includes(q)))add(`${ico} Use the ${name} tool`,'tool',()=>setTool(id));
+    for(const [ev,lab] of [['supervolcano','🌋 Supervolcano'],['snowball','❄ Snowball Earth'],['hothouse','☀ Hothouse'],['megaquake','💥 Mega-quake'],['meteor','☄ Meteor strike'],['plume','🔥 Mantle plume'],['breakup','✂ Break a continent']])if(lab.toLowerCase().includes(q)||ev.includes(q))add(lab,'event',()=>doEvent(ev));
+    for(const s of SCENLIST)if(s.name.toLowerCase().includes(q))add('World: '+s.name,s.desc,()=>{loadScen(s.id);toast(s.name)});
+    return out},
+  tabShown(id){if(id==='planet')renderPlanet(true)},
+  selChanged(){renderInspect()},
+};
+/* ---------- panels ---------- */
+const fmtLat=y=>{const l=latOf(y);return Math.abs(l).toFixed(0)+'°'+(l>=0?'N':'S')},fmtLon=x=>{const l=lonOf(x);return Math.abs(l).toFixed(0)+'°'+(l>=0?'E':'W')};
+function kv(rows){return rows.map(([k,v])=>`<div><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
+function renderPlanet(force){if($('pane-planet').hidden&&!force)return;
+  $('pStats').innerHTML=kv([['Land',Math.round(STAT.land*100)+'%'],['Continents',STAT.cont],['Islands',STAT.isl],['Highest peak',fmtN(Math.round(STAT.peak))+' m'],['Deepest trench',fmtN(Math.round(-STAT.deep))+' m'],['Active volcanoes',STAT.vol],['Ice cover',Math.round(STAT.ice*100)+'%'],['Oldest seafloor',Math.round(STAT.old)+' Myr']]);
+  const g=$('graph'),gc=g.getContext('2d'),w=g.width=g.clientWidth*DPR,hh=g.height=g.clientHeight*DPR;gc.clearRect(0,0,w,hh);
+  if(HIST.length>1){const t0=HIST[0].t,t1=HIST[HIST.length-1].t||1,X=t=>8+(w-16)*(t-t0)/Math.max(1e-6,t1-t0);
+    const line=(f,lo,hi,col)=>{gc.strokeStyle=col;gc.lineWidth=2*DPR;gc.beginPath();HIST.forEach((p,k)=>{const y=hh-8-(hh-16)*clamp((f(p)-lo)/(hi-lo),0,1);k?gc.lineTo(X(p.t),y):gc.moveTo(X(p.t),y)});gc.stroke()};
+    line(p=>p.land,0,0.6,'#7fd18a');line(p=>p.peak,0,9000,'#ff8a5c');line(p=>p.temp,-30,35,'#7fb2ff')}
+  $('gKey').innerHTML='<span style="color:#7fd18a">■ land 0–60%</span> · <span style="color:#ff8a5c">■ highest peak 0–9 km</span> · <span style="color:#7fb2ff">■ temperature</span>';
+  const L=$('plist');const ps=PL.filter(p=>p.n>0).sort((a,b)=>b.n-a.n);if(L.children.length!==ps.length){L.textContent='';for(const p of ps){const r=document.createElement('button');r.className='sprow';r.innerHTML='<i></i><span></span><b></b>';L.appendChild(r)}}
+  ps.forEach((p,k)=>{const r=L.children[k];r.children[0].style.background=p.col;r.children[1].textContent=`${p.name} · ${Math.round(p.n/N*100)}% of surface${p.cont>.3?' · continental':''}`;r.children[2].textContent=plateCm(p).toFixed(1)+' cm/yr';r.onclick=()=>{const i=idx(p.cx,Math.floor(p.cy));S.sel={i};flyToW(p.cx,p.cy);setView('plates');showTab('insp')}});
+  const Q=$('qlog');Q.innerHTML=QLOG.length?QLOG.map(q=>`<div><span>${q.where}${q.ocean?' · undersea':''}</span><b style="color:${q.m>=8?'#ff6b5a':q.m>=7?'#ffc35a':'inherit'}">M${q.m.toFixed(1)}</b></div>`).join(''):'<p class="note">None yet. Earthquakes happen along plate boundaries.</p>'}
+let INSPK='';
+function renderInspect(){const b=S.sel;$('inspEmpty').hidden=!!b;$('inspBody').hidden=!b;if(!b)return;const i=b.i,P=PL[pl[i]];if(!P)return;
+  const x=cxOf(i),y=cyOf(i),hh=h[i]-SEA,bt=['None','Colliding','Spreading','Sliding past'][bnd[i]],vol=VOL.find(v=>v.i===i);
+  const key=[i,pl[i],P.vx.toFixed(4),P.vy.toFixed(4)].join();const body=$('inspBody');
+  if(INSPK!==key){INSPK=key;const dir=(Math.atan2(-P.vy,P.vx)*180/Math.PI+360)%360;
+    body.innerHTML=`<h2 class="ititle" id="iTitle"></h2><div class="isub" id="iSub"></div><div class="kv" id="iKv"></div>
+    <span class="k">The ${P.name} plate</span><div class="kv" id="iPl"></div>
+    <div class="sl"><div class="row"><span class="k">Plate speed</span><span id="pSpV"></span></div><input type="range" id="pSp" min="0" max="20" step="0.1"></div>
+    <div class="sl"><div class="row"><span class="k">Direction</span><span id="pDirV"></span></div><input type="range" id="pDir" min="0" max="359" step="1"></div>
+    <div class="actions"><button class="btn" id="pStop">Stop plate</button><button class="btn" id="pSplit">✂ Split here</button><button class="btn" id="pView">Show plates</button></div>
+    <p class="note">Plates really move 1–15 cm a year, about as fast as fingernails grow. Over millions of years that adds up to thousands of kilometres.</p>`;
+    const sp=$('pSp'),dr=$('pDir');sp.value=plateCm(P)/ENV.speed||0;dr.value=Math.round(dir);
+    const apply=()=>{const cm=+sp.value,a=+dr.value*Math.PI/180;P.vx=Math.cos(a)*cm*CMY;P.vy=-Math.sin(a)*cm*CMY;PLATEED++;chEv('push',{p:P.id,cm:plateCm(P)});INSPK=[i,pl[i],P.vx.toFixed(4),P.vy.toFixed(4)].join();$('pSpV').textContent=cm.toFixed(1)+' cm/yr';$('pDirV').textContent=compass(+dr.value)};
+    sp.oninput=apply;dr.oninput=apply;$('pStop').onclick=()=>{sp.value=0;apply()};$('pView').onclick=()=>setView('plates');
+    $('pSplit').onclick=()=>{const a=Math.random()*Math.PI,L=30;if(splitPlate(x-Math.cos(a)*L,y-Math.sin(a)*L,x+Math.cos(a)*L,y+Math.sin(a)*L))toast('✂ The plate splits in two');else toast('Too close to the plate edge to split here')};
+    $('pSpV').textContent=(+sp.value).toFixed(1)+' cm/yr';$('pDirV').textContent=compass(+dr.value)}
+  $('iTitle').textContent=vol?vol.name:biome(i);$('iSub').textContent=`${fmtLat(y)} ${fmtLon(x)}${vol?` · ${vol.ext?'extinct':'active'} ${vol.kind==='hotspot'?'hotspot ':vol.kind==='arc'?'arc ':''}volcano · ${vol.erupts} eruptions`:''}`;
+  $('iKv').innerHTML=kv([[hh>=0?'Elevation':'Depth',fmtN(Math.round(Math.abs(hh)))+' m'],['Temperature',tempAt(i).toFixed(0)+' °C'],['Crust',cr[i]>.5?'Continental':'Oceanic'],['Crust age',cr[i]>.5?'over 200 Myr':Math.round(age[i])+' Myr'],['Plate boundary',bt],['Quake stress',bnd[i]?Math.min(100,Math.round((brel[i]*1.4+STR[i]*0.06)*100))+'%':'low']]);
+  $('iPl').innerHTML=kv([['Speed',plateCm(P).toFixed(1)+' cm/yr'],['Heading',compass((Math.atan2(-P.vy,P.vx)*180/Math.PI+360)%360)],['Size',Math.round(P.n/N*100)+'% of surface'],['Continental',Math.round(P.cont*100)+'%']])}
+const compass=d=>['east','north-east','north','north-west','west','south-west','south','south-east'][Math.round(d/45)%8];
+
+/* ================= Lithosphere: challenges, tutorial, demo ================= */
+const myr=()=>since();
+const contCount=()=>STAT.cont;
+const natQ=m=>evHas(e=>e.k==='quake'&&e.nat&&e.m>=m);
+// getting started
+CC(1,{t:'Roof of the world',g:'Find the highest mountain on the planet and select it.',hint:'Type highest in the search bar and press Enter.',scen:'earth',check:()=>{const ok=S.sel&&Math.abs(h[S.sel.i]-h[STAT.peakI])<300&&Math.abs(wdx(cxOf(S.sel.i)-cxOf(STAT.peakI)))<3;return[ok,ok?1:0,ok?'Found it':'Not found yet']},stars:byTime(20,45)});
+CC(1.1,{t:'Deep time',g:'Run time at 5 million years per second.',hint:'Press “5 Myr” next to the pause button.',scen:'earth',check:()=>{const ok=!S.paused&&S.speed>=5;return[ok,ok?1:0,'']},stars:byTime(10,30)});
+CC(1.25,{t:'Fault finder',g:'Find a place where two plates slide past each other (a yellow boundary line) and click on it.',hint:'Make sure Plate boundaries is On in the World tab, zoom in on a yellow line and click exactly on it.',scen:'earth',check:()=>{const ok=S.sel&&bnd[S.sel.i]===3;return[ok,ok?1:0,ok?'A transform fault!':'Click on a yellow line']},stars:byTime(25,60)});
+CC(1.2,{t:'See the plates',g:'Switch to the Plates view and select the fastest-moving plate.',hint:'World tab → Views → Plates. Then open the Planet tab: plates are listed with their speeds. Click the top speed.',scen:'earth',
+  check:()=>{const live=PL.filter(p=>p.n>0),f=live.reduce((a,b)=>plateCm(b)>plateCm(a)?b:a,live[0]),ok=S.view==='plates'&&S.sel&&pl[S.sel.i]===f.id;return[ok,(S.view==='plates'?.5:0)+(ok?.5:0),S.view!=='plates'?'Turn on the Plates view':ok?'That is the fastest':`Fastest is ${f.name} at ${plateCm(f).toFixed(1)} cm/yr`]},stars:byTime(30,70)});
+CC(1.3,{t:'Make an island',g:'Raise 40 squares of new land out of the open ocean.',hint:'Pick Raise and paint over the sea, again and again in the same spot.',scen:'young',setup:()=>{CH.ref.l=LANDMADE},check:()=>{const n=LANDMADE-CH.ref.l;return[n>=40,n/40,`${Math.min(n,40)} of 40 squares`]},stars:byTime(25,60)});
+CC(1.4,{t:'Eruption',g:'Start a volcano and watch it erupt 3 times.',hint:'Pick Volcano and click anywhere. New volcanoes erupt often for a while.',scen:'earth',check:()=>{const n=CH.events.filter(e=>e.k==='erupt'&&e.user).length;return[n>=3,n/3,`${Math.min(n,3)} of 3 eruptions`]},stars:byTime(25,60)});
+CC(1.5,{t:'Shake it',g:'Set off a magnitude 8 earthquake with the Quake tool.',hint:'Pick Quake, drag the Brush slider up to 7 or more, then click.',scen:'earth',check:()=>{const ok=evHas(e=>e.k==='quake'&&e.m>=8);return[ok,ok?1:0,'']},stars:byTime(20,50)});
+CC(1.6,{t:'Change course',g:'Push a plate so it moves at least 12 cm a year.',hint:'Pick Push plate and drag a long arrow across a plate, or select a plate and use the speed slider in the Inspect tab.',scen:'earth',check:()=>{const m=Math.max(0,...PL.filter(p=>p.n).map(plateCm));return[m>=12,m/12,`Fastest plate: ${m.toFixed(1)} cm/yr`]},stars:byTime(25,60)});
+CC(1.7,{t:'Hotspot',g:'Place a hotspot in the ocean and let it build a volcano.',hint:'Pick Hotspot and click on deep sea, then speed up time.',scen:'earth',check:()=>{const ok=VOL.some(v=>v.kind==='hotspot'&&v.born>CH.t0&&HS.includes(v.hs)&&HS.indexOf(v.hs)>=0);return[ok&&HOTSPOTS>0,ok?1:HOTSPOTS?.5:0,ok?'A volcano is growing':HOTSPOTS?'Now let time run':'Place a hotspot first']},stars:byTime(30,70)});
+CC(1.8,{t:'Impact',g:'Drop a meteor and blast a crater.',hint:'Pick Meteor and click anywhere.',scen:'earth',check:()=>{const ok=evN('meteor')>0;return[ok,ok?1:0,'']},stars:byTime(15,40)});
+CC(1.9,{t:'Rising tide',g:'Raise the sea level by 300 m.',hint:'World tab → Sea level slider.',scen:'earth',check:()=>{const v=SEA;return[v>=300,clamp(v/300,0,1),`Sea level ${v>=0?'+':''}${Math.round(v)} m`]},stars:byTime(15,40)});
+// mountains and oceans
+CC(2.4,{t:'Himalaya',g:'Let the two continents collide and raise a peak over 7,000 m.',hint:'The small continent is already moving. Speed up time to 5 Myr and watch the Plates view.',scen:'collide',check:()=>{const p=STAT.peak;return[p>=7000,clamp(p/7000,0,1),`Highest peak ${fmtN(Math.round(p))} m`]},stars:byTime(45,110)});
+CC(3.4,{t:'Everest and beyond',g:'Raise a mountain higher than 8,800 m by colliding continents.',hint:'Faster collisions build higher mountains. Push the small continent harder into the big one, and turn erosion down.',scen:'collide',setup:()=>{CH.ref.r=RAISED},check:()=>{const p=STAT.peak,ok=p>=8800&&RAISED===CH.ref.r;return[ok,clamp(p/8800,0,1),`Highest peak ${fmtN(Math.round(p))} m${RAISED!==CH.ref.r?' · painting with Raise does not count':''}`]},stars:byTime(70,160)});
+CC(2.8,{t:'The abyss',g:'Grow an ocean trench deeper than 10,000 m.',hint:'Trenches form where old seafloor dives under another plate. Make the plates collide faster with Push plate.',scen:'ring',setup:()=>{CH.ref.r=RAISED},check:()=>{const d=-STAT.deep,ok=d>=10000&&RAISED===CH.ref.r;return[ok,clamp(d/10000,0,1),`Deepest ${fmtN(Math.round(d))} m${RAISED!==CH.ref.r?' · digging does not count':''}`]},stars:byTime(50,120)});
+CC(2.6,{t:'Island chain',g:'Let the hotspot build a chain of 6 islands.',hint:'The plate carries each volcano away from the plume, and a new one grows. Speed up time.',scen:'hawaii',setup:()=>{CH.ref.v=0},check:()=>{const n=VOL.filter(v=>v.kind==='hotspot'&&v.born>CH.t0).length;return[n>=6,n/6,`${Math.min(n,6)} of 6 hotspot volcanoes`]},stars:byTime(45,110)});
+CC(2.9,{t:'New seafloor',g:'Open the ocean wider: make 1,000 squares of brand-new seafloor (younger than 10 Myr).',hint:'Speed the two plates apart with Push plate or the speed slider.',scen:'iceland',check:()=>{let n=0;for(let i=0;i<N;i++)if(cr[i]<.5&&age[i]<10&&age[i]<myr()+0.01)n++;return[n>=1000,n/1000,`${n} of 1,000 squares`]},stars:byTime(45,110)});
+CC(3.1,{t:'Break up Pangaea',g:'Split the supercontinent into at least 4 continents.',hint:'Speed up time and let the plates pull it apart, or use the Rift tool to cut it.',scen:'pangaea',check:()=>{const c=contCount();return[c>=4,c/4,`${c} continents`]},stars:byTime(60,150)});
+CC(3.6,{t:'Seven continents',g:'Have exactly 7 continents at the same time.',hint:'Rift big continents, or let them drift. A continent is land bigger than about 1.8 million km².',scen:'pangaea',check:()=>{const c=contCount();return[c===7,Math.min(c,7)/7,`${c} continents`]},stars:byTime(90,200)});
+CC(3.3,{t:'Rift valley',g:'Tear a continent in two with the Rift tool so a new sea opens between the halves.',hint:'Pick Rift and drag a line right across a continent. Then speed up time.',scen:'earth',setup:()=>{CH.ref.c=null},check:()=>{if(RIFTS===0)return[false,0,'Use the Rift tool first'];if(CH.ref.c==null)CH.ref.c=contCount();const c=contCount();return[c>CH.ref.c,0.5,`${c} continents · waiting for a sea to open`]},stars:byTime(60,150)});
+CC(4.5,{t:'Supercontinent',g:'Bring the land back together: make one continent that holds 80% of all land.',hint:'Push the continents toward each other with Push plate. Plates collide and weld together.',scen:'earth',check:()=>{const c=(STAT.comps||[]).reduce((a,b)=>b.area>a.area?b:a,{area:0}),tot=(STAT.comps||[]).reduce((s,b)=>s+b.area,0)||1,f=c.area/tot;return[f>=.8,f/.8,`Biggest continent holds ${Math.round(f*100)}% of the land`]},stars:byTime(150,320)});
+// quakes and volcanoes
+CC(2.5,{t:'Ring of fire',g:'Have 30 active volcanoes at once.',hint:'Volcanoes grow where seafloor dives under another plate. Turn up Volcanism and speed up time.',scen:'ring',check:()=>{const n=STAT.vol;return[n>=30,n/30,`${n} of 30 active volcanoes`]},stars:byTime(45,110)});
+CC(3.2,{t:'The big one',g:'Wait for a natural earthquake of magnitude 8 or more.',hint:'Big quakes strike where plates collide fast. Push plates into each other to build up stress (Earthquakes view).',scen:'ring',check:()=>{const ok=natQ(8);return[ok,ok?1:0,ok?'A great earthquake!':`Biggest so far: M${Math.max(0,...CH.events.filter(e=>e.k==='quake'&&e.nat).map(e=>e.m)).toFixed(1)}`]},stars:byTime(60,150)});
+CC(2.7,{t:'Tsunami',g:'Cause an undersea earthquake big enough to send out a tsunami.',hint:'Use the Quake tool at magnitude 8 or more, out at sea.',scen:'ring',check:()=>{const ok=evN('tsunami')>0;return[ok,ok?1:0,'']},stars:byTime(20,60)});
+CC(3.0,{t:'Supervolcano',g:'Set off a supervolcano and watch the planet cool by 4 °C.',hint:'World tab → 🌋 Supervolcano. The ash takes a moment to spread.',scen:'earth',setup:()=>{CH.ref.t=STAT.avgT},check:()=>{const d=CH.ref.t-STAT.avgT;return[d>=4,clamp(d/4,0,1),`${d.toFixed(1)} °C cooler`]},stars:byTime(25,60)});
+// climate and ice
+CC(2.2,{t:'Snowball Earth',g:'Freeze the planet until ice covers 70% of it, then thaw it back below 15%.',hint:'World tab → ❄ Snowball Earth. Press it again to stop, or raise the temperature.',scen:'earth',setup:()=>{CH.ref.f=false},check:()=>{if(STAT.ice>=.7)CH.ref.f=true;const ok=CH.ref.f&&STAT.ice<.15;return[ok,CH.ref.f?0.5+0.5*clamp((0.7-STAT.ice)/0.55,0,1):STAT.ice/1.4,`Ice ${Math.round(STAT.ice*100)}%${CH.ref.f?' · now thaw it':''}`]},stars:byTime(45,110)});
+CC(2.3,{t:'Drowned world',g:'Flood the planet until less than 8% is land.',hint:'Raise the sea level, or melt the ice with Hothouse.',scen:'earth',check:()=>{const l=STAT.land;return[l<.08,clamp((0.3-l)/0.22,0,1),`${Math.round(l*100)}% land`]},stars:byTime(25,60)});
+CC(3.5,{t:'Ice age',g:'Cover 40% of the land in ice sheets without the Snowball event.',hint:'Lower the global temperature. High mountains near the poles freeze first.',scen:'earth',check:()=>{const f=STAT.landIce,ok=f>=.4&&!EVT.snowball;return[ok,f/.4,`${Math.round(f*100)}% of land under ice${EVT.snowball?' · switch Snowball off':''}`]},stars:byTime(30,80)});
+CC(3.8,{t:'Wear it down',g:'The collision has stopped. Erode the highest mountain below 2,500 m.',hint:'Turn Erosion right up and speed up time.',scen:'collide',setup:()=>{for(const p of PL){p.vx=p.vy=0}for(let i=0;i<N;i++)if(cr[i]>.5&&Math.abs(wdx(cxOf(i)-195))<16&&cyOf(i)>70&&cyOf(i)<120)h[i]=Math.max(h[i],4500+Math.random()*3500)},check:()=>{const p=STAT.peak;return[p<2500,clamp((8000-p)/5500,0,1),`Highest ${fmtN(Math.round(p))} m`]},stars:byTime(40,100)});
+// building
+CC(4.0,{t:'Grow a continent',g:'On the young planet, grow the continental crust by 1,000 squares without painting it.',hint:'Island arcs slowly turn into continental crust where plates collide. Push plates together and let tens of millions of years pass.',scen:'young',setup:()=>{CH.ref.c=STAT.contCells;CH.ref.r=RAISED},check:()=>{const n=STAT.contCells-CH.ref.c,ok=n>=1000&&RAISED===CH.ref.r;return[ok,clamp(n/1000,0,1),`${Math.max(0,n)} of 1,000 new squares${RAISED!==CH.ref.r?' · painting does not count':''}`]},stars:byTime(90,200)});
+CC(3.7,{t:'Archipelago',g:'Have 15 islands at once.',hint:'Raise the sea level so hills become islands, or build them with hotspots and Raise.',scen:'earth',check:()=>{const n=STAT.isl;return[n>=15,n/15,`${n} of 15 islands`]},stars:byTime(60,150)});
+CC(4.2,{t:'Ancient seafloor',g:'Keep some seafloor alive until it is 200 million years old.',hint:'Seafloor is destroyed in trenches. Slow down the plates that dive under others.',scen:'iceland',check:()=>{const o=STAT.old;return[o>=200,o/200,`Oldest seafloor ${Math.round(o)} Myr`]},stars:byTime(80,200)});
+CC(4.4,{t:'Steady planet',g:'Keep land between 25% and 35% for 100 million years.',hint:'Watch the sea level and the ice. Big glaciers lower the sea.',scen:'earth',check:()=>{const l=STAT.land,p=hold('s',l>=.25&&l<=.35,100);return[p>=1,p,`${Math.round(l*100)}% land · ${Math.round(p*100)} of 100 Myr`]},stars:byTime(60,150)});
+
+/* tutorial: every feature gets a step */
+TSTEPS.push(
+ ['Look around','Drag with the mouse (or one finger) to move across the planet. W, A, S and D work too.',r=>CNT.moved>r.m+150,r=>{r.m=CNT.moved}],
+ ['Zoom','Scroll (or pinch) to zoom in. Zoom goes toward wherever your pointer is.',r=>CNT.zoomed>r.z+2,r=>{r.z=CNT.zoomed}],
+ ['Pause time','Press Space or the ⏸ button to pause.',()=>S.paused],
+ ['Speed up','Resume, then press “5 Myr” to run five million years every second.',()=>!S.paused&&S.speed>=5],
+ ['Find the highest peak','Type highest in the search bar and press Enter.',()=>S.sel&&Math.abs(h[S.sel.i]-h[STAT.peakI])<300&&Math.abs(wdx(cxOf(S.sel.i)-cxOf(STAT.peakI)))<3],
+ ['Inspect the ground','Click anywhere on the planet. The Inspect tab shows the rock, height and the plate underneath.',r=>S.sel&&S.sel.i!==STAT.peakI],
+ ['See the plates','In the World tab, switch to the Plates view. Arrows show where each plate is heading; red lines are collisions.',()=>S.view==='plates'],
+ ['Plate boundaries','The coloured lines are plate boundaries. Click right on a red line, where two plates collide.',()=>S.sel&&bnd[S.sel.i]===1],
+ ['Steer a plate','With some ground selected, drag the Plate speed or Direction slider in the Inspect tab.',r=>PLATEED>r.n,r=>{r.n=PLATEED}],
+ ['Push plate','Pick ➡️ Push plate in the toolbar and drag an arrow across a plate.',r=>PUSHES>r.n,r=>{r.n=PUSHES}],
+ ['Rift','Pick ✂️ Rift and drag a line right across a plate to tear it in two.',r=>RIFTS>r.n,r=>{r.n=RIFTS}],
+ ['Raise land','Pick ⛰️ Raise and paint over the sea to lift new land.',r=>RAISED>r.n,r=>{r.n=RAISED}],
+ ['Volcano','Pick 🌋 Volcano and click to start an eruption.',r=>ERUPTS>r.e&&VOL.some(v=>v.kind==='user'),r=>{r.e=ERUPTS}],
+ ['Hotspot','Pick 🔥 Hotspot and click on the ocean. As the plate slides over it, a chain of volcanoes forms.',r=>HOTSPOTS>r.n,r=>{r.n=HOTSPOTS}],
+ ['Earthquake','Pick 💥 Quake and click. The Brush slider sets the magnitude.',r=>QUAKES>r.q&&QLOG[0]&&!QLOG[0].nat,r=>{r.q=QUAKES}],
+ ['Meteor','Pick ☄️ Meteor and click to blast a crater.',r=>METEORS>r.n,r=>{r.n=METEORS}],
+ ['Sea level','In the World tab, drag the Sea level slider.',r=>SLIDED>r.n,r=>{r.n=SLIDED}],
+ ['Cause an event','Press one of the World tab events, such as ❄ Snowball Earth or ☀ Hothouse.',r=>EVN>r.n,r=>{r.n=EVN}],
+ ['Stop the event','Press the same button again (it now says ■ Stop) or ↺ Stop all events.',r=>EVSTOP>r.n,r=>{r.n=EVSTOP}],
+ ['The Planet tab','Open the Planet tab to see land, continents, peaks, every plate and recent earthquakes.',r=>(CNT.tab_planet||0)>r.n,r=>{r.n=CNT.tab_planet||0}],
+ ['Seafloor age','Switch to the Seafloor age view: red seafloor is brand new, born at mid-ocean ridges.',()=>S.view==='age'],
+ ['Other worlds','Press Worlds in the top bar and pick a different planet.',r=>CNT.scen>r.n,r=>{r.n=CNT.scen}],
+);
+
+/* demo */
+DEMO.push(
+ ['earth','Drifting plates','The surface is cracked into plates that drift a few centimetres a year. Over millions of years, whole oceans open and close.',()=>{setSpeed(3);setView('plates')}],
+ ['collide','Continents collide','A small continent ploughs into a big one. The crust crumples and a mountain range rises, like the Himalaya.',()=>{setSpeed(3);flyToW(190,95,4)}],
+ ['hawaii','Island chain','The ocean plate slides over a fixed hotspot. Each new volcano is carried away, leaving a trail of islands like Hawaii.',()=>{setSpeed(3);flyToW(190,100,4)}],
+ ['ring','Ring of Fire','Where seafloor dives under another plate, deep trenches form and volcanoes and earthquakes ring the ocean.',()=>{setSpeed(2);setView('quake')}],
+ ['pangaea','Supercontinent breakup','One giant continent splits apart. New oceans open between the pieces.',()=>{setSpeed(4);setView('plates')}],
+ ['iceland','A new ocean','At a mid-ocean ridge, fresh seafloor is born and spreads outward. Red is the youngest rock.',()=>{setSpeed(3);setView('age')}],
+ ['earth','Snowball Earth','Turn the temperature down far enough and ice spreads from the poles until the planet freezes over.',()=>{setSpeed(3);doEvent('snowball')}],
+);
+
+/* ===== flat icons: every emoji in labels, buttons and messages is drawn as a flat one-colour silhouette instead of a colourful emoji ===== */
+(function(){
+  if(window.__noEmoji)return;window.__noEmoji=true;
+  const RE=/(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|⃣)?(?:‍(?:\p{Extended_Pictographic})(?:️)?)*|[\u{1F3FB}-\u{1F3FF}]/gu,HAS=/\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+  const KEEP=new Set([...'★☆✓✔✗✕✖×→←↑↓↔⤢⊗⊙▸◂−±°©®™']);
+  const strip=s=>s.replace(RE,m=>KEEP.has(m)?m:'').replace(/[️‍]/g,'').replace(/ {2,}/g,' ');
+  window.noEmoji=strip;
+  // emoji drawn on a square background turn into plain squares as silhouettes: swap them for ones that make good flat icons
+  const SWAP={'⚛️':'🧪','⚛':'🧪','☢️':'⚠️','☯️':'⭐','🔆':'☀️','🔅':'☀️','🔃':'⇄','🔀':'⇄','🌌':'✨','🚇':'🚈','🌉':'🏗️','🔄':'⇄','🔁':'⟳','🆕':'+','🌁':'🏗️','🌃':'🌙','🌄':'⛰️','🌅':'☀️','🏞️':'⛰️','🎑':'🌙','🖼️':'🎨'};
+  const PLAIN=new Set(['OPTION','TITLE','TEXTAREA','SCRIPT','STYLE','INPUT']);
+  // turn one text node into text + flat icon spans
+  function flatten(n){const p=n.parentElement;if(!p||p.classList.contains('fi')||p.closest('.fi'))return;
+    if(PLAIN.has(p.tagName)||p.closest('svg')){n.nodeValue=strip(n.nodeValue);return}
+    const s=n.nodeValue;RE.lastIndex=0;let m,last=0,parts=[];
+    while((m=RE.exec(s))){if(KEEP.has(m[0]))continue;if(m.index>last)parts.push(document.createTextNode(s.slice(last,m.index)));const sw=SWAP[m[0]]||SWAP[m[0].replace(/\uFE0F/g,'')];const g=sw||m[0];if(sw&&!HAS.test(sw)){parts.push(document.createTextNode(sw))}else{const sp=document.createElement('span');sp.className='fi';sp.setAttribute('aria-hidden','true');sp.textContent=g;parts.push(sp)}last=m.index+m[0].length}
+    if(!parts.length)return;if(last<s.length)parts.push(document.createTextNode(s.slice(last)));const f=document.createDocumentFragment();parts.forEach(x=>f.appendChild(x));p.replaceChild(f,n)}
+  function clean(root){if(!root)return;if(root.nodeType===3){if(HAS.test(root.nodeValue))flatten(root);return}
+    if(root.nodeType!==1||PLAIN.has(root.tagName)&&root.tagName!=='OPTION'&&root.tagName!=='TITLE')return;if(root.classList&&root.classList.contains('fi'))return;
+    for(const a of ['title','aria-label','placeholder','alt'])if(root.hasAttribute&&root.hasAttribute(a)&&HAS.test(root.getAttribute(a)))root.setAttribute(a,strip(root.getAttribute(a)).trim());
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);const texts=[];let n;
+    while((n=w.nextNode())){if(n.nodeType===1){for(const a of ['title','aria-label','placeholder','alt'])if(n.hasAttribute(a)&&HAS.test(n.getAttribute(a)))n.setAttribute(a,strip(n.getAttribute(a)).trim());continue}if(HAS.test(n.nodeValue))texts.push(n)}
+    texts.forEach(flatten)}
+  // canvas labels: emoji are left out there (the map draws its own shapes)
+  for(const P of [window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype,window.OffscreenCanvasRenderingContext2D&&OffscreenCanvasRenderingContext2D.prototype])if(P)for(const f of ['fillText','strokeText']){const o=P[f];P[f]=function(t,...a){if(typeof t==='string'&&HAS.test(t)){t=strip(t).trim();if(!t)return}return o.call(this,t,...a)}}
+  const css=document.createElement('style');
+  css.textContent='.fi{display:inline-block;line-height:1;font-style:normal;filter:brightness(0) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);opacity:.92;vertical-align:-.08em}.ne-lab{display:none}';
+  const go=()=>{document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
+    new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData'){if(m.target.parentElement&&!m.target.parentElement.classList.contains('fi'))clean(m.target)}else if(m.type==='attributes')clean(m.target);else for(const x of m.addedNodes)clean(x)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})};
+  if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
+})();
+
+/* ===== extras for every simulator: 📸 snapshot and ⛶ full screen ===== */
+var SNAPS=0;
+(function(){
+  const cv=document.getElementById('world')||document.getElementById('sky');if(!cv)return;
+  const name=(document.title||'simulation').replace(/\s+/g,'-').toLowerCase();
+  const say=m=>{try{if(typeof toast==='function')toast(m)}catch(e){}};
+  function snap(){try{const w=cv.width,h=cv.height,o=document.createElement('canvas');o.width=w;o.height=h;const c=o.getContext('2d');c.drawImage(cv,0,0);
+      const s=Math.max(1,w/1200),t=(document.title||'')+'  ·  '+new Date().toLocaleDateString();c.font=`600 ${Math.round(16*s)}px "IBM Plex Mono",monospace`;const tw=c.measureText(t).width;
+      c.fillStyle='rgba(0,0,0,.55)';c.fillRect(w-tw-28*s,h-38*s,tw+20*s,28*s);c.fillStyle='#fff';c.textBaseline='middle';c.fillText(t,w-tw-18*s,h-24*s);
+      const a=document.createElement('a');a.download=`${name}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.png`;a.href=o.toDataURL('image/png');document.body.appendChild(a);a.click();a.remove();
+      SNAPS++;try{if(typeof chEv==='function')chEv('snap',{})}catch(e){}say('Picture saved to your downloads')}catch(e){say('Could not save a picture here')}}
+  const canFull=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled);
+  function full(){const d=document,el=d.documentElement;if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d)}else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el)}}
+  const ICONS={cam:'<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 6h3l1.5-2h5L14 6h3v10H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="11" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',full:'<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'};const mk=(ic,tip,fn)=>{const b=document.createElement('button');if(ICONS[ic])b.innerHTML=ICONS[ic];else b.textContent=ic;b.title=tip;b.setAttribute('aria-label',tip);b.onclick=e=>{e.stopPropagation();fn()};return b};
+  const zb=document.querySelector('.zoomb');let box=zb;
+  if(!box){box=document.createElement('div');box.className='xtras';box.style.cssText='position:fixed;left:12px;bottom:12px;z-index:30;display:flex;gap:6px';document.body.appendChild(box);
+    const st=document.createElement('style');st.textContent='.xtras button{width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,14,26,.82);color:#fff;font-size:17px;cursor:pointer}.xtras button:hover{background:rgba(40,50,80,.9)}@media (max-width:760px){.xtras{left:auto!important;right:10px!important;bottom:auto!important;top:220px!important;flex-direction:column}}';document.head.appendChild(st)}
+  box.appendChild(mk('cam','Save a picture of the world',snap));if(canFull)box.appendChild(mk('full','Full screen',full));
+  window.SIM_SNAP=snap;
+  // a tutorial step and a challenge for the kit simulators
+  try{if(typeof CC==='function'&&typeof TSTEPS!=='undefined'){const kit=typeof SIM!=='undefined';const su=kit?undefined:typeof scen==='function'?scen('solar'):typeof scn==='function'?scn('meadow'):undefined;
+    const where=document.querySelector('.zoomb')?'next to the zoom buttons':'in the bottom-left corner';
+    TSTEPS.push(['Take a picture',`Press the camera button ${where} to save a picture of your world.`,r=>SNAPS>r.n,r=>{r.n=SNAPS}]);
+    const o={t:'Photographer',g:'Save a picture of the world with the camera button.',hint:`The camera button is ${where}.`,check:()=>{const ok=typeof evN==='function'?evN('snap')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='snap'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(10,30):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;else o.setup=su;CC(1.02,o)}}catch(e){}
+})();
+
+/* ==ASKQ== Ask Quasar: an AI helper inside every simulator. It reads what you are doing, so you never have to explain. */
+(function(){if(window.__askq)return;window.__askq=1;
+try{if(typeof CC==='function'&&typeof TSTEPS!=='undefined'){const kit=typeof SIM!=='undefined';
+  TSTEPS.push(['Ask Quasar','Press Ask Quasar at the top. Quasar can see your game, so ask it anything, like what to do next.',r=>(window.AQO||0)>r.n,r=>{r.n=window.AQO||0}]);
+  const o={t:'Curious mind',g:'Ask Quasar a question about your game (it needs the internet).',hint:'Press Ask Quasar at the top and tap one of the suggestions.',check:()=>{const ok=typeof evN==='function'?evN('askq')>0:(typeof CH!=='undefined'&&CH.events?CH.events.some(e=>e.k==='askq'):false);return[ok,ok?1:0,'']},stars:typeof byTime==='function'?byTime(30,90):undefined};if(kit)o.scen=SIM.tutScen||SIM.home;CC(1.03,o)}}catch(e){}
+
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const tracking=()=>LS.get('quasar_track')!==false;
+const gameId=()=>{try{if(typeof SIM!=='undefined'&&SIM.id)return SIM.id}catch(e){}const p=location.pathname.toLowerCase();return p.includes('/life')?'biosphere':p.includes('barycenter')?'barycenter':(document.title||'game').toLowerCase().split(/\s/)[0]};
+const gameName=()=>{try{if(typeof SIM!=='undefined'&&SIM.name)return SIM.name}catch(e){}return(document.title||'Simulator').split(/[·|—-]/)[0].trim()};
+const vis=e=>e&&e.offsetParent!==null&&getComputedStyle(e).visibility!=='hidden';
+const txt=(el,n)=>vis(el)?el.innerText.replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim().slice(0,n||600):'';
+function progress(){const o={};try{if(typeof CHALS!=='undefined'&&typeof PROG!=='undefined'){const n=CHALS.length;let st=0,done=0,next=null;CHALS.forEach(c=>{const s=PROG.stars[c.t]||0;st+=s;if(s)done++;else if(!next)next=c});o.stars=st;o.maxStars=n*3;o.done=done;o.total=n;o.plays=PROG.plays||0;if(next)o.next=`${next.t}: ${next.g}`}}catch(e){}return o}
+function snapshot(){const o={game:gameName(),page:location.href.split('#')[0]};try{const home=document.getElementById('home');o.screen=home&&!home.hidden?'home menu':'playing'}catch(e){}
+  try{if(typeof SIM!=='undefined'&&typeof S!=='undefined'){const sc=(SIM.scens||[]).find(s=>s.id===S.scen);o.scenario=sc?sc.name:S.scen;if(SIM.dateTxt)o.clock=SIM.dateTxt();if(SIM.dateSub)o.status=SIM.dateSub();if(SIM.stats)o.stats=SIM.stats().map(([k,v])=>k+': '+v).join(', ');o.tool=S.tool;o.view=S.view;o.speed=S.paused?'paused':S.speed+'×'}}catch(e){}
+  try{if(typeof CH!=='undefined'&&CH.active)o.challenge=`${CH.active.t}: ${CH.active.g}. Progress: ${(document.getElementById('chProg')||{}).textContent||''}. Hint: ${CH.active.hint||'none'}`;if(typeof TUT!=='undefined'&&TUT.on&&typeof TSTEPS!=='undefined'){const st=TSTEPS[TUT.i];if(st)o.tutorial=`step ${TUT.i+1} of ${TSTEPS.length}: ${st[0]}: ${st[1]}`}}catch(e){}
+  if(!o.challenge&&!o.tutorial){const h=document.getElementById('chHud');const t=txt(h,300);if(t)o.challengeBox=t}
+  o.selected=txt(document.getElementById('inspBody'),600)||'';const pane=document.querySelector('#dock .pane:not([hidden])');if(pane&&vis(pane)){const cl=pane.cloneNode(true);cl.querySelectorAll('select,option,script,canvas,svg').forEach(e=>e.remove());cl.querySelectorAll('input[type=range]').forEach(e=>e.replaceWith(' ['+e.value+'] '));o.openPanel=cl.textContent.replace(/\s+/g,' ').trim().slice(0,700)}
+  if(!o.stats){o.screenText=[...document.querySelectorAll('.panel,.hud,#hud,header')].filter(e=>vis(e)&&!e.closest('#aqP')).map(e=>e.innerText.replace(/\s+/g,' ').trim()).filter(Boolean).join(' | ').slice(0,1200)}o.progress=progress();return o}
+function remember(){if(!tracking())return;try{const s=snapshot(),all=LS.get('quasar_activity')||{};const p=s.progress||{};all[gameId()]={name:s.game,url:s.page,when:Date.now(),stars:p.stars,maxStars:p.maxStars,done:p.done,total:p.total,next:p.next,doing:[s.scenario,s.challenge&&('challenge '+s.challenge.split('. Progress')[0]),s.tutorial&&'tutorial',s.clock].filter(Boolean).join(' · ').slice(0,240)};LS.set('quasar_activity',all)}catch(e){}}
+setInterval(()=>{if(document.visibilityState==='visible')remember()},15000);addEventListener('pagehide',remember);setTimeout(remember,4000);
+function siteProgress(){const all=LS.get('quasar_activity')||{};return Object.values(all).sort((a,b)=>b.when-a.when).slice(0,14).map(a=>`- ${a.name}: ${a.done!=null?`${a.done}/${a.total} challenges, ${a.stars}/${a.maxStars} stars`:'played'}${a.doing?`; last doing: ${a.doing}`:''}; ${Math.round((Date.now()-a.when)/60000)} min ago`).join('\n')}
+/* ---------- the chat panel ---------- */
+const css=`#aqBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;border:1px solid rgba(180,150,255,.55);background:rgba(14,12,26,.92);color:#efe8ff;font:600 13px system-ui,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.45);cursor:pointer}
+#aqBtn svg{width:18px;height:18px}#aqBtn.aqIn{position:static;box-shadow:none;padding:6px 11px 6px 9px;background:rgba(60,40,120,.55);font-size:12.5px}@media (max-width:1500px){#aqBtn.aqIn span{display:none}#aqBtn.aqIn{padding:6px 9px}}#aqBtn:hover{border-color:#b388ff}
+#aqP{position:fixed;right:12px;bottom:12px;z-index:80;width:min(390px,calc(100vw - 24px));height:min(560px,calc(100vh - 24px));display:flex;flex-direction:column;background:#0e0c1a;color:#ece8f6;isolation:isolate;border:1px solid rgba(180,150,255,.4);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.6);font:14px/1.45 system-ui,sans-serif;overflow:hidden}
+#aqP[hidden],#aqBtn[hidden]{display:none}#aqP header{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.08)}#aqP header b{font-size:15px}#aqP header small{color:#a99fc4;display:block;font-size:11.5px}
+#aqP header button{margin-left:auto;background:none;border:0;color:#cfc6e8;font-size:20px;cursor:pointer;padding:2px 8px}
+#aqM{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}.aqm{max-width:88%;padding:8px 11px;border-radius:12px;white-space:normal;word-wrap:break-word}.aqm.me{align-self:flex-end;background:#3b2f6b}.aqm.ai{align-self:flex-start;background:rgba(255,255,255,.06)}.aqm ul{margin:4px 0 4px 18px;padding:0}
+#aqC{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}#aqC button{border:1px solid rgba(180,150,255,.35);background:none;color:#d8ccff;border-radius:999px;padding:5px 10px;font:12.5px system-ui,sans-serif;cursor:pointer}
+#aqF{display:flex;gap:6px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08)}#aqF input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;padding:9px 11px;font:14px system-ui,sans-serif}#aqF button{border:0;border-radius:10px;background:#8b5cf6;color:#fff;padding:0 14px;font:600 14px system-ui,sans-serif;cursor:pointer}
+#aqT{padding:0 12px 9px;font-size:11.5px;color:#9a90b8}#aqT a{color:#c4b0ff;cursor:pointer;text-decoration:underline}
+@media (max-width:760px){#aqBtn{right:10px;bottom:auto;top:calc(var(--hudH,70px) + 14px);padding:8px 11px}#aqP{right:0;left:0;bottom:0;width:100vw;height:78vh;border-radius:16px 16px 0 0}}`;
+const icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(-25 12 12)"/><path d="M19 3.5v3M17.5 5h3"/></svg>';
+let hist=[];try{hist=JSON.parse(sessionStorage.getItem('aq_hist_'+gameId())||'[]')}catch(e){}
+const save=()=>{try{sessionStorage.setItem('aq_hist_'+gameId(),JSON.stringify(hist.slice(-20)))}catch(e){}};
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function md(s){const L=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n');let out='',ul=false;for(const l of L){const m=l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);if(m){if(!ul){out+='<ul>';ul=true}out+='<li>'+m[1]+'</li>'}else{if(ul){out+='</ul>';ul=false}out+=l?l+'<br>':'<br>'}}if(ul)out+='</ul>';return out.replace(/(<br>)+$/,'')}
+function add(role,text){const d=document.createElement('div');d.className='aqm '+(role==='user'?'me':'ai');d.innerHTML=md(text);document.getElementById('aqM').appendChild(d);d.scrollIntoView({block:'end'});return d}
+function system(){const s=snapshot();const live=tracking()?JSON.stringify(s,null,1).slice(0,3500):'(the player turned off progress tracking)';
+  return `You are Quasar, the friendly AI helper built into "${s.game}", one of the free browser simulators on the Our Simulations! website. Many players are kids, so use simple words, be encouraging, and keep answers short (under 120 words) unless they ask for more.
+You can SEE what the player is doing: the live game state below is read automatically every time they ask. Never ask them to describe what is on screen; use it. Refer to real buttons, tools, tabs and challenge names you can see. When they ask how to do something, give 2–5 clear steps.
+Live game state right now:
+${live}
+${tracking()?`The player's progress across the website (most recent first):\n${siteProgress()||'- nothing recorded yet'}`:''}`}
+let busy=false;
+async function ask(q){if(busy||!q.trim())return;busy=true;hist.push({role:'user',content:q});add('user',q);const box=add('ai','…');let out='';
+  if(!navigator.onLine){box.innerHTML='Quasar needs the internet to answer. Everything else in the simulator still works offline.';busy=false;hist.pop();return}
+  try{const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',stream:true,private:true,messages:[{role:'system',content:system()},...hist.slice(-10)]})});
+    if(!r.ok||!r.body)throw new Error('http '+r.status);const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+    for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')continue;try{const j=JSON.parse(d),t=j.choices&&j.choices[0]&&(j.choices[0].delta||{}).content;if(t){out+=t;box.innerHTML=md(out.replace(/<think>[\s\S]*?(<\/think>|$)/g,''));box.scrollIntoView({block:'end'})}}catch(e){}}}
+    if(!out.trim())throw new Error('empty')}
+  catch(e){try{const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(q)+'?private=true&model=openai&system='+encodeURIComponent(system().slice(0,3000)));out=await r.text();box.innerHTML=md(out)}catch(e2){out='';box.innerHTML='Sorry, I could not reach Quasar just now. Try again in a moment.'}}
+  out=out.replace(/<think>[\s\S]*?<\/think>/g,'').trim();if(out){hist.push({role:'assistant',content:out});save()}else hist.pop();busy=false;try{if(typeof chEv==='function')chEv('askq',{});window.AQN=(window.AQN||0)+1}catch(e){}}
+function build(){if(document.getElementById('aqBtn'))return;const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
+  const b=document.createElement('button');b.id='aqBtn';b.type='button';b.innerHTML=icon+'<span>Ask Quasar</span>';b.title='Ask Quasar, the AI helper. It can see what you are doing.';const host=document.querySelector('.hud-top .right')||(document.getElementById('homeBtn')||{}).parentElement;if(host&&host!==document.body){b.className='btn aqIn';host.insertBefore(b,host.querySelector('#homeBtn')||null)}else document.body.appendChild(b);
+  const p=document.createElement('div');p.id='aqP';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','Ask Quasar');
+  p.innerHTML=`<header>${icon.replace('<svg','<svg width="22" height="22" style="color:#b388ff"')}<div><b>Quasar</b><small>Sees your game and progress, so just ask</small></div><button id="aqX" aria-label="Close">×</button></header><div id="aqM"></div><div id="aqC"></div><div id="aqT"></div><form id="aqF"><input id="aqI" placeholder="Ask anything about this game…" autocomplete="off"><button>Send</button></form>`;document.body.appendChild(p);
+  const chips=['What should I do next?','Explain what I am looking at','Help me with this challenge','How am I doing overall?'];const C=document.getElementById('aqC');for(const c of chips){const x=document.createElement('button');x.type='button';x.textContent=c;x.onclick=()=>ask(c);C.appendChild(x)}
+  const T=document.getElementById('aqT');const tr=()=>{T.innerHTML=tracking()?'Quasar can see this game and your progress. <a id="aqOff">Turn off</a>':'Progress tracking is off. <a id="aqOff">Turn on</a>';document.getElementById('aqOff').onclick=()=>{LS.set('quasar_track',!tracking());if(!tracking())try{localStorage.removeItem('quasar_activity')}catch(e){}tr()}};tr();
+  if(hist.length)hist.forEach(h=>add(h.role,h.content));else add('assistant',`Hi! I'm Quasar. I can see what you're doing in ${gameName()}, so just ask, like "what should I do next?"`);
+  const open=v=>{p.hidden=!v;b.hidden=v;if(v){remember();setTimeout(()=>document.getElementById('aqI').focus(),50);try{window.AQO=(window.AQO||0)+1;if(typeof chEv==='function')chEv('askqopen',{})}catch(e){}}};
+  b.onclick=()=>open(true);document.getElementById('aqX').onclick=()=>open(false);
+  document.getElementById('aqF').onsubmit=e=>{e.preventDefault();const i=document.getElementById('aqI');const q=i.value;i.value='';ask(q)};
+  p.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')open(false)});p.addEventListener('pointerdown',e=>e.stopPropagation())}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
+window.askQuasar=q=>{const b=document.getElementById('aqBtn');if(b)b.click();if(q)ask(q)};
+})();
+/* ==/ASKQ== */
+
+/* ===== simulator kit: UI, home, accounts, challenges, tutorial, demo, main loop ===== */
+const cv=$('world'),ctx=cv.getContext('2d');
+function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);measureHud();if(SIM.resize)SIM.resize()}
+function measureHud(){const h=document.querySelector('.hud-top');if(h)document.documentElement.style.setProperty('--hudH',Math.round(h.getBoundingClientRect().height)+'px')}
+const sx=wx=>(wx-cam.x)*cam.z+W/2+cam.ox,sy=wy=>(wy-cam.y)*cam.z+H/2;
+const wxOf=px=>(px-W/2-cam.ox)/cam.z+cam.x,wyOf=py=>(py-H/2)/cam.z+cam.y;
+function freeRect(){let l=0,r=W,t=0,b=H;if(!$('home').hidden)return{l,r,t,b};const vis=e=>e&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().width>0;const hud=document.querySelector('.hud-top'),rail=$('rail'),dock=$('dock');
+  if(vis(hud))t=hud.getBoundingClientRect().bottom+8;if(innerWidth>760){if(vis(rail))l=rail.getBoundingClientRect().right+8;if(vis(dock))r=dock.getBoundingClientRect().left-8;b=H-50}else{if(vis(rail))b=rail.getBoundingClientRect().top-8;if(vis(dock)&&document.body.classList.contains('dockOpen'))b=Math.min(b,dock.getBoundingClientRect().top-8)}
+  if(r-l<200){l=0;r=W}if(b-t<150){t=0;b=H}return{l,r,t,b}}
+function fitWorld(){const w=SIM.world.w,h=SIM.world.h;if(SIM.world.wrapX){cam.z=Math.max(W/w,H/h);cam.x=w/2;cam.y=h/2;clampCam();return}const f=freeRect(),fw=f.r-f.l,fh=f.b-f.t;cam.z=Math.min(fw/w,fh/h)*0.96;if(W<760&&fh>fw*1.05)cam.z=Math.min(Math.max(fw/w,fh/h),cam.z*1.7);cam.x=w/2-((f.l+f.r)/2-W/2-cam.ox)/cam.z;cam.y=h/2-((f.t+f.b)/2-H/2)/cam.z;clampCam()}
+function minZoom(){const w=SIM.world.w,h=SIM.world.h;return SIM.world.wrapX?H/h:Math.min(W/w,H/h)*0.5}
+function clampCam(){const h=SIM.world.h,w=SIM.world.w;cam.z=clamp(cam.z,minZoom(),SIM.world.maxZ||40);if(SIM.world.wrapX){const hy=H/2/cam.z;cam.y=clamp(cam.y,Math.min(h/2,hy),Math.max(h/2,h-hy))}else cam.y=clamp(cam.y,-h*0.5,h*1.5);if(SIM.world.wrapX)cam.x=mod(cam.x,w);else cam.x=clamp(cam.x,-w*0.5,w*1.5)}
+function zoomAt(f,px,py){const wx=wxOf(px),wy=wyOf(py);cam.z*=f;clampCam();cam.x+=wx-wxOf(px);cam.y+=wy-wyOf(py);clampCam();bump('zoomed')}
+function flyToW(x,y,z){S.follow=false;cam.x=x;cam.y=y;if(z)cam.z=Math.max(cam.z,z);clampCam()}
+
+/* speeds */
+function buildSpeeds(){const b=$('spds');b.textContent='';SIM.speeds.forEach(([l,v],i)=>{const e=document.createElement('button');e.className='spd';e.textContent=l;e.onclick=()=>{setSpeed(i);setPaused(false)};b.appendChild(e)})}
+function setSpeed(i){i=clamp(i,0,SIM.speeds.length-1);S.speedI=i;S.speed=SIM.speeds[i][1];[...$('spds').children].forEach((e,k)=>e.setAttribute('aria-pressed',k===i));updateRate()}
+function setPaused(p){S.paused=p;$('pauseBtn').innerHTML=p?'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.2l10 5.8-10 5.8z" fill="currentColor"/></svg>':'<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/></svg>';$('pauseBtn').setAttribute('aria-label',p?'Resume':'Pause');updateRate()}
+function updateRate(){$('rateTxt').textContent=S.paused?'Paused':SIM.fmtRate(S.speed)+(S.achieved<S.speed*0.8&&!S.paused&&S.achieved>0?` (running ${SIM.fmtRate(isFinite(S.speed)?Math.max(S.achieved,S.speed*0.01):S.achieved)})`:'')}
+$('pauseBtn').onclick=()=>setPaused(!S.paused);
+
+/* tools */
+function buildRail(){const r=$('rail');r.textContent='';for(const [g,items] of SIM.tools){if(g){const h=document.createElement('h3');h.textContent=g;r.appendChild(h)}
+  for(const [id,ico,name] of items){const b=document.createElement('button');b.className='tool';b.dataset.tool=id;b.innerHTML='<span class="ico"></span><span></span>';b.children[0].textContent=ico;b.children[1].textContent=name;b.onclick=()=>setTool(id);r.appendChild(b)}}}
+function toolInfo(id){for(const [,items] of SIM.tools)for(const t of items)if(t[0]===id)return t;return null}
+function setTool(id){S.tool=id;document.querySelectorAll('.tool').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===id));const t=toolInfo(id);
+  $('placeopts').hidden=id==='select'||!t;$('toolNote').textContent=t&&t[3]||'';$('brush').parentElement.hidden=!(t&&t[4]);cv.classList.toggle('place',id!=='select');if(id!=='select')bump('tool');if(SIM.toolChanged)SIM.toolChanged(id)}
+$('brush').oninput=e=>{S.brush=+e.target.value;$('brushV').textContent=S.brush};
+
+/* dock tabs */
+function showTab(id){document.body.classList.remove('dockHidden');document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===id));document.querySelectorAll('#dock .pane').forEach(p=>p.hidden=p.id!=='pane-'+id);bump('tab_'+id);if(SIM.tabShown)SIM.tabShown(id)}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
+$('dockBtn').onclick=()=>{if(document.body.classList.contains('dockHidden')){document.body.classList.remove('dockHidden');document.body.classList.add('dockOpen')}else document.body.classList.toggle('dockOpen');setTimeout(()=>{if(!SIM.world.wrapX)fitWorld()},30)};
+$('dockClose').onclick=()=>{document.body.classList.add('dockHidden');document.body.classList.remove('dockOpen');bump('dockclose');setTimeout(()=>{if(!SIM.world.wrapX)fitWorld()},30)};
+function setView(v){S.view=v;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));bump('view');if(SIM.viewChanged)SIM.viewChanged(v)}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+function setLegend(title,grad,ticks){const L=$('legend');if(!title){L.hidden=true;return}L.hidden=false;L.children[0].textContent=title;L.children[1].style.background=grad;[...L.children[2].children].forEach((s,i)=>s.textContent=ticks[i]||'')}
+
+/* scenarios */
+function buildScen(){const g=$('scgrid');g.textContent='';for(const s of SIM.scens){const b=document.createElement('button');b.className='scb';b.innerHTML='<b></b><span></span>';b.children[0].textContent=s.name;b.children[1].textContent=s.desc;b.onclick=()=>{$('scen').hidden=true;loadScen(s.id);bump('scen');toast(s.name)};g.appendChild(b)}}
+function loadScen(id){S.t=0;S.sel=null;S.follow=false;SIM.load(id);S.scen=id;fitWorld();if(SIM.after)SIM.after()}
+$('scenBtn').onclick=()=>$('scen').hidden=!$('scen').hidden;$('scenClose').onclick=()=>$('scen').hidden=true;
+
+/* find */
+let findItems=[],findI=0;
+function renderFind(){const L=$('findList'),q=$('find').value.trim();findItems=q?SIM.find(q.toLowerCase()).slice(0,10):[];findI=0;L.hidden=!findItems.length;L.textContent='';
+  findItems.forEach((it,i)=>{const b=document.createElement('button');b.className=i===findI?'on':'';b.innerHTML='<span></span><small></small>';b.children[0].textContent=it.label;b.children[1].textContent=it.sub||'';b.onmousedown=e=>{e.preventDefault();doFind(i)};L.appendChild(b)})}
+function doFind(i){const it=findItems[i];if(!it)return;$('find').value='';$('findList').hidden=true;$('find').blur();it.go();bump('find')}
+$('find').oninput=renderFind;$('find').onblur=()=>setTimeout(()=>$('findList').hidden=true,120);
+$('find').onkeydown=e=>{if(e.key==='Enter'){doFind(findI)}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){findI=clamp(findI+(e.key==='ArrowDown'?1:-1),0,findItems.length-1);[...$('findList').children].forEach((b,k)=>b.className=k===findI?'on':'');e.preventDefault()}else if(e.key==='Escape'){$('find').blur()}};
+
+/* pointer input */
+const ptrs=new Map();let drag=null,pinch=null;
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:cam.z};if(drag&&drag.tool)SIM.pointer('up',wxOf(e.clientX),wyOf(e.clientY),e);drag=null;return}
+  const pan=S.tool==='select'||e.button===1||e.button===2;
+  drag={x0:e.clientX,y0:e.clientY,lx:e.clientX,ly:e.clientY,moved:0,pan,tool:!pan};
+  if(!pan)SIM.pointer('down',wxOf(e.clientX),wyOf(e.clientY),e)});
+cv.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(p){p.x=e.clientX;p.y=e.clientY}
+  if(pinch&&ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;const f=pinch.z*d/pinch.d/cam.z;zoomAt(f,mx,my);if(pinch.mx!=null){S.follow=false;cam.x-=(mx-pinch.mx)/cam.z;cam.y-=(my-pinch.my)/cam.z;clampCam();CNT.moved+=Math.abs(mx-pinch.mx)+Math.abs(my-pinch.my)}pinch.mx=mx;pinch.my=my;return}
+  if(!drag){if(SIM.hover)SIM.hover(wxOf(e.clientX),wyOf(e.clientY));return}
+  const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;drag.lx=e.clientX;drag.ly=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
+  if(drag.pan){S.follow=false;cam.x-=dx/cam.z;cam.y-=dy/cam.z;clampCam();CNT.moved+=Math.abs(dx)+Math.abs(dy)}else SIM.pointer('drag',wxOf(e.clientX),wyOf(e.clientY),e)});
+function endPtr(e){ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!drag)return;const d=drag;drag=null;
+  if(d.tool)SIM.pointer('up',wxOf(e.clientX),wyOf(e.clientY),e);else if(d.moved<6&&e.button!==2){S.follow=false;S.sel=SIM.pick(wxOf(e.clientX),wyOf(e.clientY))||null;if(S.sel&&SIM.inspectTab){showTab(SIM.inspectTab);document.body.classList.add('dockOpen')}if(SIM.selChanged)SIM.selChanged();deselBtn()}}
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('dblclick',e=>{if(S.sel&&S.tool==='select'&&SIM.canFollow){S.follow=true;cam.z=Math.max(cam.z,SIM.world.followZ||cam.z)}});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(Math.exp(-e.deltaY*0.0015),e.clientX,e.clientY)},{passive:false});
+$('zIn').onclick=()=>zoomAt(1.4,W/2+cam.ox,H/2);$('zOut').onclick=()=>zoomAt(1/1.4,W/2+cam.ox,H/2);$('zFit').onclick=()=>{fitWorld();bump('zoomed')};
+const keys=new Set();
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')return;const k=e.key.toLowerCase();
+  if(k===' '){e.preventDefault();setPaused(!S.paused)}else if(k==='escape'){if(S.tool!=='select')setTool('select');else{S.sel=null;S.follow=false;if(SIM.selChanged)SIM.selChanged()}}
+  else if(k==='+'||k==='=')zoomAt(1.25,W/2+cam.ox,H/2);else if(k==='-')zoomAt(0.8,W/2+cam.ox,H/2);else keys.add(k)});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+function camKeys(dt){let dx=0,dy=0;if(keys.has('a')||keys.has('arrowleft'))dx--;if(keys.has('d')||keys.has('arrowright'))dx++;if(keys.has('w')||keys.has('arrowup'))dy--;if(keys.has('s')||keys.has('arrowdown'))dy++;
+  if(dx||dy){S.follow=false;const sp=600*dt/cam.z;cam.x+=dx*sp;cam.y+=dy*sp;clampCam();CNT.moved+=600*dt}}
+
+/* accounts (shared by every simulator on the site) */
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const ACC_KEY='barycenter.accounts',PROG_KEY=SIM.id+'.progress';
+let ACC=lsGet(ACC_KEY);if(!ACC||!Array.isArray(ACC.list))ACC={list:[],cur:'guest',devicePlays:0};if(ACC.cur!=='guest'&&!ACC.list.some(a=>a.id===ACC.cur))ACC.cur='guest';
+let ACCN=0;
+const progKey=id=>id==='guest'?PROG_KEY:PROG_KEY+'.'+id;
+const blankProg=()=>({stars:{},plays:0,secs:0});
+let PROG=blankProg();
+function loadProg(){const v=lsGet(progKey(ACC.cur));PROG=Object.assign(blankProg(),v&&typeof v.stars==='object'?v:{})}
+function saveProg(){lsSet(progKey(ACC.cur),PROG)}
+function saveAcc(){const cur=lsGet(ACC_KEY);if(cur&&Array.isArray(cur.list)){for(const a of ACC.list){const o=cur.list.find(x=>x.id===a.id);if(o)Object.keys(o).forEach(k=>{if(!(k in a))a[k]=o[k]})}for(const o of cur.list)if(!ACC.list.some(a=>a.id===o.id))ACC.list.push(o);if(cur.devicePlays>ACC.devicePlays)ACC.devicePlays=cur.devicePlays}lsSet(ACC_KEY,ACC)}
+const curAcc=()=>ACC.list.find(a=>a.id===ACC.cur);
+const accName=()=>(curAcc()||{name:'Guest'}).name;
+const pinHash=p=>{let h=5381;for(const c of 'bary:'+p)h=((h*33)^c.charCodeAt(0))>>>0;return h.toString(36)};
+const GCOUNT='https://abacus.jasoncameron.dev',GPATH='barycenter-sandbox/'+SIM.id+'-plays';let GLOBAL=null;
+function gCount(op){try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),6000);fetch(`${GCOUNT}/${op}/${GPATH}`,{signal:ctl.signal,cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&Number.isFinite(+j.value)){GLOBAL=Math.max(GLOBAL||0,+j.value);updateAcctUI()}}).catch(()=>{})}catch(e){}}
+function countPlay(){PROG.plays++;ACC.devicePlays=(ACC.devicePlays||0)+1;saveProg();saveAcc();if(GLOBAL!=null)GLOBAL++;updateAcctUI();gCount('hit')}
+function updateAcctUI(){$('hAcctName').textContent=curAcc()?accName():'Guest · make an account';$('hPlaysN').textContent=(GLOBAL!=null?GLOBAL:PROG.plays).toLocaleString();$('hPlaysL').textContent=GLOBAL!=null?'plays by everyone':'plays';$('acctBtn').title=`Account: ${accName()} (saved on this device)`}
+function switchAcc(id,quiet){if(id===ACC.cur)return;saveProg();ACC.cur=id;saveAcc();loadProg();ACCN++;updateAcctUI();if(!$('home').hidden)homeView($('hChalView').hidden?'hMain':'hChalView');if(!quiet)toast(`Signed in as ${accName()}`);renderAcct()}
+let acctPend=null;
+function renderAcct(msg){const L=$('acctList');L.textContent='';$('acctMsg').textContent=msg||'';
+  for(const a of [{id:'guest',name:'Guest',guest:1},...ACC.list]){const pr=a.id===ACC.cur?PROG:(lsGet(progKey(a.id))||{stars:{},plays:0}),cur=a.id===ACC.cur,r=document.createElement('div');r.className='arow'+(cur?' cur':'');
+    const nm=document.createElement('div');nm.className='an';nm.innerHTML='<div></div><div class="as"></div>';nm.children[0].textContent=(a.pin?'🔒 ':'')+a.name+(cur?' (signed in)':'');nm.children[1].textContent=`★ ${Object.values(pr.stars||{}).reduce((x,y)=>x+y,0)} in ${SIM.name} · ${pr.plays||0} plays`;r.appendChild(nm);
+    if(!cur){if(acctPend===a.id){const inp=document.createElement('input');inp.placeholder='PIN';inp.maxLength=4;const go=document.createElement('button');go.className='btn primary';go.textContent='OK';const t=()=>{if(pinHash(inp.value)===a.pin){acctPend=null;switchAcc(a.id)}else renderAcct('Wrong PIN')};go.onclick=t;inp.onkeydown=e=>{if(e.key==='Enter')t()};r.append(inp,go);setTimeout(()=>inp.focus(),0)}
+      else{const b=document.createElement('button');b.className='btn';b.textContent=a.guest?'Use guest':'Sign in';b.onclick=()=>{if(a.pin){acctPend=a.id;renderAcct()}else switchAcc(a.id)};r.appendChild(b)}}
+    else if(!a.guest){const so=document.createElement('button');so.className='btn';so.textContent='Sign out';so.onclick=()=>switchAcc('guest');r.appendChild(so)}
+    L.appendChild(r)}}
+function openAcct(){acctPend=null;$('acct').hidden=false;renderAcct()}
+$('acctForm').addEventListener('submit',e=>{e.preventDefault();const name=$('acctNew').value.trim().replace(/\s+/g,' ').slice(0,20),pin=$('acctPin').value.trim();
+  if(!name)return renderAcct('Type a name first');if(/^guest$/i.test(name)||ACC.list.some(a=>a.name.toLowerCase()===name.toLowerCase()))return renderAcct('That name is taken on this device');if(pin&&!/^\d{4}$/.test(pin))return renderAcct('A PIN is 4 digits (or leave it empty)');
+  const fromGuest=ACC.cur==='guest'&&(PROG.plays||Object.keys(PROG.stars).length);const a={id:'a'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),name,created:Date.now()};if(pin)a.pin=pinHash(pin);
+  if(fromGuest){lsSet(progKey(a.id),PROG);lsSet(PROG_KEY,blankProg())}ACC.list.push(a);saveAcc();$('acctNew').value='';$('acctPin').value='';switchAcc(a.id,true);toast(`Account ${name} created`);renderAcct(fromGuest?'Your guest progress moved into this account.':'')});
+$('hAcctBtn').onclick=openAcct;$('acctBtn').onclick=openAcct;$('acctClose').onclick=()=>$('acct').hidden=true;$('acct').addEventListener('click',e=>{if(e.target.id==='acct')$('acct').hidden=true});
+$('hPlays').onclick=()=>{gCount('get');toast(GLOBAL!=null?`${GLOBAL.toLocaleString()} plays by everyone · ${PROG.plays} by you`:`${PROG.plays} plays by you on this device`)};
+
+/* challenges */
+CHALS.sort((a,b)=>a.diff-b.diff);loadProg();
+const NCH=CHALS.length;
+const starsOf=i=>(CHALS[i]&&PROG.stars[CHALS[i].t])||0;
+const unlocked=i=>{if(i===0||starsOf(i-1)||starsOf(i))return true;for(let j=i+1;j<NCH;j++)if(starsOf(j))return true;return false};
+function totalStars(){let n=0;for(let i=0;i<NCH;i++)n+=starsOf(i);return n}
+const doneCount=()=>CHALS.filter((c,i)=>starsOf(i)>0).length;
+function setMode(m){document.body.classList.toggle('mHome',m==='home');document.body.classList.toggle('mDemo',m==='demo')}
+function homeView(v){for(const id of ['hMain','hChalView','hDemoView'])$(id).hidden=id!==v;if(v==='hChalView')renderGrid();const d=doneCount();$('hChalSub').textContent=d?`${d} of ${NCH} complete · ${totalStars()} of ${NCH*3} stars`:`${NCH} goals, from easy to fiendish`;updateAcctUI()}
+function showHome(){stopDemo(true);if(CH.active)endChallenge();if(TUT.on)endTutorial();$('chDone').hidden=true;$('scen').hidden=true;
+  CH.loading=true;loadScen(SIM.home);CH.loading=false;setSpeed(SIM.homeSpeed??SIM.defSpeed);setPaused(false);setTool('select');setView('normal');
+  cam.ox=innerWidth>900?innerWidth*0.2:0;setMode('home');$('home').hidden=false;homeView('hMain')}
+function leaveHome(){cam.ox=0;$('home').hidden=true;setMode('');fitWorld()}
+$('homeBtn').onclick=showHome;document.querySelectorAll('.hback').forEach(b=>b.onclick=()=>homeView('hMain'));
+$('hChal').onclick=()=>homeView('hChalView');$('hDemo').onclick=()=>homeView('hDemoView');
+function startFree(){leaveHome();loadScen(SIM.freeScen||SIM.home);setSpeed(SIM.defSpeed);countPlay()}
+$('hFree').onclick=startFree;
+function renderGrid(){const g=$('hGrid');g.textContent='';let next=-1;
+  CHALS.forEach((c,i)=>{const st=starsOf(i),un=unlocked(i);if(un&&!st&&next<0)next=i;const b=document.createElement('button');b.className='ct'+(i===next?' next':'');b.disabled=!un;b.title=un?`${c.t}: ${c.g}`:'Finish the previous challenge to unlock';
+    b.innerHTML='<span class="cn"></span><span class="ctt"></span><span class="cs"></span>';b.children[0].textContent=`#${i+1}`;b.children[1].textContent=un?c.t:'Locked';b.children[2].textContent=un?(st?'★'.repeat(st)+'☆'.repeat(3-st):'☆☆☆'):'🔒';b.onclick=()=>startChallenge(i);g.appendChild(b)});
+  $('hStars').textContent=`★ ${totalStars()} / ${NCH*3}`;if(next>=0)setTimeout(()=>{const el=g.children[next];if(el)el.scrollIntoView({block:'nearest'})},30)}
+function startChallenge(i){const c=CHALS[i];if(!c||!unlocked(i))return;leaveHome();countPlay();$('chDone').hidden=true;
+  CH.active=c;CH.idx=i;CH.events=[];CH.hold={};CH.ref={};CH.done=false;CH.failed='';CH.loading=true;try{loadScen(c.scen||SIM.home);setSpeed(c.speed??SIM.defSpeed);if(c.setup)c.setup()}finally{CH.loading=false}
+  CH.t0=S.t;CH.real0=performance.now();setPaused(false);setTool(SIM.defTool||'select');
+  $('chHud').hidden=false;$('chNum').textContent=`Challenge ${i+1} of ${NCH}`;$('chTitle').textContent=c.t;$('chGoal').textContent=c.g;$('chProg').textContent='';$('chBar').style.width='0%';$('chHint').hidden=!c.hint;$('chRestart').textContent='Restart'}
+function endChallenge(){CH.active=null;$('chHud').hidden=true}
+function chTick(){if(TUT.on)tutTick();if(!CH.active||CH.done)return;const c=CH.active;let r;try{r=c.check()}catch(e){console.warn(e);r=[false,0,'']}
+  const [done,p,txt]=r;$('chProg').textContent=txt||'';$('chBar').style.width=Math.round(clamp(p||0,0,1)*100)+'%';const t=realSecs();$('chTime').textContent=`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+  if(done){CH.done=true;const st=clamp((c.stars||byTime(60,150))(),1,3),prev=starsOf(CH.idx);if(st>prev)PROG.stars[c.t]=st;saveProg();
+    $('dStars').innerHTML='★'.repeat(st)+'<span class="off">'+'★'.repeat(3-st)+'</span>';$('dTitle').textContent=`Challenge ${CH.idx+1} complete!`;$('dText').textContent=`${c.t} · ${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}${st<3?' · Faster solutions earn more stars.':' · Perfect!'}${prev>st?` Your best is still ${prev} ★.`:''}`;
+    $('dNext').hidden=CH.idx>=NCH-1;$('dNext').textContent='Next challenge';$('dRetry').hidden=false;$('dList').textContent='All challenges';$('chDone').hidden=false;$('chHud').hidden=true;return}
+  const f=c.fail&&c.fail();if(f){CH.done=true;$('dStars').innerHTML='<span class="off">★★★</span>';$('dTitle').textContent='Not this time';$('dText').textContent=f+'. Try again?';$('dNext').hidden=true;$('dRetry').hidden=false;$('dList').textContent='All challenges';$('chDone').hidden=false;$('chHud').hidden=true}}
+$('chRestart').addEventListener('click',()=>{if(TUT.on){TUT.i++;tutStep();return}startChallenge(CH.idx)});
+$('chExit').addEventListener('click',()=>{if(TUT.on){endTutorial();showHome();homeView('hDemoView');return}endChallenge();showHome();homeView('hChalView')});
+$('chHint').onclick=()=>{if(CH.active)toast('Hint: '+CH.active.hint,6000)};
+$('dNext').onclick=()=>{if(TUT.finished){TUT.finished=false;showHome();homeView('hChalView');return}startChallenge(CH.idx+1)};
+$('dRetry').onclick=()=>{if(TUT.finished){TUT.finished=false;startTutorial();return}startChallenge(CH.idx)};
+$('dList').onclick=()=>{if(TUT.finished){TUT.finished=false;$('chDone').hidden=true;startFree();return}endChallenge();showHome();homeView('hChalView')};
+
+/* tutorial */
+const TUT={on:false,i:0,ref:{},finished:false};
+function startTutorial(){leaveHome();countPlay();$('chDone').hidden=true;CH.loading=true;loadScen(SIM.tutScen||SIM.home);CH.loading=false;setSpeed(SIM.defSpeed);setPaused(false);setTool(SIM.defTool||'select');TUT.on=true;TUT.i=0;TUT.finished=false;tutStep()}
+function tutStep(){const st=TSTEPS[TUT.i];if(!st){TUT.on=false;TUT.finished=true;$('chHud').hidden=true;$('dStars').innerHTML='★★★';$('dTitle').textContent='Tutorial complete!';$('dText').textContent='You know all the controls. Try the challenges, or build anything in free play.';$('dNext').hidden=false;$('dNext').textContent='Challenges';$('dRetry').hidden=false;$('dList').textContent='Free play';$('chDone').hidden=false;$('chRestart').textContent='Restart';return}
+  TUT.ref={};if(st[3])st[3](TUT.ref);$('chHud').hidden=false;$('chNum').textContent=`Tutorial · step ${TUT.i+1} of ${TSTEPS.length}`;$('chTitle').textContent=st[0];$('chGoal').textContent=st[1];$('chProg').textContent='';$('chTime').textContent='';$('chBar').style.width=Math.round(TUT.i/TSTEPS.length*100)+'%';$('chHint').hidden=true;$('chRestart').textContent='Skip step'}
+function tutTick(){const st=TSTEPS[TUT.i];let ok=false;try{ok=st&&st[2](TUT.ref)}catch(e){}if(ok){TUT.i++;toast('✓ '+st[0]);tutStep()}}
+function endTutorial(){TUT.on=false;$('chHud').hidden=true;$('chRestart').textContent='Restart'}
+$('hTut').onclick=startTutorial;
+
+/* demo */
+let demoI=-1,demoTimer=0;
+function startDemo(){leaveHome();countPlay();setMode('demo');$('demoCap').hidden=false;demoI=-1;nextDemo()}
+function nextDemo(){clearTimeout(demoTimer);demoI=(demoI+1)%DEMO.length;const [id,t,x,f]=DEMO[demoI];CH.loading=true;loadScen(id);CH.loading=false;setView('normal');setPaused(false);if(f)f();
+  $('demoStep').textContent=`Demo · ${demoI+1} of ${DEMO.length}`;$('demoTitle').textContent=t;$('demoText').textContent=x;demoTimer=setTimeout(nextDemo,12000)}
+function stopDemo(quiet){clearTimeout(demoTimer);if(demoI<0&&quiet)return;demoI=-1;$('demoCap').hidden=true;setMode('');if(!quiet)showHome()}
+$('hWatch').onclick=startDemo;$('demoExit').onclick=()=>stopDemo();$('demoNext').onclick=nextDemo;
+
+/* main loop */
+let last=performance.now(),uiT=0,achAcc=0,achT=0,renderMs=4,stepMs=1;S.achieved=1;
+function frame(now){const dtR=Math.min(0.1,(now-last)/1000);last=now;camKeys(dtR);
+  try{
+    if(!S.paused){const want=S.speed*dtR,step=SIM.stepSize(S.speed),t0=performance.now(),budget=clamp((SIM.budget||12.5)-renderMs,2,9);let done=0;
+      while(done<want-1e-12){const el=performance.now()-t0;if(el+stepMs*0.9>budget&&done>0)break;const s0=performance.now(),d=Math.min(step,want-done);SIM.step(d);S.t+=d;done+=d;stepMs=stepMs*0.8+(performance.now()-s0)*0.2}
+      achAcc+=done}
+    achT+=dtR;if(achT>=0.5){S.achieved=achAcc/achT;achAcc=0;achT=0}
+    if(SIM.frame)SIM.frame(dtR);
+    if(S.follow&&S.sel&&SIM.selPos){const p=SIM.selPos(S.sel);if(p){cam.x=lerp(cam.x,p[0],Math.min(1,dtR*6));cam.y=lerp(cam.y,p[1],Math.min(1,dtR*6));clampCam()}}
+    const r0=performance.now();ctx.setTransform(DPR,0,0,DPR,0,0);SIM.render(ctx,now);renderMs=renderMs*0.85+(performance.now()-r0)*0.15;
+    uiT+=dtR;if(uiT>0.25){uiT=0;updateHud()}
+  }catch(err){console.error('['+SIM.name+']',err)}
+  requestAnimationFrame(frame)}
+function deselect(){S.sel=null;S.follow=false;if(SIM.selChanged)SIM.selChanged()}
+function deselBtn(){const p=$('pane-insp');if(!p)return;let b=$('kitDesel');if(!b){b=document.createElement('button');b.id='kitDesel';b.className='btn';b.textContent='✕ Stop inspecting';b.onclick=deselect;p.insertBefore(b,p.firstChild)}b.hidden=!S.sel}
+function updateHud(){deselBtn();measureHud();const st=SIM.stats(),box=$('stats');if(box.children.length!==st.length){box.textContent='';for(const [k] of st){const d=document.createElement('div');d.className='stat';d.innerHTML='<span class="k"></span><span class="v"></span>';d.children[0].textContent=k;box.appendChild(d)}}
+  st.forEach(([k,v],i)=>{box.children[i].children[1].textContent=v});$('dateTxt').textContent=SIM.dateTxt();$('dateSub').textContent=SIM.dateSub?SIM.dateSub():'';updateRate();SIM.hud();chTick();
+  if(document.visibilityState==='visible'&&$('home').hidden)PROG.secs=(PROG.secs||0)+0.25}
+addEventListener('resize',resize);addEventListener('pagehide',saveProg);
+resize();buildRail();buildSpeeds();buildScen();if(SIM.init)SIM.init();setSpeed(SIM.defSpeed);setTool('select');updateAcctUI();gCount('get');showHome();requestAnimationFrame(frame);
+
+/* ===== Your worlds: Free play keeps a list of saved worlds. Create world, carry on later, Save & exit while playing. =====
+   A world is saved by walking every piece of the game's state (listed at build time in __STATE_NAMES), keeping shared
+   references, typed arrays, Sets and Maps, then squeezing it with gzip into the browser's IndexedDB. */
+(function(){
+  const GAME=SIM.id,NOSAVE=SIM.noSave||[],NAMES=(typeof __STATE_NAMES!=='undefined'?__STATE_NAMES:[]).filter(n=>!NOSAVE.includes(n)).filter(n=>!/^(SIM|TB|SCENS|SCENLIST|LC|SC|SC3|TEX|LCL|LCS|CL|VIEW|JOB|DETS|DET|PARTS|FX|HOVER|DRAG|DRAGR|TOOLD|INSPK|BPATH|ACTX|MODE|off|ox|img|vOff|vx|vImg|bOff|bx|bImg|sig|SEAG|SPC|BPREV)$/.test(n));
+  const geval=eval;const get=n=>{try{return geval(n)}catch(e){return undefined}};
+  /* ---------- turning the world into data and back ---------- */
+  const TA={Float32Array,Float64Array,Int8Array,Int16Array,Int32Array,Uint8Array,Uint16Array,Uint32Array,Uint8ClampedArray};
+  const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)};
+  const unb64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+  function pack(roots){const ids=new Map(),objs=[];const bad=v=>typeof v==='function'||(typeof Node!=='undefined'&&v instanceof Node)||(typeof CanvasRenderingContext2D!=='undefined'&&v instanceof CanvasRenderingContext2D)||(typeof ImageData!=='undefined'&&v instanceof ImageData)||(typeof AudioContext!=='undefined'&&v instanceof AudioContext);
+    function enc(v){if(v===null||typeof v==='boolean'||typeof v==='string')return v;if(typeof v==='number')return Number.isFinite(v)?v:{$n:String(v)};if(v===undefined)return{$u:1};if(bad(v))return{$u:1};if(typeof v!=='object')return{$u:1};
+      if(ids.has(v))return{$r:ids.get(v)};const id=objs.length;ids.set(v,id);objs.push(null);let o;
+      const tn=Object.keys(TA).find(k=>v instanceof TA[k]);
+      if(tn)o={$t:tn,d:b64(new Uint8Array(v.buffer,v.byteOffset,v.byteLength))};
+      else if(Array.isArray(v))o={$a:v.map(enc)};else if(v instanceof Set)o={$s:[...v].map(enc)};else if(v instanceof Map)o={$m:[...v].map(([k,x])=>[enc(k),enc(x)])};
+      else{const p={};for(const k of Object.keys(v)){if(bad(v[k]))continue;p[k]=enc(v[k])}o={$o:p}}objs[id]=o;return{$r:id}}
+    const out={};for(const n of Object.keys(roots))out[n]=enc(roots[n]);return{objs,roots:out}}
+  function unpack(P){const live=new Array(P.objs.length);
+    function make(i){if(live[i]!==undefined)return live[i];const o=P.objs[i];let v;
+      if(o.$t){const u=unb64(o.d);v=new TA[o.$t](u.buffer,0,u.byteLength/TA[o.$t].BYTES_PER_ELEMENT);live[i]=v;return v}
+      if(o.$a){v=[];live[i]=v;for(const x of o.$a)v.push(dec(x));return v}if(o.$s){v=new Set();live[i]=v;for(const x of o.$s)v.add(dec(x));return v}
+      if(o.$m){v=new Map();live[i]=v;for(const [k,x] of o.$m)v.set(dec(k),dec(x));return v}v={};live[i]=v;for(const k of Object.keys(o.$o))v[k]=dec(o.$o[k]);return v}
+    function dec(x){if(x===null||typeof x!=='object')return x;if(x.$u)return undefined;if(x.$n)return Number(x.$n);if(x.$r!==undefined)return make(x.$r);return x}
+    const r={};for(const n of Object.keys(P.roots))r[n]=dec(P.roots[n]);return r}
+  // put a saved value back: reassign `let` variables; for `const` ones, refill the existing object in place
+  function restoreInto(name,val){const cur=get(name);if(cur===undefined&&val===undefined)return;
+    window.__wv=val;try{geval(name+'=window.__wv');return}catch(e){}
+    if(cur&&val&&typeof cur==='object'){const tn=Object.keys(TA).find(k=>cur instanceof TA[k]);
+      if(tn){if(val.length===cur.length)cur.set(val);return}if(Array.isArray(cur)&&Array.isArray(val)){cur.length=0;for(const x of val)cur.push(x);return}
+      if(cur instanceof Set&&val instanceof Set){cur.clear();val.forEach(x=>cur.add(x));return}if(cur instanceof Map&&val instanceof Map){cur.clear();val.forEach((x,k)=>cur.set(k,x));return}
+      for(const k of Object.keys(val)){const c=cur[k];if(c&&typeof c==='object'&&Object.keys(TA).some(t=>c instanceof TA[t])&&val[k]&&val[k].length===c.length)c.set(val[k]);else if(typeof c!=='function')try{cur[k]=val[k]}catch(e){}}}}
+  async function gz(str){try{const s=new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));return 'gz:'+b64(new Uint8Array(await new Response(s).arrayBuffer()))}catch(e){return str}}
+  async function ungz(s){if(!s.startsWith('gz:'))return s;const st=new Blob([unb64(s.slice(3))]).stream().pipeThrough(new DecompressionStream('gzip'));return await new Response(st).text()}
+  function snapshot(){const roots={};for(const n of NAMES){const v=get(n);if(v!==undefined&&typeof v!=='function')roots[n]=v}
+    roots.__S={t:S.t,scen:S.scen,view:S.view,speedI:S.speedI,status:S.status,brush:S.brush};roots.__cam={x:cam.x,y:cam.y,z:cam.z};return pack(roots)}
+  function apply(P){const r=unpack(P);for(const n of Object.keys(r)){if(n==='__S'||n==='__cam')continue;restoreInto(n,r[n])}
+    const s=r.__S||{};S.t=s.t||0;S.scen=s.scen;if(s.status)S.status=s.status;if(s.brush)S.brush=s.brush;S.sel=null;S.follow=false;
+    // rebuild anything drawn from the world
+    for(const f of ['dirtyImg','dirtyClim','DIRTY','VDIRTY','BDIRTY'])try{geval(f+'=true')}catch(e){}
+    try{if(typeof VIEW!=='undefined'&&VIEW){VIEW.key='';VIEW.ready=null;VIEW.job=null}}catch(e){}
+    try{if(typeof SEAG!=='undefined'){geval('SEAG=null;SPC=new Map()')}}catch(e){}
+    for(const f of ['routes','syncPanel','syncWorldUI','computeStats','countPlates'])try{const fn=get(f);if(typeof fn==='function')fn()}catch(e){}
+    if(typeof SIM.afterRestore==='function')try{SIM.afterRestore()}catch(e){}
+    if(s.view)try{setView(s.view)}catch(e){}if(s.speedI!=null)setSpeed(s.speedI);if(r.__cam){cam.x=r.__cam.x;cam.y=r.__cam.y;cam.z=r.__cam.z;try{clampCam()}catch(e){}}}
+  /* ---------- storage: IndexedDB on this device (localStorage if that is unavailable) ---------- */
+  let dbp=null;const db=()=>dbp||(dbp=new Promise((ok,no)=>{try{const r=indexedDB.open('sim_worlds',1);r.onupgradeneeded=()=>{const s=r.result.createObjectStore('worlds',{keyPath:'id'});s.createIndex('game','game')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}));
+  const tx=async(mode,fn)=>{const d=await db();return new Promise((ok,no)=>{const t=d.transaction('worlds',mode),st=t.objectStore('worlds');const q=fn(st);t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)})};
+  const LSK='sim_worlds_'+GAME;const lsAll=()=>{try{return JSON.parse(localStorage.getItem(LSK)||'[]')}catch(e){return[]}};const lsPut=a=>{try{localStorage.setItem(LSK,JSON.stringify(a));return true}catch(e){return false}};
+  async function listWorlds(){try{const all=await tx('readonly',st=>st.index('game').getAll(GAME));return(all||[]).map(({data,...m})=>m).sort((a,b)=>b.updated-a.updated)}catch(e){return lsAll().map(({data,...m})=>m).sort((a,b)=>b.updated-a.updated)}}
+  async function getWorld(id){try{return await tx('readonly',st=>st.get(id))}catch(e){return lsAll().find(w=>w.id===id)}}
+  async function putWorld(w){try{await tx('readwrite',st=>st.put(w));return true}catch(e){const a=lsAll().filter(x=>x.id!==w.id);a.push(w);return lsPut(a)}}
+  async function delWorld(id){try{await tx('readwrite',st=>st.delete(id))}catch(e){lsPut(lsAll().filter(w=>w.id!==id))}}
+  /* ---------- the current world ---------- */
+  let CUR=null,saving=false,lastSave=0;window.WORLDSAVES=0;
+  function thumb(){try{const c=document.getElementById('world')||document.getElementById('sky'),t=document.createElement('canvas'),k=240/Math.max(c.width,c.height);t.width=Math.round(c.width*k);t.height=Math.round(c.height*k);t.getContext('2d').drawImage(c,0,0,t.width,t.height);return t.toDataURL('image/jpeg',.7)}catch(e){return''}}
+  async function saveNow(quietly){if(!CUR||saving)return;saving=true;try{const data=await gz(SIM.saveState?SIM.saveState():JSON.stringify(snapshot()));CUR.data=data;CUR.updated=Date.now();CUR.scen=S.scen;CUR.thumb=thumb();CUR.t=S.t;
+      const ok=await putWorld(CUR);lastSave=Date.now();WORLDSAVES++;if(!ok&&!quietly)toast('Could not save: this browser is out of storage space');else if(!quietly)toast('World saved')}catch(e){if(!quietly)toast('Could not save this world')}saving=false}
+  setInterval(()=>{if(CUR&&$('home').hidden&&!document.body.classList.contains('mDemo')&&Date.now()-lastSave>(SIM.saveEvery||30000))saveNow(true)},5000);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&CUR)saveNow(true)});addEventListener('pagehide',()=>{if(CUR)saveNow(true)});
+  /* ---------- screens ---------- */
+  const css=document.createElement('style');css.textContent=`#hWorldsView .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .wcard{display:flex;flex-direction:column;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}.wcard .wth{aspect-ratio:16/10;background:#000 center/cover no-repeat;cursor:pointer}
+  .wcard .wb{padding:9px 10px;display:flex;flex-direction:column;gap:3px}.wcard b{font-family:var(--f-display);font-weight:500;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wcard small{color:var(--dim);font-size:12px}
+  .wcard .wa{display:flex;gap:4px;padding:0 8px 8px}.wcard .wa .btn{flex:1;padding:5px 4px;font-size:12px}.wnew{display:grid;place-items:center;min-height:150px;border:2px dashed var(--line-strong);border-radius:12px;cursor:pointer;color:var(--ink);background:none;font:600 15px var(--f-body)}.wnew:hover{border-color:var(--cool)}
+  .wform{display:grid;gap:10px;margin-top:10px}.wform input{font:16px var(--f-body);color:var(--ink);background:rgba(0,0,0,.3);border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px}.wscens{display:grid;gap:6px}.wscens button{text-align:left;padding:9px 11px}.wscens button[aria-pressed="true"]{border-color:var(--cool);background:rgba(var(--accRGB),.14)}
+  #exitWorld{display:none}body.inWorld #exitWorld{display:inline-flex}.wxs{display:none}@media (max-width:760px){.wxl{display:none}.wxs{display:inline}}.wempty{color:var(--dim);font-size:14px;margin:4px 0 10px}`;document.head.appendChild(css);
+  const home=$('home'),view=document.createElement('div');view.id='hWorldsView';view.className='hview';view.hidden=true;
+  view.innerHTML=`<div class="hbar"><button class="btn ghost hback" id="wBack">← Back</button><h2>Your worlds</h2></div><p class="wempty" id="wEmpty"></p><div class="wgrid" id="wGrid"></div><div id="wCreate" hidden></div>`;
+  const chal=$('hChalView');chal.parentElement.insertBefore(view,chal);
+  const ohv=homeView;homeView=function(v){view.hidden=v!=='hWorldsView';if(v==='hWorldsView'){for(const id of ['hMain','hChalView','hDemoView'])$(id).hidden=true;renderWorlds();return}ohv(v)};
+  $('wBack').onclick=()=>homeView('hMain');
+  const ago=t=>{const s=(Date.now()-t)/1000;return s<60?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':new Date(t).toLocaleDateString()};
+  const scenName=id=>{const s=(SIM.scens||[]).find(x=>x.id===id);return s?s.name:''};
+  async function renderWorlds(){$('wCreate').hidden=true;const g=$('wGrid');g.hidden=false;g.textContent='';const ws=await listWorlds();
+    $('wEmpty').textContent=ws.length?'Pick up where you left off, or start something new.':'You have no worlds yet. Create your first one!';
+    const nb=document.createElement('button');nb.className='wnew';nb.id='wNew';nb.textContent='+ Create world';nb.onclick=showCreate;g.appendChild(nb);
+    for(const w of ws){const c=document.createElement('div');c.className='wcard';c.innerHTML='<div class="wth"></div><div class="wb"><b></b><small></small></div><div class="wa"><button class="btn primary">Play</button><button class="btn">Rename</button><button class="btn">Delete</button></div>';
+      if(w.thumb)c.querySelector('.wth').style.backgroundImage=`url(${w.thumb})`;c.querySelector('b').textContent=w.name;c.querySelector('small').textContent=`${scenName(w.scen)} · ${ago(w.updated)}`;
+      const [pl,rn,dl]=c.querySelectorAll('.wa .btn');c.querySelector('.wth').onclick=pl.onclick=()=>playWorld(w.id);
+      rn.onclick=async()=>{const n=prompt('New name for this world:',w.name);if(n&&n.trim()){const full=await getWorld(w.id);full.name=n.trim().slice(0,40);await putWorld(full);renderWorlds()}};
+      dl.onclick=async()=>{if(confirm(`Delete "${w.name}"? This cannot be undone.`)){await delWorld(w.id);renderWorlds()}};g.appendChild(c)}}
+  function showCreate(){const f=$('wCreate');$('wGrid').hidden=true;f.hidden=false;let pick=SIM.freeScen||SIM.home;
+    f.innerHTML=`<div class="wform"><label class="k">World name</label><input id="wName" maxlength="40" value="My ${SIM.name} world"><label class="k">Start from</label><div class="wscens" id="wScens"></div><div class="actions"><button class="btn primary" id="wGo">Create world</button><button class="btn" id="wCancel">Cancel</button></div></div>`;
+    const L=$('wScens');for(const s of SIM.scens||[]){const b=document.createElement('button');b.className='btn';b.setAttribute('aria-pressed',s.id===pick);b.innerHTML='<b></b><br><small></small>';b.querySelector('b').textContent=s.name;b.querySelector('small').textContent=s.desc||'';b.onclick=()=>{pick=s.id;L.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))};L.appendChild(b)}
+    $('wCancel').onclick=renderWorlds;$('wGo').onclick=()=>{const name=($('wName').value||'').trim()||`My ${SIM.name} world`;createWorld(name,pick)};$('wName').select()}
+  async function createWorld(name,scen){CUR={id:GAME+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),game:GAME,name:name.slice(0,40),scen,created:Date.now(),updated:Date.now()};
+    __startFree(scen);document.body.classList.add('inWorld');await saveNow(true);chEv('worldnew',{});toast(`Created "${CUR.name}"`)}
+  async function playWorld(id){const w=await getWorld(id);if(!w)return;toast('Loading…');__startFree(w.scen);try{const txt=await ungz(w.data);if(SIM.loadState){if(SIM.loadState(txt)===false)throw new Error('load')}else apply(JSON.parse(txt));CUR=w;document.body.classList.add('inWorld');lastSave=Date.now();toast(`Welcome back to "${w.name}"`)}catch(e){CUR=w;document.body.classList.add('inWorld');toast('Could not load the saved state, so this world starts fresh')}}
+  // Free play opens Your worlds
+  const __startFree=scen=>{if(SIM.start){SIM.start(scen||SIM.freeScen||SIM.home);return}if(typeof MODE!=='undefined')try{geval("MODE='free'")}catch(e){}leaveHome();loadScen(scen||SIM.freeScen||SIM.home);setSpeed(SIM.defSpeed);countPlay()};
+  const hf0=$('hFree'),hf=hf0.cloneNode(true);hf0.replaceWith(hf);hf.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();if(typeof MODE!=='undefined')try{geval("MODE='free'")}catch(x){}homeView('hWorldsView')};
+  const hd=hf.querySelector('.hd');if(hd&&!/saved/i.test(hd.textContent))hd.textContent=hd.textContent.replace(/\.?\s*$/,'')+'. Your worlds are saved, so you can carry on later.';
+  // Save & exit while playing a world; Home also saves first
+  const ex=document.createElement('button');ex.id='exitWorld';ex.className='btn';ex.title='Save this world and go back to Your worlds';ex.innerHTML='<span class="wxl">Save &amp; e</span><span class="wxs">E</span>xit';
+  const hb=$('homeBtn');hb.parentElement.insertBefore(ex,hb);
+  ex.onclick=async()=>{await saveNow(true);const keep=CUR;CUR=null;document.body.classList.remove('inWorld');showHome();homeView('hWorldsView');if(keep)toast(`Saved "${keep.name}"`)};
+  const osh=showHome;showHome=function(){if(CUR){saveNow(true);CUR=null;document.body.classList.remove('inWorld')}osh()};
+  hb.onclick=()=>showHome();
+  // a changed town/sea/world inside a saved world keeps saving into the same world
+  {const m=location.hash.match(/^#world=([\w-]+)/);if(m){setTimeout(()=>{history.replaceState(null,'',location.pathname+location.search);playWorld(m[1])},400)}}
+  window.WORLD={save:saveNow,list:listWorlds,current:()=>CUR,fp:()=>SIM.saveState?SIM.saveState().length:snapshot().objs.length};
+  TSTEPS.push(['Your worlds','Free play keeps your worlds: press Free play on the home page to see them, or Create world to start a new one. While playing a world, Save & exit (next to Home) keeps it for later.',r=>Date.now()-r.t0>6000,r=>{r.t0=Date.now()}]);
+})();
+
+/* ===== account helpers shared by every simulator: a sign-out button on the home page while signed in ===== */
+{const h=$('hAcctBtn');if(h&&!$('hOut')){const b=document.createElement('button');b.className='chip';b.id='hOut';b.textContent='↩ Sign out';b.title='Sign out (back to guest)';b.onclick=()=>switchAcc('guest');h.after(b)}
+  setInterval(()=>{const b=$('hOut');if(b)b.hidden=!curAcc()},500)}
+
+</script>
+</body>
+</html>

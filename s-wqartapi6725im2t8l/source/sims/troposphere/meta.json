@@ -1,0 +1,43 @@
+{
+ "id": "troposphere",
+ "icon": "🌀",
+ "name": "Troposphere",
+ "tag": "Steer winds, brew hurricanes and change the climate",
+ "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/troposphere/",
+ "color": "#60d6e6",
+ "title": "Troposphere Sandbox",
+ "theme": "--voidRGB:5,9,14;--deepRGB:8,14,22;--accRGB:96,214,230;--lineRGB:150,200,230;--panel:rgba(9,16,26,.86);--ink:#e6eef5;--ink2:#cfdbe6;--dim:#8ea0b2;",
+ "tabs": [
+  [
+   "world",
+   "World"
+  ],
+  [
+   "climate",
+   "Climate"
+  ],
+  [
+   "insp",
+   "Inspect"
+  ]
+ ],
+ "js": [
+  "sim.js",
+  "content.js"
+ ],
+ "text": {
+  "NAME_A": "Tropo",
+  "NAME_B": "sphere",
+  "SUB": "A weather and climate sandbox",
+  "TAG": "Steer the winds, brew hurricanes and tornadoes, and change the climate of a whole planet",
+  "FREE": "The full sandbox: heat and cool the air, spin up storms, raise mountains and change the greenhouse",
+  "WATCH": "A tour of global winds, a category 5 hurricane, tornado alley, an ice age and a planet with no night",
+  "FOOT": "Simplified but real meteorology: sunlight and seasons, pressure and the Coriolis effect, evaporation, clouds and rain, storms and the greenhouse effect.",
+  "FIND": "Find a storm, place or weather…",
+  "SCEN_LABEL": "Worlds",
+  "SCEN_ONE": "world",
+  "DATE_K": "Date",
+  "HINT": "Drag to look around · scroll to zoom · click anywhere to read the weather there",
+  "CANVAS_LABEL": "The planet's weather: drag to look around, scroll to zoom"
+ }
+}

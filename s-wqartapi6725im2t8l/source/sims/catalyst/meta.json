@@ -1,0 +1,43 @@
+{
+ "id": "catalyst",
+ "icon": "⚛️",
+ "name": "Catalyst",
+ "tag": "Mix atoms, spark reactions and build molecules",
+ "url": "https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/catalyst/",
+ "color": "#c48bff",
+ "title": "Catalyst Sandbox",
+ "theme": "--voidRGB:9,6,14;--deepRGB:14,10,22;--accRGB:196,139,255;--lineRGB:200,170,240;--panel:rgba(16,11,26,.86);--ink:#efe9f7;--ink2:#dcd2ea;--dim:#a096b2;",
+ "tabs": [
+  [
+   "world",
+   "Lab"
+  ],
+  [
+   "mols",
+   "Molecules"
+  ],
+  [
+   "insp",
+   "Inspect"
+  ]
+ ],
+ "js": [
+  "sim.js",
+  "content.js"
+ ],
+ "text": {
+  "NAME_A": "Cata",
+  "NAME_B": "lyst",
+  "SUB": "An atoms and chemistry sandbox",
+  "TAG": "Mix atoms, spark reactions, and watch molecules form, freeze, melt and boil",
+  "FREE": "The full sandbox: drop in any atoms, heat and squeeze them, and set off reactions",
+  "WATCH": "A tour of exploding hydrogen, freezing water, a salt crystal, the Haber process and the primordial soup",
+  "FOOT": "Simplified but real chemistry: atoms bond by their valence, reactions need activation energy, energy is released or absorbed, and temperature is just atoms moving.",
+  "FIND": "Find or add a molecule or element…",
+  "SCEN_LABEL": "Experiments",
+  "SCEN_ONE": "experiment",
+  "DATE_K": "Time",
+  "HINT": "Drag to look around · scroll to zoom · click an atom to see its molecule",
+  "CANVAS_LABEL": "The lab box: drag to look around, scroll to zoom"
+ }
+}

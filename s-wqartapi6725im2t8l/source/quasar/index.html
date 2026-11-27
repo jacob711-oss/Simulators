@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en"><head><meta name="robots" content="noindex,nofollow"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quasar AI</title>
+<meta name="description" content="Quasar: chat, make pictures and find videos.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#05060d;--panel:#0d1020;--panel2:#141831;--ink:#eef1ff;--dim:#939bbd;--line:rgba(255,255,255,.1);--a:#9b7bff;--b:#3fd8ff}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:radial-gradient(900px 500px at 50% -10%,#24164a 0%,transparent 60%),radial-gradient(700px 400px at 100% 100%,#0b2a3a 0%,transparent 60%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;display:flex;height:100dvh;overflow:hidden}
+svg{display:block}
+/* sidebar of saved chats */
+aside{width:260px;flex:0 0 260px;background:rgba(8,10,20,.92);border-right:1px solid var(--line);display:flex;flex-direction:column;transition:transform .2s ease}
+aside .top{display:flex;gap:8px;padding:14px}aside .chatq{margin:0 14px 10px;font:14px 'IBM Plex Sans',sans-serif;color:var(--ink);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.chatrow .ren,.chatrow .dl{opacity:0;background:none;border:0;color:var(--dim);cursor:pointer;padding:8px 4px;border-radius:8px}.chatrow:hover .ren,.chatrow:hover .dl,.chatrow.on .ren,.chatrow.on .dl{opacity:1}.chatrow .ren:hover,.chatrow .dl:hover{color:var(--ink)}
+aside .list{flex:1;overflow:auto;padding:0 8px 12px;display:flex;flex-direction:column;gap:2px}
+.chatrow{display:flex;align-items:center;gap:6px;border-radius:10px;padding:2px 2px 2px 10px}.chatrow:hover,.chatrow.on{background:rgba(155,123,255,.14)}
+.chatrow button.t{flex:1;min-width:0;text-align:left;background:none;border:0;color:var(--ink);font:14px 'IBM Plex Sans',sans-serif;padding:9px 0;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatrow .del{opacity:.0;background:none;border:0;color:var(--dim);cursor:pointer;padding:8px;border-radius:8px}.chatrow:hover .del,.chatrow.on .del{opacity:1}.chatrow .del:hover{color:#ff8a8a}
+aside .foot{padding:12px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--dim)}aside .foot a{color:#8fe3ff}
+.col{flex:1;display:flex;flex-direction:column;min-width:0}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(5,6,13,.6);backdrop-filter:blur(8px)}
+.logo{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#fff 0 8%,#c9b8ff 14%,#7b5cff 35%,transparent 62%),conic-gradient(from 0deg,transparent,#3fd8ff55,transparent,#9b7bff55,transparent);box-shadow:0 0 22px #7b5cff99;animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font-family:'Oxanium',sans-serif;font-size:21px;letter-spacing:.18em;margin:0;background:linear-gradient(90deg,#c9b8ff,#3fd8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hsp{flex:1}.hbtn{display:inline-flex;align-items:center;gap:6px;font:500 13px 'IBM Plex Mono',monospace;color:var(--ink);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:99px;padding:7px 12px;text-decoration:none;cursor:pointer}.hbtn:hover{border-color:var(--a)}
+.ibtn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer}.ibtn:hover{border-color:var(--a)}
+#menuBtn{display:none}
+main{flex:1;overflow:auto;padding:20px 16px 8px;scroll-behavior:smooth}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.hero{text-align:center;padding:34px 10px 10px}.hero .big{width:84px;height:84px;margin:0 auto 18px}.hero h2{font-family:'Oxanium',sans-serif;font-size:30px;margin:0 0 8px}.hero p{color:var(--dim);margin:0 0 22px}
+.sugg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;text-align:left}.sugg button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;line-height:1.35}.sugg button:hover{border-color:var(--a);background:var(--panel2)}.sugg small{display:block;color:var(--dim);font-size:12.5px;margin-top:3px}
+.msg{display:flex;gap:10px;align-items:flex-start}.msg.me{justify-content:flex-end}
+.av{width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:radial-gradient(circle,#fff 0 9%,#b9a6ff 16%,#7b5cff 40%,transparent 70%)}
+.body{display:flex;flex-direction:column;gap:6px;max-width:min(660px,88%);min-width:0}
+.bub{padding:11px 14px;border-radius:16px;line-height:1.6;font-size:15.5px;overflow-wrap:anywhere}
+.me .bub{background:linear-gradient(135deg,#5b3fd6,#3a62d8);border-bottom-right-radius:4px;max-width:min(620px,86%)}
+.ai .bub{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bub p{margin:.4em 0}.bub p:first-child{margin-top:0}.bub p:last-child{margin-bottom:0}.bub ul,.bub ol{margin:.4em 0;padding-left:1.3em}.bub li{margin:.15em 0}.bub a{color:#8fe3ff}
+.bub code{font-family:'IBM Plex Mono',monospace;font-size:.9em;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px}
+.bub pre{position:relative;background:#05070f;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto}.bub pre code{background:none;padding:0}
+.bub pre .cp{position:absolute;top:6px;right:6px;font:500 11px 'IBM Plex Mono',monospace;color:var(--dim);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 7px;cursor:pointer}
+.bub h3,.bub h4{margin:.7em 0 .3em;font-family:'Oxanium',sans-serif}.bub table{border-collapse:collapse;margin:.5em 0;font-size:14px}.bub td,.bub th{border:1px solid var(--line);padding:5px 8px}
+.mx{font-family:'IBM Plex Mono',monospace}.mxd{display:block;text-align:center;margin:.5em 0;overflow-x:auto}.bub pre code.hljs{background:none;padding:0}
+.caret::after{content:'';display:inline-block;width:8px;height:15px;margin-left:2px;vertical-align:-2px;background:var(--b);animation:bl 1s steps(2) infinite}
+.ued{align-self:flex-end;display:inline-flex;gap:5px;align-items:center;font:500 12px 'IBM Plex Mono',monospace;color:var(--dim);background:none;border:0;cursor:pointer;opacity:0;padding:3px 4px}.msg.me:hover .ued,.ued:focus{opacity:1}@media (hover:none){.ued{opacity:.7}}
+.tools{display:flex;gap:4px;flex-wrap:wrap}.tools button{display:inline-flex;align-items:center;gap:5px;font:500 12px 'IBM Plex Mono',monospace;color:var(--dim);background:none;border:1px solid transparent;border-radius:8px;padding:4px 7px;cursor:pointer}.tools button:hover{color:var(--ink);border-color:var(--line)}
+.follow{display:flex;gap:6px;flex-wrap:wrap}.follow button{font:13px 'IBM Plex Sans',sans-serif;color:var(--ink);background:rgba(155,123,255,.1);border:1px solid rgba(155,123,255,.35);border-radius:99px;padding:6px 12px;cursor:pointer}.follow button:hover{background:rgba(155,123,255,.2)}
+.media{margin-top:10px;display:grid;gap:10px}.media.grid4{grid-template-columns:1fr 1fr}
+.pic{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(110deg,#11152a 30%,#1d2346 50%,#11152a 70%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+.pic.done{animation:none;background:#000}.pic img{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s}.pic.done img{opacity:1}
+.pic .wait{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font:500 13px 'IBM Plex Mono',monospace;text-align:center;padding:10px}
+.pic .over{position:absolute;inset:auto 0 0 0;display:flex;gap:6px;justify-content:flex-end;padding:8px;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:opacity .2s}.pic:hover .over,.pic:focus-within .over{opacity:1}
+.pic .over a,.pic .over button{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:rgba(10,12,24,.85);border:1px solid var(--line);color:#fff;cursor:pointer}
+.capt{font-size:12.5px;color:var(--dim)}
+@keyframes sh{to{background-position:-200% 0}}
+.vid{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#000}.vid video{display:block;width:100%;max-height:380px;background:#000}.vid .vt{padding:7px 10px;font-size:12.5px;color:var(--dim);background:var(--panel)}.vid .vt a{color:#8fe3ff}
+.lnk{display:inline-flex;align-items:center;gap:6px;font:500 12.5px 'IBM Plex Mono',monospace;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:5px 10px;text-decoration:none}.lnk:hover{border-color:var(--b)}
+.dots{display:inline-flex;gap:4px;padding:4px 0}.dots i{width:7px;height:7px;border-radius:50%;background:var(--a);animation:bl 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}@keyframes bl{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.err{color:#ff9d9d}
+footer{padding:8px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(5,6,13,.75);backdrop-filter:blur(8px)}
+.opts{max-width:860px;margin:0 auto 8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--dim)}.opts[hidden]{display:none}
+.opts select{font:13px 'IBM Plex Sans',sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg button{font:12.5px 'IBM Plex Sans',sans-serif;color:var(--dim);background:var(--panel);border:0;padding:6px 10px;cursor:pointer}.seg button[aria-pressed="true"]{color:var(--ink);background:rgba(63,216,255,.16)}
+.bar{max-width:860px;margin:0 auto;display:flex;gap:6px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:7px}
+.bar:focus-within{border-color:var(--a)}
+.plus{position:relative}.menu{position:absolute;bottom:46px;left:0;z-index:10;min-width:200px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}.menu[hidden]{display:none}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:14px 'IBM Plex Sans',sans-serif;color:var(--ink);background:none;border:0;border-radius:8px;padding:9px 10px;cursor:pointer}.menu button:hover{background:rgba(155,123,255,.16)}.menu button[aria-pressed="true"]{color:var(--b)}
+.tray{max-width:860px;margin:0 auto 8px;display:flex;gap:8px;flex-wrap:wrap}.tray[hidden]{display:none}
+.att{position:relative;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 30px 5px 5px;font-size:13px;max-width:240px}
+.att img{width:44px;height:44px;object-fit:cover;border-radius:8px;display:block}.att .fic{width:44px;height:44px;border-radius:8px;display:grid;place-items:center;background:rgba(155,123,255,.18);font:600 11px 'IBM Plex Mono',monospace;color:#c9b8ff}
+.att .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.att .nm small{display:block;color:var(--dim);font-size:11.5px}.att .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.uatt{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;margin-bottom:6px}.uatt img{max-width:200px;max-height:200px;border-radius:12px;border:1px solid var(--line);display:block}.uatt .fchip{font:12.5px 'IBM Plex Mono',monospace;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
+.drop{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(5,6,13,.8);border:3px dashed var(--a);font:600 22px 'Oxanium',sans-serif;color:#c9b8ff}body.dragging .drop{display:grid}
+.chips{display:flex;gap:4px;align-self:center}.chip{font:12.5px 'IBM Plex Sans',sans-serif;color:var(--b);background:rgba(63,216,255,.12);border:1px solid rgba(63,216,255,.4);border-radius:99px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+.mode{display:flex;gap:3px}.mode button{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 10px;border-radius:12px;border:1px solid transparent;background:rgba(255,255,255,.04);color:var(--ink);font:13px 'IBM Plex Sans',sans-serif;cursor:pointer}.mode button[aria-pressed="true"]{border-color:var(--b);background:rgba(63,216,255,.14)}
+textarea{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(--ink);font:16px 'IBM Plex Sans',system-ui,sans-serif;max-height:180px;min-height:38px;padding:8px 6px;line-height:1.4}
+.round{width:40px;height:38px;flex:0 0 40px;display:grid;place-items:center;border-radius:12px;border:0;cursor:pointer;color:#fff}
+.send{background:linear-gradient(135deg,#7b5cff,#2fb7e6)}.send:disabled{opacity:.5;cursor:default}.stop{background:#c0455a}
+.mic{background:rgba(255,255,255,.06);border:1px solid var(--line)}.mic.on{background:#c0455a;animation:pulse 1.2s infinite}@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(192,69,90,.25)}}
+.srcs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.srcs .lnk{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hint{max-width:860px;margin:6px auto 0;color:var(--dim);font-size:12px;text-align:center}
+.msel{font:500 13px 'IBM Plex Mono',monospace;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:6px 10px;margin-left:6px}
+.dlg{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(0,0,0,.55)}.dlg[hidden]{display:none}.dcard{width:min(520px,calc(100% - 28px));background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.dcard h3{margin:0;font-family:'Oxanium',sans-serif;font-size:20px}.dcard label{display:grid;gap:6px;font-size:13.5px;color:var(--dim)}.dcard textarea{font:15px 'IBM Plex Sans',sans-serif;color:var(--ink);background:#080b15;border:1px solid var(--line);border-radius:10px;padding:9px 11px;resize:vertical}
+.dcard .chk{display:flex;gap:8px;align-items:center;color:var(--ink)}.dact{display:flex;gap:8px;justify-content:flex-end}.hbtn.pri{background:linear-gradient(135deg,#7b5cff,#2fb7e6);border-color:transparent;color:#fff}
+.scrim{display:none}
+@media (max-width:820px){aside{position:fixed;inset:0 auto 0 0;z-index:20;transform:translateX(-102%)}body.side aside{transform:none}body.side .scrim{display:block;position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.5)}#menuBtn{display:grid}.hbtn.wide{display:none}}
+@media (max-width:560px){header{padding:10px 12px}h1{font-size:17px}.body{max-width:92%}.bub{font-size:15px}.hero{padding-top:16px}.hero h2{font-size:24px}.mode button span{display:none}.media.grid4{grid-template-columns:1fr 1fr}}
+.prog{margin-top:auto;padding:10px 4px 4px;border-top:1px solid rgba(255,255,255,.08)}.prog .ph{font:600 11px/1 system-ui;text-transform:uppercase;letter-spacing:.08em;color:#9a90b8;margin:2px 6px 8px}.prog p{font-size:12.5px;color:#a99fc4;margin:0 6px 6px}.prog .pr{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:6px 8px;border-radius:8px;color:inherit;text-decoration:none;font-size:13px}.prog .pr:hover{background:rgba(255,255,255,.05)}.prog .pr span{font-size:11px;color:#9a90b8;text-align:right}.prog .pr i{grid-column:1/3;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}.prog .pr em{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#3fd8ff)}.prog .pq{margin:6px 6px 0;width:calc(100% - 12px);padding:7px;border-radius:8px;border:1px solid rgba(180,150,255,.35);background:none;color:#d8ccff;cursor:pointer}.runb{position:absolute;right:62px;top:6px;border:1px solid rgba(120,220,140,.45);background:rgba(40,120,60,.35);color:#c9f5d2;border-radius:6px;padding:2px 8px;font:12px system-ui;cursor:pointer;display:inline-flex;align-items:center;gap:4px}.runb svg{width:11px;height:11px}pre{position:relative}#runDlg{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}#runDlg[hidden]{display:none}.runbox{width:min(980px,100%);height:min(720px,100%);background:#0e0c1a;border:1px solid rgba(180,150,255,.35);border-radius:14px;display:flex;flex-direction:column;overflow:hidden}.runh{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}.runh .capt{flex:1}.runh button{background:none;border:1px solid rgba(255,255,255,.18);color:#ddd;border-radius:7px;padding:4px 10px;cursor:pointer}#runX{font-size:18px;line-height:1;padding:2px 9px}#runF{flex:1;border:0;background:#fff;width:100%}.vchat.on{color:#fff;background:#8b5cf6;border-radius:50%}.memh{font-weight:600;margin:12px 0 6px}.memlist{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow:auto}.memr{display:flex;justify-content:space-between;gap:8px;align-items:center;background:rgba(255,255,255,.05);border-radius:8px;padding:5px 9px;font-size:13px}.memr button{background:none;border:0;color:#bbb;font-size:16px;cursor:pointer}.memclr{align-self:flex-start;margin-top:4px;background:none;border:1px solid rgba(255,120,120,.4);color:#ffb0b0;border-radius:8px;padding:4px 10px;cursor:pointer}</style></head>
+<body>
+<aside id="side"><div class="top"><button class="hbtn" id="newChat" style="flex:1;justify-content:center">+ New chat</button></div><input id="chatQ" class="chatq" type="search" placeholder="Search chats…" aria-label="Search chats"><div class="list" id="chats"></div><div id="prog" class="prog"></div>
+<div class="foot">Chats are saved on this device only. <a href="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/">All our simulators</a></div></aside>
+<div class="scrim" id="scrim"></div>
+<div class="dlg" id="setDlg" hidden><div class="dcard"><h3>Settings and memory</h3>
+<label>What should Quasar know about you?<textarea id="pAbout" rows="3" maxlength="800" placeholder="For example: I love space and coding. I'm learning about volcanoes."></textarea></label>
+<label>How should Quasar reply?<textarea id="pStyle2" rows="2" maxlength="400" placeholder="For example: short answers, with examples. Explain things simply."></textarea></label>
+<label class="chk"><input type="checkbox" id="pSpeak"> Read every answer aloud automatically</label>
+<label class="chk"><input type="checkbox" id="pTrack"> Let Quasar track my progress in the simulators</label>
+<div class="memh">What Quasar remembers about you</div><div id="memList" class="memlist"></div>
+<p class="capt">Saved on this device only. Quasar uses it in every chat.</p>
+<div class="dact"><button class="hbtn" id="pClear" type="button">Clear memory</button><button class="hbtn pri" id="pSave" type="button">Save</button></div></div></div><div class="drop">Drop photos or files here</div>
+<div class="col">
+<header><button class="ibtn" id="menuBtn" aria-label="Chats"><svg width="18" height="18" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+<div class="logo" aria-hidden="true"></div><h1>QUASAR</h1><select id="model" class="msel" aria-label="AI model" title="AI model"><option value="openai">Fast</option><option value="openai-large">Smart</option><option value="deepseek-reasoning">Deep thinking</option></select><span class="hsp"></span><button class="ibtn" id="setBtn" title="Settings and memory" aria-label="Settings and memory"><svg width="17" height="17" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+<a class="hbtn wide" href="https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/">Simulators</a></header>
+<main id="main"><div class="wrap" id="log"></div></main>
+<footer>
+<div class="opts" id="picOpts" hidden>Style <select id="pStyle"><option value="">Any</option><option value="photorealistic, highly detailed photo">Realistic photo</option><option value="anime style illustration">Anime</option><option value="soft watercolour painting">Watercolour</option><option value="3D render, soft lighting, Pixar style">3D cartoon</option><option value="pixel art, 16-bit">Pixel art</option><option value="comic book style, bold lines">Comic</option><option value="oil painting, brush strokes">Oil painting</option><option value="pencil sketch, black and white">Pencil sketch</option><option value="cinematic, dramatic lighting, 35mm">Cinematic</option></select>
+Shape <span class="seg" id="pShape"><button data-v="1024x1024" aria-pressed="true">Square</button><button data-v="1280x720" aria-pressed="false">Wide</button><button data-v="768x1152" aria-pressed="false">Tall</button></span>
+How many <span class="seg" id="pCount"><button data-v="1" aria-pressed="true">1</button><button data-v="4" aria-pressed="false">4</button></span></div>
+<div class="tray" id="tray" hidden></div>
+<input type="file" id="fileIn" multiple hidden accept="image/*,.txt,.md,.csv,.tsv,.json,.js,.ts,.py,.html,.css,.java,.c,.cpp,.cs,.rb,.go,.rs,.xml,.yaml,.yml,.log,.pdf">
+<form class="bar" id="bar"><div class="plus"><button type="button" class="round mic" id="plusBtn" title="Tools" aria-label="Tools" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+<div class="menu" id="toolMenu" hidden><button type="button" id="attachBtn"><svg width="17" height="17" viewBox="0 0 20 20"><path d="M14.5 9.5l-5.8 5.8a3.5 3.5 0 0 1-5-5l6.6-6.6a2.3 2.3 0 0 1 3.3 3.3l-6.5 6.5a1.1 1.1 0 0 1-1.6-1.6l5.9-5.9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Add photos &amp; files</button><button type="button" data-mode="image"><svg width="17" height="17" viewBox="0 0 20 20"><rect x="2.5" y="4" width="15" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7" cy="8" r="1.6" fill="currentColor"/><path d="M3 15l5-5 4 4 2-2 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Create image</button><button type="button" data-mode="video"><svg width="17" height="17" viewBox="0 0 20 20"><rect x="2.5" y="4.5" width="15" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 7.5l4 2.5-4 2.5z" fill="currentColor"/></svg>Find a video</button><button type="button" id="webBtn" aria-pressed="false"><svg width="17" height="17" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h14M10 3c2.5 2.5 2.5 11.5 0 14M10 3c-2.5 2.5-2.5 11.5 0 14" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>Search the web</button><button type="button" id="resBtn"><svg width="17" height="17" viewBox="0 0 20 20"><path d="M4 3.5h8l4 4v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 9h7M6.5 12h7M6.5 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Deep research</button></div></div>
+<span class="chips" id="chips"></span>
+<textarea id="inp" rows="1" placeholder="Message Quasar…" aria-label="Message"></textarea>
+<button class="round mic vchat" type="button" id="vchat" title="Voice chat: talk and listen hands-free" aria-label="Voice chat" hidden><svg width="18" height="18" viewBox="0 0 20 20"><path d="M3 10v-1a7 7 0 0 1 14 0v1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="10" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="10" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button><button class="round mic" type="button" id="mic" title="Speak" hidden><svg width="17" height="17" viewBox="0 0 20 20"><rect x="7" y="2.5" width="6" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+<button class="round send" id="send" type="submit" title="Send" aria-label="Send"><svg width="17" height="17" viewBox="0 0 20 20"><path d="M3 10l14-6-5 14-2.5-5.5z" fill="currentColor"/></svg></button></form>
+<div class="hint">Quasar can make mistakes. Pictures are made by AI; videos come from Wikimedia Commons. Photos and files you add are sent to the AI service to answer you.</div></footer>
+</div>
+<script>
+(()=>{
+const SIMS=[["Barycenter","space, gravity, planets and black holes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/barycenter/"],["Biosphere","a living world of animals, plants and microbes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/life/"],["Lithosphere","continents, mountains and volcanoes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/lithosphere/"],["Troposphere","weather, winds and hurricanes","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/troposphere/"],["Catalyst","atoms, molecules and chemical reactions","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/catalyst/"],["Abyssal","the ocean, from reefs to the deep sea","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/abyssal/"],["Interchange","trains, metros and trams in a growing city","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/interchange/"],["Gridlock","roads, buses and traffic","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/gridlock/"],["Hivemind","ant colonies, scent trails and raids","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/hivemind/"],["Flux","electric charges and magnets","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/flux/"],["Seaway","ships and island ports","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/seaway/"],["Contrail","air traffic control and airports","https://jacob711-oss.github.io/Simulators/s-wqartapi6725im2t8l/contrail/"]];
+const SYSTEM=`You are Quasar, a friendly, upbeat and genuinely helpful AI assistant on the Simulators website. You are safe for all ages: kindly refuse anything harmful, hateful, sexual or violent. Give accurate, clear answers. Use Markdown when it helps: short paragraphs, bullet or numbered lists, **bold** key words, tables for comparisons, and code blocks for code. Keep most answers under 200 words unless the user asks for detail. If you are not sure, say so.
+You can make pictures and show videos. When the user wants a picture, drawing or image, write one short sentence and then, on its own line, [IMAGE: a vivid, detailed English description of the picture]. When the user wants to watch or see a video, write one short sentence and then, on its own line, [VIDEO: two to four search words]. Only add these tags when the user asks for a picture or a video.
+Today's date is ${new Date().toDateString()}.
+For maths, science or logic questions, work it out step by step (briefly) and double-check the numbers before giving the answer. If a request is unclear, ask one short question to check what they mean.
+When asked to make a game, website, app, animation or drawing with code, write ONE complete, self-contained HTML file (all CSS and JavaScript inside it, no external files or images) in a single \`\`\`html code block. The user can press Run to play it straight away, so make it work first time, fit any screen, and support both mouse/keyboard and touch.
+Memory: when the user tells you a lasting fact about themselves (their name, school year, favourite things, hobbies, goals) or asks you to remember something, add on its own line at the very end: [[remember: the fact, in a few words]]. If they ask you to forget something, add [[forget: the fact]]. Never mention these tags or this rule.
+This website has these simulators; recommend them with Markdown links when they fit the question: ${SIMS.map(s=>`${s[0]} (${s[1]}): ${s[2]}`).join('; ')}.`;
+const $=id=>document.getElementById(id),log=$('log'),main=$('main'),inp=$('inp'),bar=$('bar'),sendB=$('send');
+const IC={copy:'<svg width="14" height="14" viewBox="0 0 20 20"><rect x="7" y="7" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 4H5a1 1 0 0 0-1 1v8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  speak:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M3 8h3l4-3v10l-4-3H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M13 7a4 4 0 0 1 0 6M15.5 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  again:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M16 10a6 6 0 1 1-2-4.5M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  open:'<svg width="15" height="15" viewBox="0 0 20 20"><path d="M11 3h6v6M17 3l-8 8M14 12v5H3V6h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  trash:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M4 6h12M8 6V4h4v2M6 6l1 11h6l1-11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+  stop:'<svg width="15" height="15" viewBox="0 0 20 20"><rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor"/></svg>',
+  send:'<svg width="17" height="17" viewBox="0 0 20 20"><path d="M3 10l14-6-5 14-2.5-5.5z" fill="currentColor"/></svg>',
+  edit:'<svg width="13" height="13" viewBox="0 0 20 20"><path d="M4 16l1-4 8-8 3 3-8 8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+  down:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M10 3v10M6 9l4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  play:'<svg width="14" height="14" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6z" fill="currentColor"/></svg>'};
+/* ---------- saved chats (on this device) ---------- */
+const LS='quasar_chats_v2';let chats=[],cur=null;
+try{chats=JSON.parse(localStorage.getItem(LS)||'[]')||[]}catch(e){chats=[]}
+try{const old=JSON.parse(localStorage.getItem('quasar_chat')||'null');if(old&&old.length&&!chats.length){chats=[{id:'c'+Date.now(),title:(old.find(m=>m.role==='user')||{content:'Chat'}).content.slice(0,40),msgs:old,t:Date.now()}];localStorage.removeItem('quasar_chat')}}catch(e){}
+const save=()=>{try{localStorage.setItem(LS,JSON.stringify(chats.slice(0,40).map(c=>({...c,msgs:c.msgs.slice(-60)}))))}catch(e){}};
+const hist=()=>cur?cur.msgs:[];
+function listChats(){const L=$('chats'),cq=($('chatQ').value||'').trim().toLowerCase();L.textContent='';for(const c of chats){if(cq&&!((c.title||'')+' '+c.msgs.map(m=>m.shown||m.content||'').join(' ')).toLowerCase().includes(cq))continue;const r=document.createElement('div');r.className='chatrow'+(c===cur?' on':'');r.innerHTML=`<button class="t"></button><button class="ren" title="Rename chat" aria-label="Rename chat">${IC.edit}</button><button class="dl" title="Download chat" aria-label="Download chat">${IC.down}</button><button class="del" title="Delete chat" aria-label="Delete chat">${IC.trash}</button>`;r.querySelector('.ren').onclick=()=>{const n=prompt('Rename this chat:',c.title||'');if(n&&n.trim()){c.title=n.trim().slice(0,60);save();listChats()}};r.querySelector('.dl').onclick=()=>downloadChat(c);r.querySelector('.t').textContent=c.title||'New chat';
+    r.querySelector('.t').onclick=()=>{openChat(c);document.body.classList.remove('side')};r.querySelector('.del').onclick=()=>{chats=chats.filter(x=>x!==c);if(cur===c)cur=null;save();cur?listChats():newChat()};L.appendChild(r)}}
+function downloadChat(c){const txt=`${c.title||'Chat'}\n${new Date(c.t||Date.now()).toLocaleString()}\n\n`+c.msgs.map(m=>(m.role==='user'?'You: ':'Quasar: ')+(m.shown||m.content||'')+(m.img?`\n[Picture: ${m.img}]`:'')+(m.vid?`\n[Videos: ${m.vid}]`:'')).join('\n\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));a.download=(c.title||'chat').replace(/[^\w\- ]+/g,'').slice(0,40)+'.txt';document.body.appendChild(a);a.click();a.remove()}
+function newChat(){cur=null;log.textContent='';log.appendChild(heroEl());listChats();inp.focus()}
+function openChat(c){cur=c;log.textContent='';for(let i=0;i<c.msgs.length;i++){const m=c.msgs[i];if(m.role==='user')addUser(m.shown!=null?m.shown:m.content,m.att,i);else renderAI(addAI(),m,false)}listChats();scroll()}
+function ensureChat(first){if(!cur){cur={id:'c'+Date.now(),title:first.slice(0,48),msgs:[],t:Date.now()};chats.unshift(cur)}cur.t=Date.now();listChats()}
+/* ---------- markdown ---------- */
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function md(src){src=String(src||'').replace(/\[\[(remember|forget):[^\]]*\]\]?/gi,'').replace(/\[\[[^\]]*$/,'');const blocks=[],maths=[];src=String(src).replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|(?<![\w$])\$([^$\n]{1,120}?)\$(?![\w$])/g,(m,a,b,c,d)=>{if(d!=null&&!/[\\^_=]/.test(d))return m;maths.push({t:a||b||c||d,d:!!(a||b)});return`\u0001${maths.length-1}\u0001`});
+  const out=md0(src,blocks);return out.replace(/\u0001(\d+)\u0001/g,(_,i)=>{const x=maths[+i];return`<span class="mx${x.d?' mxd':''}" data-tex="${esc(x.t)}">${esc(x.t)}</span>`})}
+function md0(src,blocks){blocks.L=blocks.L||[];let s=esc(src).replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)(```|$)/g,(_,l,c)=>{blocks.push(c);blocks.L.push(l.toLowerCase());return`\u0000${blocks.length-1}\u0000`});
+  s=s.replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/(^|[^*\w])\*([^*\n]+)\*/g,'$1<i>$2</i>')
+   .replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g,(_,t,u)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`);
+  const out=[];let list=null,table=null;for(const line of s.split('\n')){const ul=line.match(/^\s*[-*•]\s+(.*)/),ol=line.match(/^\s*\d+[.)]\s+(.*)/),h=line.match(/^#{1,4}\s+(.*)/),tr=line.match(/^\s*\|(.+)\|\s*$/);
+    if(tr){if(/^[\s|:-]+$/.test(tr[1]))continue;if(!table){if(list){out.push(`</${list.t}>`);list=null}table=true;out.push('<table>')}out.push('<tr>'+tr[1].split('|').map(c=>`<td>${c.trim()}</td>`).join('')+'</tr>');continue}
+    if(table){out.push('</table>');table=null}
+    if(ul||ol){const t=ul?'ul':'ol';if(!list||list.t!==t){if(list)out.push(`</${list.t}>`);list={t};out.push(`<${t}>`)}out.push(`<li>${(ul||ol)[1]}</li>`);continue}
+    if(list){out.push(`</${list.t}>`);list=null}if(h){out.push(`<h4>${h[1]}</h4>`);continue}if(line.trim())out.push(`<p>${line}</p>`)}if(list)out.push(`</${list.t}>`);if(table)out.push('</table>');
+  return out.join('').replace(/\u0000(\d+)\u0000/g,(_,i)=>`<pre data-lang="${(blocks.L||[])[+i]||''}"><button class="cp" type="button">Copy</button><code>${blocks[+i]}</code></pre>`)}
+/* ---------- messages ---------- */
+const scroll=()=>{main.scrollTop=main.scrollHeight};
+function heroEl(){const d=document.createElement('div');d.className='hero';d.id='hero';d.innerHTML=`<div class="logo big"></div><h2>Hi, I'm Quasar ✨</h2><p>Ask me anything, ask me to draw a picture, or ask to see a video.</p><div class="sugg">
+<button data-q="A dragon flying over a neon city at night" data-m="image">Draw a dragon over a neon city<small>Make a picture</small></button>
+<button data-q="volcano eruption" data-m="video">Show me a video of a volcano<small>Find a real video</small></button>
+<button data-q="How do black holes work? Explain it simply.">How do black holes work?<small>Ask a question</small></button>
+<button data-q="Which of your simulators should I try first, and why?">Which simulator should I try?<small>Get a recommendation</small></button>
+<button data-q="Search the web: what is the latest news about space exploration?">Latest space news<small>Search the web</small></button>
+<button data-q="Help me write a short story about a robot who wants to be an astronaut.">Write a short story<small>Get creative</small></button>
+<button data-attach="1">Ask about a photo or file<small>Add photos and files</small></button></div>`;
+  d.querySelectorAll('.sugg button').forEach(b=>b.onclick=()=>b.dataset.attach?$('fileIn').click():send(b.dataset.q,b.dataset.m));return d}
+function addUser(text,att,hi){const h=$('hero');if(h)h.remove();const m=document.createElement('div');m.className='msg me';if(hi!=null)m.dataset.hi=hi;m.innerHTML='<div class="body" style="align-items:flex-end"><div class="uatt"></div><div class="bub"></div></div>';
+  const ua=m.querySelector('.uatt');for(const a of att||[]){if(a.kind==='img'){const i=document.createElement('img');i.src=a.thumb;i.alt=a.name;ua.appendChild(i)}else{const f=document.createElement('span');f.className='fchip';f.textContent=a.name;ua.appendChild(f)}}if(!ua.children.length)ua.remove();
+  const b=m.querySelector('.bub');if(text)b.innerHTML=md(text);else b.remove();
+  if(text){const e=document.createElement('button');e.type='button';e.className='ued';e.innerHTML=IC.edit+'Edit';e.onclick=()=>editMsg(m,text);m.querySelector('.body').appendChild(e)}log.appendChild(m);scroll()}
+function editMsg(m,text){if(ctrl)return;const H=hist();let i=m.dataset.hi!=null?+m.dataset.hi:H.map(x=>x.role).lastIndexOf('user');if(i<0||!H[i])return;H.splice(i);save();openChat(cur);inp.value=text;inp.dispatchEvent(new Event('input'));inp.focus()}
+function addAI(){const h=$('hero');if(h)h.remove();const m=document.createElement('div');m.className='msg ai';m.innerHTML='<div class="av"></div><div class="body"><div class="bub"><div class="dots"><i></i><i></i><i></i></div></div></div>';log.appendChild(m);scroll();return m.querySelector('.body')}
+let KX=null,HL=null;const lib=(js,css)=>new Promise((ok,no)=>{if(css){const l=document.createElement('link');l.rel='stylesheet';l.href=css;document.head.appendChild(l)}const s=document.createElement('script');s.src=js;s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+function pretty(b){if(b.querySelector('.mx:not([data-done])')){KX=KX||lib('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js','https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css');
+    KX.then(()=>b.querySelectorAll('.mx:not([data-done])').forEach(e=>{try{katex.render(e.dataset.tex,e,{displayMode:e.classList.contains('mxd'),throwOnError:false})}catch(x){}e.dataset.done=1})).catch(()=>{KX=null})}
+  if(b.querySelector('pre code:not([data-hl])')){HL=HL||lib('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js','https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css');
+    HL.then(()=>b.querySelectorAll('pre code:not([data-hl])').forEach(e=>{try{hljs.highlightElement(e)}catch(x){}e.dataset.hl=1})).catch(()=>{HL=null})}}
+function wireCode(b){pretty(b);b.querySelectorAll('pre').forEach(pre=>{if(pre.querySelector('.runb'))return;const code=pre.querySelector('code');if(!code)return;const t=code.textContent,l=pre.dataset.lang||'';const kind=/^(html|svg|xml)$/.test(l)||/^\s*(<!doctype|<html|<svg|<body|<canvas|<div|<style|<script)/i.test(t)?'html':/^(js|javascript)$/.test(l)?'js':'';if(!kind||t.length<12)return;const r=document.createElement('button');r.type='button';r.className='runb';r.innerHTML=IC.play+' Run';r.onclick=()=>runCode(code.textContent,kind);pre.appendChild(r)});b.querySelectorAll('pre .cp').forEach(btn=>btn.onclick=()=>{const t=btn.parentElement.querySelector('code').textContent;navigator.clipboard&&navigator.clipboard.writeText(t);btn.textContent='Copied'})}
+// draw an AI message: text, then pictures/videos, then buttons and follow-ups
+function renderAI(body,m,live){const bub=body.querySelector('.bub');bub.innerHTML=md(m.content||'');wireCode(bub);
+  if(m.img||m.vid){const md2=document.createElement('div');md2.className='media'+(m.img&&m.count>1?' grid4':'');bub.appendChild(md2);if(m.img)pictures(md2,m.img,m.count||1,m.size||'1024x1024',m.seed);if(m.vid)videos(md2,m.vid)}
+  if(m.sources&&m.sources.length){const sv=document.createElement('div');sv.className='srcs';sv.innerHTML='<span class="capt">Sources</span>';m.sources.forEach((x,i)=>{const a=document.createElement('a');a.className='lnk';a.target='_blank';a.rel='noopener';a.href=x.url;a.textContent=`${i+1}. ${x.title}`;sv.appendChild(a)});body.appendChild(sv)}
+  const tools=document.createElement('div');tools.className='tools';
+  const tb=(ic,label,fn)=>{const b=document.createElement('button');b.type='button';b.innerHTML=IC[ic]+label;b.onclick=fn;tools.appendChild(b);return b};
+  if(m.content){tb('copy','Copy',e=>{navigator.clipboard&&navigator.clipboard.writeText(m.content);e.currentTarget.lastChild.textContent='Copied'});
+    if('speechSynthesis' in window)tb('speak','Read aloud',e=>{const b=e.currentTarget;if(speechSynthesis.speaking){speechSynthesis.cancel();b.lastChild.textContent='Read aloud';return}const u=new SpeechSynthesisUtterance(m.content.replace(/[#*`|>\[\]()]/g,' ').replace(/https?:\S+/g,''));u.onend=()=>{b.lastChild.textContent='Read aloud'};speechSynthesis.speak(u);b.lastChild.textContent='Stop reading'})}
+  if(live!==null&&hist()[hist().length-1]===m)tb('again','Regenerate',()=>regenerate());
+  body.appendChild(tools);
+  if(live&&m.follow&&m.follow.length){const f=document.createElement('div');f.className='follow';for(const q of m.follow){const b=document.createElement('button');b.type='button';b.textContent=q;b.onclick=()=>{f.remove();send(q)};f.appendChild(b)}body.appendChild(f)}
+  scroll()}
+/* ---------- pictures ---------- */
+const STYLE=()=>$('pStyle').value,SIZE=()=>$('pShape').querySelector('[aria-pressed=true]').dataset.v,COUNT=()=>+$('pCount').querySelector('[aria-pressed=true]').dataset.v;
+const picUrl=(prompt,size,seed)=>{const [w,h]=size.split('x');return`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&safe=true&enhance=true&seed=${seed}`};
+function pictures(box,prompt,count,size,seed){seed=seed||Math.floor(Math.random()*1e9);const [w,h]=size.split('x');
+  for(let k=0;k<count;k++){const s=seed+k*7919,url=picUrl(prompt,size,s),d=document.createElement('div');d.className='pic';d.style.aspectRatio=`${w}/${h}`;
+    d.innerHTML=`<div class="wait">Painting${count>1?' '+(k+1)+'/'+count:''}…</div><img alt=""><div class="over"><a target="_blank" rel="noopener" title="Open full size">${IC.open}</a></div>`;
+    const img=d.querySelector('img');img.alt=prompt;d.querySelector('a').href=url;let tries=0;
+    img.onload=()=>{d.classList.add('done');const wt=d.querySelector('.wait');if(wt)wt.remove()};
+    img.onerror=()=>{if(++tries<3){setTimeout(()=>{img.src=url+'&r='+tries},1500*tries);return}d.querySelector('.wait').textContent='Could not make this picture. Try again in a moment.';d.style.animation='none'};
+    setTimeout(()=>{img.src=url},k*350);box.appendChild(d)}
+  const c=document.createElement('div');c.className='capt';c.textContent='Picture: '+prompt;box.appendChild(c)}
+/* ---------- videos: real, free videos from Wikimedia Commons ---------- */
+async function videos(box,q){const w=document.createElement('div');w.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';box.appendChild(w);const yt=`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+  try{const u='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|mime&gsrsearch='+encodeURIComponent('filetype:video '+q);
+    const r=await fetch(u);const j=await r.json();const pages=Object.values((j.query&&j.query.pages)||{}).filter(p=>p.imageinfo&&/^video\//.test(p.imageinfo[0].mime)).sort((a,b)=>a.index-b.index).slice(0,2);w.innerHTML='';
+    if(!pages.length){w.innerHTML=`<p>I couldn't find a free video of that.</p><a class="lnk" target="_blank" rel="noopener" href="${yt}">${IC.play} Search YouTube for “${esc(q)}”</a>`;return}
+    for(const p of pages){const v=document.createElement('div');v.className='vid';const title=p.title.replace(/^File:/,'').replace(/\.[a-z0-9]+$/i,'').replace(/_/g,' ');
+      v.innerHTML=`<video controls preload="metadata" playsinline></video><div class="vt"><span></span> · <a target="_blank" rel="noopener">Wikimedia Commons</a></div>`;v.querySelector('video').src=p.imageinfo[0].url;v.querySelector('span').textContent=title;v.querySelector('a').href=p.imageinfo[0].descriptionurl||('https://commons.wikimedia.org/wiki/'+encodeURIComponent(p.title));w.appendChild(v)}
+    const more=document.createElement('a');more.className='lnk';more.target='_blank';more.rel='noopener';more.href=yt;more.innerHTML=IC.play+' More on YouTube';w.appendChild(more);scroll()}
+  catch(e){w.innerHTML=`<p class="err">Could not load videos right now.</p><a class="lnk" target="_blank" rel="noopener" href="${yt}">${IC.play} Search YouTube instead</a>`}}
+/* ---------- web search: live results from Wikipedia and DuckDuckGo, used as sources ---------- */
+async function webSearch(q,signal){const out=[];const add=(title,url,text)=>{if(url&&!out.some(o=>o.url===url))out.push({title,url,text:(text||'').replace(/<[^>]+>/g,'').slice(0,700)})};
+  const jobs=[(async()=>{const r=await fetch('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=3&prop=extracts|info&inprop=url&exintro=1&explaintext=1&exsentences=6&gsrsearch='+encodeURIComponent(q),{signal});const j=await r.json();
+      Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>a.index-b.index).forEach(p=>add(p.title+' (Wikipedia)',p.fullurl,p.extract))})(),
+    (async()=>{const r=await fetch('https://api.duckduckgo.com/?format=json&no_html=1&skip_disambig=1&q='+encodeURIComponent(q),{signal});const j=await r.json();if(j.AbstractText)add(j.Heading||q,j.AbstractURL,j.AbstractText);
+      (j.RelatedTopics||[]).slice(0,2).forEach(t=>{if(t.Text&&t.FirstURL)add(t.Text.split(' - ')[0].slice(0,60),t.FirstURL,t.Text)})})()];
+  await Promise.allSettled(jobs.map(p=>Promise.race([p,sleep(6000)])));return out.slice(0,5)}
+const wantsSearch=t=>/(search|look up|google|latest|news|today|tonight|this week|this year|right now|current(ly)?|recent(ly)?|who won|price of|weather|score|20[2-9]\d)\b/i.test(t);
+/* ---------- talking to the AI ---------- */
+// streams the answer as it is written (fast), falls back to waiting for the whole reply
+async function askStream(msgs,signal,onText,model,system){const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model||'openai',messages:[{role:'system',content:system||SYSTEM},...msgs],private:true,stream:true}),signal});
+  if(!r.ok||!r.body)throw new Error('no stream '+r.status);const rd=r.body.getReader(),dec=new TextDecoder();let buf='',text='';
+  for(;;){const {value,done}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(!line.startsWith('data:'))continue;const d=line.slice(5).trim();if(d==='[DONE]')continue;
+      try{const j=JSON.parse(d);const c=j.choices&&j.choices[0]&&(j.choices[0].delta&&j.choices[0].delta.content||j.choices[0].message&&j.choices[0].message.content);if(c){text+=c;onText(text)}}catch(e){}}}
+  if(!text)throw new Error('empty');return text}
+let ctrl=null;const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function askAI(msgs,signal,model,system){const body=JSON.stringify({model:model||'openai',messages:[{role:'system',content:system||SYSTEM},...msgs],private:true});
+  for(let attempt=0;attempt<2;attempt++){try{const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body,signal});
+      if(r.ok){const j=await r.json();const t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;if(t)return t}}catch(e){if(signal.aborted)throw e}
+    if(attempt<1)await sleep(1200)}
+  // simpler backup route
+  const lc=msgs[msgs.length-1].content,last=Array.isArray(lc)?lc[0].text:lc;const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(last)+'?private=true&model=openai&system='+encodeURIComponent(SYSTEM),{signal});if(!r.ok)throw new Error(r.status);return await r.text()}
+const wantsImage=t=>/^(please\s+)?(draw|paint|sketch|illustrate)\b/i.test(t)||/\b(make|generate|create|show|give)\b.{0,25}\b(image|picture|pic|drawing|painting|art|wallpaper|photo|logo)\b/i.test(t);
+const wantsVideo=t=>/\b(video|vid|vids|clip|footage)\b/i.test(t);
+const picPrompt=t=>(t.replace(/^(please\s+)?(can you\s+)?(draw|paint|sketch|illustrate|make|generate|create|give)\s+(me\s+)?(a\s+|an\s+)?(picture|image|drawing|painting|pic|photo)?\s*(of\s+)?/i,'')||t).trim();
+const vidQuery=t=>t.replace(/\b(can|you|please|show|find|give|play|watch|me|a|an|some|the|video|videos|vid|vids|clip|clips|of|about|on)\b|[?!.]/gi,' ').replace(/\s+/g,' ').trim()||t;
+function followUps(q,m){const topic=q.replace(/[?!.]+$/,'').slice(0,60);const f=[];if(m.img){f.push('Make it at night','Add more colour')}else if(m.vid){f.push(`Explain ${m.vid} simply`,`Draw ${m.vid}`)}else{f.push('Tell me more','Explain it like I am 10',`Draw a picture of this`)}return f}
+function setBusy(b){sendB.classList.toggle('send',!b);sendB.classList.toggle('stop',b);sendB.innerHTML=b?IC.stop:IC.send;sendB.title=b?'Stop':'Send';sendB.setAttribute('aria-label',b?'Stop':'Send')}
+async function typeOut(bub,text,signal){const step=Math.max(4,Math.ceil(text.length/60));for(let i=step;i<text.length;i+=step){if(signal.aborted)break;bub.innerHTML=md(text.slice(0,i));bub.classList.add('caret');scroll();await sleep(8)}bub.classList.remove('caret')}
+async function reply(q,forced){const H=hist();const body=addAI(),bub=body.querySelector('.bub');ctrl=new AbortController();setBusy(true);
+  const mode=forced||(MODE!=='chat'?MODE:wantsImage(q)?'image':wantsVideo(q)?'video':'chat');let m;
+  try{if(mode==='image'){const style=STYLE();const p=picPrompt(q)+(style?', '+style:'');m={role:'assistant',content:COUNT()>1?'Here are 4 versions:':'Here is your picture!',img:p,count:COUNT(),size:SIZE(),seed:Math.floor(Math.random()*1e9)}}
+    else if(mode==='video'){const v=vidQuery(q);m={role:'assistant',content:`Here are some videos of **${v}**:`,vid:v}}
+    else{const msgs=H.slice(-14).map(x=>({role:x.role,content:x.content}));const na=NEXTATT;NEXTATT=null;
+      if(na&&msgs.length){msgs[msgs.length-1]={role:'user',content:na.imgs.length?[{type:'text',text:na.text},...na.imgs.map(u=>({type:'image_url',image_url:{url:u}}))]:na.text}}let system=SYSTEM+memPrompt()+(PREFS.about?`\n\nWhat the user has told you about themselves (use it when helpful): ${PREFS.about}`:'')+(PREFS.style?`\n\nHow the user wants you to reply: ${PREFS.style}`:'')+progPrompt(),sources=null;
+      if(RESEARCH){const qq=q.replace(/\b(research|deep research|look up)\b/gi,'').trim()||q;bub.innerHTML='<p class="capt">Researching: searching several ways…</p>';const rs=await Promise.all([qq,qq+' explained',qq+' facts history',qq+' latest'].map(x=>webSearch(x,ctrl.signal).catch(()=>[])));sources=[];for(const l of rs)for(const x of l)if(!sources.some(y=>y.url===x.url)&&sources.length<9)sources.push(x);bub.innerHTML=`<p class="capt">Read ${sources.length} sources, writing your report…</p>`;
+        system+=`\n\nDEEP RESEARCH MODE. Today is ${new Date().toDateString()}. Write a thorough, well organised report (about 400 to 700 words): start with a 2 to 3 sentence summary, then sections with ## headings and bullet points, and finish with ## Key takeaways. Cite the sources below like [1], [2] after the facts they support. If sources disagree or are thin, say so.\nSources:\n`+sources.map((s,i)=>`[${i+1}] ${s.title} (${s.url}): ${s.text}`).join('\n')}
+      else if(SEARCH||wantsSearch(q)){bub.innerHTML='<p class="capt">Searching the web…</p>';sources=await webSearch(q.replace(/\b(search( the web)?( for)?|look up|google)\b/gi,'').trim()||q,ctrl.signal);
+        if(sources.length)system=system+`\n\nToday is ${new Date().toDateString()}. Web search results for the user's question (use them, and cite them like [1], [2]; if they don't answer it, say what you know and that it may be out of date):\n`+sources.map((s,i)=>`[${i+1}] ${s.title} (${s.url}): ${s.text}`).join('\n');
+        else bub.innerHTML='<p class="capt">No web results found, answering from what I know…</p>'}
+      const strip=t=>t.replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').replace(/\[IMAGE:\s*([^\]]*)\]?/i,'').replace(/\[VIDEO:\s*([^\]]*)\]?/i,'').trim();let last=0;
+      const live=t=>{const now=performance.now();if(now-last<40)return;last=now;bub.innerHTML=md(strip(t));bub.classList.add('caret');scroll()};
+      const MOD=RESEARCH&&$('model').value==='openai'?'openai-large':$('model').value;let t;try{t=await askStream(msgs,ctrl.signal,live,MOD,system)}catch(e){if(ctrl.signal.aborted)throw e;try{if(MOD==='openai')throw e;bub.innerHTML='<p class="capt">That model is busy, switching to Fast…</p>';t=await askStream(msgs,ctrl.signal,live,'openai',system)}catch(e2){if(ctrl.signal.aborted)throw e2;bub.innerHTML='<div class="dots"><i></i><i></i><i></i></div>';t=await askAI(msgs,ctrl.signal,null,system);await typeOut(bub,strip(t),ctrl.signal)}}
+      bub.classList.remove('caret');t=t.replace(/<think>[\s\S]*?(<\/think>|$)/gi,'').trim();let img=null,vid=null;
+      const clean=t.replace(/\[IMAGE:\s*([^\]]+)\]/i,(_,p)=>{img=p.trim();return''}).replace(/\[VIDEO:\s*([^\]]+)\]/i,(_,v)=>{vid=v.trim();return''}).trim();
+      m={role:'assistant',content:clean,img:img||undefined,vid:vid||undefined,count:1,size:SIZE(),seed:Math.floor(Math.random()*1e9),sources:sources&&sources.length?sources.map(s=>({title:s.title,url:s.url})):undefined}}
+    m.follow=followUps(q,m);H.push(m);save();renderAI(body,m,true);if(PREFS.speak&&m.content&&'speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(m.content.replace(/[#*`|>\[\]()]/g,' ').replace(/https?:\S+/g,'')))}}
+  catch(e){if(ctrl.signal.aborted){bub.innerHTML='<p class="capt">Stopped.</p>'}else{bub.innerHTML=navigator.onLine===false?'<p class="err">You are offline. Quasar needs the internet to answer, make pictures and find videos. Your saved chats still work, and the simulators all work offline.</p>':'<p class="err">Quasar is busy right now. Please try again in a few seconds.</p>';const t=document.createElement('div');t.className='tools';const b=document.createElement('button');b.type='button';b.innerHTML=IC.again+'Try again';b.onclick=()=>{body.parentElement.remove();reply(q,forced)};t.appendChild(b);body.appendChild(t)}}
+  ctrl=null;setBusy(false);listChats();try{memScan(q)}catch(e){}if(VOICE.on)voiceAfter()}
+function send(text,forced){text=(text||'').trim();const att=ATT.splice(0);tray();if((!text&&!att.length)||ctrl)return;
+  if(!text)text=att.some(a=>a.kind==='img')?'What is in this picture?':'Please summarise this file.';
+  // what the AI reads: the message plus the text of any files
+  const files=att.filter(a=>a.kind==='file').map(a=>`\n\nFile "${a.name}":\n\`\`\`\n${a.text}\n\`\`\``).join('');
+  ensureChat(text);addUser(text,att,hist().length);hist().push({role:'user',content:text+(files?files.slice(0,8000):''),shown:text,att:att.map(a=>a.kind==='img'?{kind:'img',name:a.name,thumb:a.thumb}:{kind:'file',name:a.name})});save();
+  if(att.length&&!forced)forced='chat';NEXTATT={text:text+files,imgs:att.filter(a=>a.kind==='img').map(a=>a.data)};
+  document.querySelectorAll('.follow').forEach(f=>f.remove());document.querySelectorAll('.tools button').forEach(b=>{if(/Regenerate/.test(b.textContent))b.remove()});reply(text,forced)}
+let NEXTATT=null;
+function regenerate(){const H=hist();if(ctrl||!H.length)return;if(H[H.length-1].role==='assistant'){H.pop();const nodes=log.querySelectorAll('.msg.ai');nodes[nodes.length-1].remove()}const q=H[H.length-1];if(q&&q.role==='user')reply(q.content)}
+/* ---------- photos and files ---------- */
+let ATT=[];const MAXTXT=40000;
+const loadImg=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src});
+const shrink=(img,max,q)=>{const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)};
+let PDFJS=null;function pdfjs(){if(PDFJS)return PDFJS;PDFJS=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok(window.pdfjsLib)};s.onerror=()=>{PDFJS=null;no(new Error('pdf'))};document.head.appendChild(s)});return PDFJS}
+async function readPdf(file){const lib=await pdfjs(),doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;let t='';for(let p=1;p<=Math.min(doc.numPages,40)&&t.length<MAXTXT;p++){const pg=await doc.getPage(p),c=await pg.getTextContent();t+=c.items.map(i=>i.str).join(' ')+'\n\n'}return{text:t,pages:doc.numPages}}
+const kb=n=>n>1e6?(n/1e6).toFixed(1)+' MB':Math.max(1,Math.round(n/1e3))+' KB';
+async function addFiles(list){for(const f of list){if(ATT.length>=6){toastMsg('Up to 6 attachments at a time');break}
+    try{if(f.type.startsWith('image/')){const url=URL.createObjectURL(f),img=await loadImg(url);ATT.push({kind:'img',name:f.name||'photo',data:shrink(img,1280,.85),thumb:shrink(img,320,.7)});URL.revokeObjectURL(url)}
+      else if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){const r=await readPdf(f);ATT.push({kind:'file',name:f.name,size:f.size,text:r.text.slice(0,MAXTXT),note:r.pages+' pages'})}
+      else if(f.size<3e6){const t=await f.text();if(/\u0000/.test(t.slice(0,2000)))throw new Error('binary');ATT.push({kind:'file',name:f.name,size:f.size,text:t.slice(0,MAXTXT),note:kb(f.size)})}
+      else throw new Error('big')}catch(e){toastMsg(`Can't read ${f.name}: Quasar can open photos, PDFs and text or code files under 3 MB.`)}}
+  tray();inp.focus()}
+function tray(){const T=$('tray');T.textContent='';T.hidden=!ATT.length;ATT.forEach((a,i)=>{const d=document.createElement('div');d.className='att';d.innerHTML=(a.kind==='img'?'<img alt="">':`<div class="fic">${(a.name.split('.').pop()||'FILE').slice(0,4).toUpperCase()}</div>`)+'<div class="nm"><span></span><small></small></div><button type="button" class="x" aria-label="Remove">×</button>';
+  if(a.kind==='img')d.querySelector('img').src=a.thumb;d.querySelector('.nm span').textContent=a.name;d.querySelector('small').textContent=a.kind==='img'?'Photo':a.note||'';d.querySelector('.x').onclick=()=>{ATT.splice(i,1);tray()};T.appendChild(d)})}
+function toastMsg(t){const b=addAI();b.querySelector('.bub').innerHTML=`<p class="err">${esc(t)}</p>`}
+$('attachBtn').onclick=()=>{closeMenu();$('fileIn').click()};$('fileIn').onchange=e=>{addFiles([...e.target.files]);e.target.value=''};
+inp.addEventListener('paste',e=>{const fs=[...(e.clipboardData&&e.clipboardData.files||[])];if(fs.length){e.preventDefault();addFiles(fs)}});
+let dragN=0;addEventListener('dragenter',e=>{if([...(e.dataTransfer&&e.dataTransfer.types||[])].includes('Files')){dragN++;document.body.classList.add('dragging')}});addEventListener('dragleave',()=>{if(--dragN<=0){dragN=0;document.body.classList.remove('dragging')}});
+addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();dragN=0;document.body.classList.remove('dragging');const fs=[...(e.dataTransfer&&e.dataTransfer.files||[])];if(fs.length)addFiles(fs)});
+/* ---------- input ---------- */
+let MODE='chat',SEARCH=false,RESEARCH=false;
+const ls=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},lsw=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let PREFS=ls('quasar_prefs',{about:'',style:'',speak:false});
+$('model').value=ls('quasar_model','openai');$('model').onchange=()=>lsw('quasar_model',$('model').value);
+$('setBtn').onclick=()=>{$('pAbout').value=PREFS.about||'';$('pStyle2').value=PREFS.style||'';$('pSpeak').checked=!!PREFS.speak;$('pTrack').checked=trackOn();renderMem();$('setDlg').hidden=false;$('pAbout').focus()};
+$('setDlg').onclick=e=>{if(e.target.id==='setDlg')$('setDlg').hidden=true};
+$('pSave').onclick=()=>{PREFS={about:$('pAbout').value.trim(),style:$('pStyle2').value.trim(),speak:$('pSpeak').checked};lsw('quasar_prefs',PREFS);lsw('quasar_track',$('pTrack').checked);if(!$('pTrack').checked)try{localStorage.removeItem('quasar_activity')}catch(e){}renderProg();$('setDlg').hidden=true};
+$('pClear').onclick=()=>{$('pAbout').value='';$('pStyle2').value=''};
+// the + menu: create an image, find a video, search the web (shown as removable chips, like other AI chats)
+const menu=$('toolMenu'),plus=$('plusBtn');const closeMenu=()=>{menu.hidden=true;plus.setAttribute('aria-expanded','false')};
+plus.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;plus.setAttribute('aria-expanded',!menu.hidden)};document.addEventListener('click',e=>{if(!menu.contains(e.target))closeMenu()});
+function chips(){const c=$('chips');c.textContent='';const add=(label,off)=>{const b=document.createElement('button');b.type='button';b.className='chip';b.innerHTML=label+' <span aria-hidden="true">×</span>';b.title='Remove';b.onclick=()=>{off();chips();inp.focus()};c.appendChild(b)};
+  if(MODE==='image')add('Image',()=>{MODE='chat'});if(MODE==='video')add('Video',()=>{MODE='chat'});if(SEARCH)add('Search',()=>{SEARCH=false});if(RESEARCH)add('Deep research',()=>{RESEARCH=false});
+  $('picOpts').hidden=MODE!=='image';$('webBtn').setAttribute('aria-pressed',SEARCH);inp.placeholder=MODE==='image'?'Describe an image…':MODE==='video'?'What video do you want to see?':RESEARCH?'What should I research?':SEARCH?'Search the web and ask…':'Message Quasar…'}
+$('webBtn').onclick=()=>{SEARCH=!SEARCH;if(SEARCH)RESEARCH=false;closeMenu();chips();inp.focus()};$('resBtn').onclick=()=>{RESEARCH=!RESEARCH;if(RESEARCH)SEARCH=false;closeMenu();chips();inp.focus()};
+bar.onsubmit=e=>{e.preventDefault();if(ctrl){ctrl.abort();return}const t=inp.value;inp.value='';inp.style.height='';send(t)};
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();bar.requestSubmit()}});
+inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(180,inp.scrollHeight)+'px'});
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{MODE=MODE===b.dataset.mode?'chat':b.dataset.mode;closeMenu();chips();inp.focus()});
+for(const id of ['pShape','pCount'])$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+$('chatQ').addEventListener('input',listChats);
+$('newChat').onclick=()=>{newChat();document.body.classList.remove('side')};$('menuBtn').onclick=()=>document.body.classList.toggle('side');$('scrim').onclick=()=>document.body.classList.remove('side');
+// talk instead of typing
+{const SR=window.SpeechRecognition||window.webkitSpeechRecognition,mic=$('mic');if(SR){mic.hidden=false;let rec=null;mic.onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=true;const base=inp.value;
+  rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;inp.value=(base?base+' ':'')+t;inp.dispatchEvent(new Event('input'))};rec.onend=()=>{mic.classList.remove('on');rec=null;if(inp.value.trim())bar.requestSubmit()};rec.onerror=()=>{mic.classList.remove('on');rec=null};mic.classList.add('on');rec.start()}}}
+/* progress from the simulators: each game records what you did, so Quasar knows without being told */
+function trackOn(){return ls('quasar_track',true)!==false}
+function progList(){if(!trackOn())return[];const a=ls('quasar_activity',{})||{};return Object.values(a).filter(x=>x&&x.name).sort((x,y)=>y.when-x.when)}
+function ago(t){const m=Math.round((Date.now()-t)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
+function progPrompt(){const L=progList();if(!L.length)return'';return `\n\nThe user plays the free simulators on this website (Our Simulations!). Their progress is tracked automatically, so never ask them to explain it; use it when relevant (for example if they ask what to play, how they are doing, or for help with a game):\n`+L.slice(0,14).map(a=>`- ${a.name}: ${a.done!=null?`${a.done} of ${a.total} challenges done, ${a.stars} of ${a.maxStars} stars`:'played'}${a.next?`; next challenge: ${a.next}`:''}${a.doing?`; last doing: ${a.doing}`:''}; ${ago(a.when)}`).join('\n')}
+function renderProg(){const el=$('prog');if(!el)return;const L=progList();if(!trackOn()){el.innerHTML='<div class="ph">Your progress</div><p>Tracking is off. Turn it on in settings.</p>';return}
+  if(!L.length){el.innerHTML='<div class="ph">Your progress</div><p>Play any simulator and Quasar will keep track, so you never have to explain.</p>';return}
+  el.innerHTML='<div class="ph">Your progress</div>';for(const a of L.slice(0,8)){const r=document.createElement('a');r.className='pr';r.href=a.url||'#';const pct=a.maxStars?Math.round(a.stars/a.maxStars*100):0;r.innerHTML='<b></b><span></span><i><em></em></i>';r.children[0].textContent=a.name;r.children[1].textContent=(a.done!=null?`${a.done}/${a.total} challenges · `:'')+ago(a.when);r.querySelector('em').style.width=pct+'%';el.appendChild(r)}
+  const q=document.createElement('button');q.className='pq';q.textContent='How am I doing?';q.onclick=()=>{$('inp').value='How am I doing in the simulators, and what should I try next?';$('send').click()};el.appendChild(q)}
+renderProg();addEventListener('focus',renderProg);addEventListener('storage',e=>{if(e.key==='quasar_activity')renderProg()});
+
+/* ---------- memory: Quasar remembers what you tell it, across every chat ---------- */
+let MEM=ls('quasar_memory',[]);
+function memPrompt(){return MEM.length?`\n\nThings you remember about the user from earlier chats (use them naturally, don't list them unless asked):\n- `+MEM.join('\n- '):''}
+function memAdd(f){f=String(f).replace(/\s+/g,' ').trim().slice(0,140);if(!f||MEM.some(m=>m.toLowerCase()===f.toLowerCase()))return false;MEM.push(f);if(MEM.length>40)MEM.shift();lsw('quasar_memory',MEM);return true}
+function memForget(f){const k=String(f).toLowerCase().split(/\W+/).filter(w=>w.length>3);const n=MEM.length;MEM=MEM.filter(m=>!k.length||!k.every(w=>m.toLowerCase().includes(w))&&!m.toLowerCase().includes(String(f).toLowerCase().trim()));lsw('quasar_memory',MEM);return n!==MEM.length}
+function memScan(q){const last=hist()[hist().length-1];if(!last||last.role!=='assistant')return;let ch=0;String(last.content||'').replace(/\[\[remember:\s*([^\]]+)\]\]/gi,(_,f)=>{if(memAdd(f))ch++}).replace(/\[\[forget:\s*([^\]]+)\]\]/gi,(_,f)=>{if(memForget(f))ch++});
+  if(!ch){const m=String(q||'').match(/^\s*(?:please\s+)?remember(?: that)?\s+(.{3,120})$/i)||String(q||'').match(/\b(my name is [a-z][a-z' -]{1,30}|call me [a-z][a-z' -]{1,30})/i);if(m&&memAdd(m[1].replace(/[.!]+$/,'')))ch++}
+  if(ch)toastMsg('Memory updated. See it in settings.')}
+function renderMem(){const el=$('memList');if(!el)return;el.textContent='';if(!MEM.length){el.innerHTML='<p class="capt">Nothing yet. Tell Quasar things like “my name is Sam” or “remember I love space”.</p>';return}
+  MEM.forEach((m,i)=>{const r=document.createElement('div');r.className='memr';const t=document.createElement('span');t.textContent=m;const b=document.createElement('button');b.type='button';b.textContent='×';b.title='Forget this';b.onclick=()=>{MEM.splice(i,1);lsw('quasar_memory',MEM);renderMem()};r.append(t,b);el.appendChild(r)});
+  const c=document.createElement('button');c.type='button';c.className='memclr';c.textContent='Forget everything';c.onclick=()=>{MEM=[];lsw('quasar_memory',MEM);renderMem()};el.appendChild(c)}
+/* ---------- Run: code from Quasar runs in a safe, sealed-off preview ---------- */
+function runCode(code,kind){let dlg=$('runDlg');if(!dlg){dlg=document.createElement('div');dlg.id='runDlg';dlg.innerHTML='<div class="runbox"><div class="runh"><b>Preview</b><span class="capt">Runs safely: it cannot see your chats or files</span><button type="button" id="runFull">Full screen</button><button type="button" id="runRe">Restart</button><button type="button" id="runX" aria-label="Close">×</button></div><iframe id="runF" sandbox="allow-scripts allow-modals allow-pointer-lock" allow="fullscreen"></iframe></div>';document.body.appendChild(dlg);
+    $('runX').onclick=()=>{dlg.hidden=true;$('runF').srcdoc=''};dlg.onclick=e=>{if(e.target===dlg){dlg.hidden=true;$('runF').srcdoc=''}};$('runFull').onclick=()=>{const f=$('runF');(f.requestFullscreen||f.webkitRequestFullscreen||(()=>{})).call(f)};$('runRe').onclick=()=>{const f=$('runF');const d=f.srcdoc;f.srcdoc='';setTimeout(()=>f.srcdoc=d,30)}}
+  const doc=kind==='js'?`<!doctype html><html><head><meta charset="utf-8"><style>body{font:14px/1.5 ui-monospace,monospace;background:#0e0c1a;color:#e8e4f4;margin:12px}pre{white-space:pre-wrap;margin:0}.e{color:#ff8a8a}</style></head><body><pre id="o"></pre><script>const o=document.getElementById('o'),w=(c,a)=>{const s=document.createElement('div');if(c)s.className=c;s.textContent=a.map(x=>typeof x==='object'?JSON.stringify(x,null,1):String(x)).join(' ');o.appendChild(s)};console.log=(...a)=>w('',a);console.error=(...a)=>w('e',a);onerror=(m,u,l)=>{w('e',['Error: '+m+' (line '+l+')'])};<\/script><script>${code.replace(/<\/script/gi,'<\\/script')}<\/script></body></html>`
+    :(/<html|<body|<!doctype/i.test(code)?code:`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${code}</body></html>`);
+  dlg.hidden=false;$('runF').srcdoc=doc}
+/* ---------- voice chat: talk, listen to the answer, talk again ---------- */
+const VOICE={on:false,rec:null};
+{const SR=window.SpeechRecognition||window.webkitSpeechRecognition,vb=$('vchat');if(SR&&'speechSynthesis' in window&&vb){vb.hidden=false;
+  const listen=()=>{if(!VOICE.on)return;const r=new SR();VOICE.rec=r;r.lang=navigator.language||'en-US';r.interimResults=false;r.onresult=e=>{const t=e.results[0][0].transcript;if(t&&t.trim()){inp.value='';send(t)}};r.onend=()=>{VOICE.rec=null;if(VOICE.on&&!ctrl&&!speechSynthesis.speaking)setTimeout(listen,400)};r.onerror=ev=>{VOICE.rec=null;if(ev.error==='not-allowed'){stopV();toastMsg('Microphone blocked. Allow it in your browser to use voice chat.')}};try{r.start();vb.classList.add('on')}catch(e){}};
+  const stopV=()=>{VOICE.on=false;vb.classList.remove('on');if(VOICE.rec)try{VOICE.rec.abort()}catch(e){}speechSynthesis.cancel();vb.title='Voice chat: talk and listen hands-free'};
+  window.voiceAfter=()=>{const last=hist()[hist().length-1];if(!VOICE.on||!last||last.role!=='assistant'){setTimeout(listen,300);return}const u=new SpeechSynthesisUtterance(String(last.content||'').replace(/\[\[[^\]]*\]\]/g,'').replace(/```[\s\S]*?```/g,' I wrote some code for you. ').replace(/[#*`|>\[\]()_]/g,' ').replace(/https?:\S+/g,'').slice(0,1800));u.onend=()=>setTimeout(listen,250);speechSynthesis.cancel();speechSynthesis.speak(u)};
+  vb.onclick=()=>{if(VOICE.on){stopV();toastMsg('Voice chat off');return}VOICE.on=true;vb.title='Voice chat is on: tap to stop';toastMsg('Voice chat on: just talk. Tap the headphones to stop.');listen()}}}
+if(!window.voiceAfter)window.voiceAfter=()=>{};
+// start: open the latest chat, or a fresh one
+if(chats.length)openChat(chats[0]);else newChat();
+})();
+
+</script>
+<script id="noemoji">/* ===== flat icons: every emoji in labels, buttons and messages is drawn as a flat one-colour silhouette instead of a colourful emoji ===== */
+(function(){
+  if(window.__noEmoji)return;window.__noEmoji=true;
+  const RE=/(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|⃣)?(?:‍(?:\p{Extended_Pictographic})(?:️)?)*|[\u{1F3FB}-\u{1F3FF}]/gu,HAS=/\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+  const KEEP=new Set([...'★☆✓✔✗✕✖×→←↑↓↔⤢⊗⊙▸◂−±°©®™']);
+  const strip=s=>s.replace(RE,m=>KEEP.has(m)?m:'').replace(/[️‍]/g,'').replace(/ {2,}/g,' ');
+  window.noEmoji=strip;
+  // emoji drawn on a square background turn into plain squares as silhouettes: swap them for ones that make good flat icons
+  const SWAP={'⚛️':'🧪','⚛':'🧪','☢️':'⚠️','☯️':'⭐','🔆':'☀️','🔅':'☀️','🔃':'⇄','🔀':'⇄','🌌':'✨','🚇':'🚈','🌉':'🏗️','🔄':'⇄','🔁':'⟳','🆕':'+','🌁':'🏗️','🌃':'🌙','🌄':'⛰️','🌅':'☀️','🏞️':'⛰️','🎑':'🌙','🖼️':'🎨'};
+  const PLAIN=new Set(['OPTION','TITLE','TEXTAREA','SCRIPT','STYLE','INPUT']);
+  // turn one text node into text + flat icon spans
+  function flatten(n){const p=n.parentElement;if(!p||p.classList.contains('fi')||p.closest('.fi'))return;
+    if(PLAIN.has(p.tagName)||p.closest('svg')){n.nodeValue=strip(n.nodeValue);return}
+    const s=n.nodeValue;RE.lastIndex=0;let m,last=0,parts=[];
+    while((m=RE.exec(s))){if(KEEP.has(m[0]))continue;if(m.index>last)parts.push(document.createTextNode(s.slice(last,m.index)));const sw=SWAP[m[0]]||SWAP[m[0].replace(/\uFE0F/g,'')];const g=sw||m[0];if(sw&&!HAS.test(sw)){parts.push(document.createTextNode(sw))}else{const sp=document.createElement('span');sp.className='fi';sp.setAttribute('aria-hidden','true');sp.textContent=g;parts.push(sp)}last=m.index+m[0].length}
+    if(!parts.length)return;if(last<s.length)parts.push(document.createTextNode(s.slice(last)));const f=document.createDocumentFragment();parts.forEach(x=>f.appendChild(x));p.replaceChild(f,n)}
+  function clean(root){if(!root)return;if(root.nodeType===3){if(HAS.test(root.nodeValue))flatten(root);return}
+    if(root.nodeType!==1||PLAIN.has(root.tagName)&&root.tagName!=='OPTION'&&root.tagName!=='TITLE')return;if(root.classList&&root.classList.contains('fi'))return;
+    for(const a of ['title','aria-label','placeholder','alt'])if(root.hasAttribute&&root.hasAttribute(a)&&HAS.test(root.getAttribute(a)))root.setAttribute(a,strip(root.getAttribute(a)).trim());
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);const texts=[];let n;
+    while((n=w.nextNode())){if(n.nodeType===1){for(const a of ['title','aria-label','placeholder','alt'])if(n.hasAttribute(a)&&HAS.test(n.getAttribute(a)))n.setAttribute(a,strip(n.getAttribute(a)).trim());continue}if(HAS.test(n.nodeValue))texts.push(n)}
+    texts.forEach(flatten)}
+  // canvas labels: emoji are left out there (the map draws its own shapes)
+  for(const P of [window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype,window.OffscreenCanvasRenderingContext2D&&OffscreenCanvasRenderingContext2D.prototype])if(P)for(const f of ['fillText','strokeText']){const o=P[f];P[f]=function(t,...a){if(typeof t==='string'&&HAS.test(t)){t=strip(t).trim();if(!t)return}return o.call(this,t,...a)}}
+  const css=document.createElement('style');
+  css.textContent='.fi{display:inline-block;line-height:1;font-style:normal;filter:brightness(0) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);opacity:.92;vertical-align:-.08em}.ne-lab{display:none}';
+  const go=()=>{document.head.appendChild(css);document.title=strip(document.title).trim();clean(document.body);
+    new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData'){if(m.target.parentElement&&!m.target.parentElement.classList.contains('fi'))clean(m.target)}else if(m.type==='attributes')clean(m.target);else for(const x of m.addedNodes)clean(x)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']})};
+  if(document.body)go();else document.addEventListener('DOMContentLoaded',go);
+})();
+</script>
+</body></html>
