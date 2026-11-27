@@ -298,7 +298,8 @@ async function videos(box,q){const w=document.createElement('div');w.innerHTML='
     const more=document.createElement('a');more.className='lnk';more.target='_blank';more.rel='noopener';more.href=yt;more.innerHTML=IC.play+' More on YouTube';w.appendChild(more);scroll()}
   catch(e){w.innerHTML=`<p class="err">Could not load videos right now.</p><a class="lnk" target="_blank" rel="noopener" href="${yt}">${IC.play} Search YouTube instead</a>`}}
 /* ---------- web search: live results from Wikipedia and DuckDuckGo, used as sources ---------- */
-const SRV=()=>((PREFS&&PREFS.server)||'').trim().replace(/\/+$/,'');
+// on its own server (Cloudflare Pages) Quasar finds the server by itself
+const SRV=()=>(((PREFS&&PREFS.server)||'').trim()||(/\.(pages|workers)\.dev$/.test(location.hostname)||document.querySelector('meta[name=quasar-server]')?location.origin:'')).replace(/\/+$/,'');
 async function webSearch(q,signal){const out=[];const add=(title,url,text,max)=>{if(url&&!out.some(o=>o.url===url))out.push({title,url,text:(text||'').replace(/<[^>]+>/g,'').slice(0,max||700)})};
   // your own Quasar server (if you set one up in Settings) searches without any browser limits
   if(SRV()){try{const r=await fetch(SRV()+'/search?q='+encodeURIComponent(q),{signal});if(r.ok){const j=await r.json();(j.results||[]).forEach(x=>add(x.title,x.url,x.text,900));if(out.length)return out.slice(0,8)}}catch(e){if(signal&&signal.aborted)throw e}}
