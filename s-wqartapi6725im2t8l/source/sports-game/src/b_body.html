@@ -1,0 +1,97 @@
+<body>
+<!-- HOME: pick a sport -->
+<div id="home" class="screen bgfx">
+ <div class="wrap">
+  <div class="topnav">
+   <a class="pill" href="../">← All simulators</a>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="pill" href="../quasar/">✨ Ask Quasar</a>
+    <span class="pill coins" id="hCoins">🪙 0</span>
+   </div>
+  </div>
+  <div class="logo emb" role="img" aria-label="Sports championship emblem"></div>
+  <div class="tag">Every sport • One stage • Matchday live</div>
+  <h1 class="big">SPORTS</h1>
+  <p class="sub">Pick a sport, choose your country and division, then play a 100-level career or a quick match with a coin toss, walkouts, live commentary and a win meter.</p>
+  <div class="grid" id="sportGrid"></div>
+  <p class="note" style="text-align:center;margin-top:16px">Coins are shared across every sport, including Cricket. Spend them in each sport's store on upgrades.</p>
+ </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="screen bgfx hidden">
+ <div class="wrap">
+  <div class="topnav">
+   <button class="pill" id="sBack">← All sports</button>
+   <span class="pill coins" id="sCoins">🪙 0</span>
+  </div>
+  <div style="display:flex;gap:14px;align-items:center;justify-content:center;margin:10px 0 4px;flex-wrap:wrap">
+   <div class="emb" style="width:96px;height:78px;border-radius:10px;border:1px solid rgba(222,181,83,.6)"></div>
+   <div><div class="tag" style="text-align:left">Sports • Match centre</div><h1 class="big" id="sTitle" style="text-align:left;margin:2px 0">FOOTBALL</h1><div class="note" id="sDesc"></div></div>
+  </div>
+  <div class="row2">
+   <div class="panel">
+    <div class="sec"><h3>Your country</h3>
+     <input class="inp" id="cSearch" placeholder="Search countries…" aria-label="Search countries">
+     <div class="cgrid" id="cGrid" style="margin-top:8px"></div>
+     <div id="customBox" class="hidden" style="margin-top:8px;display:grid;gap:6px">
+      <input class="inp" id="cuName" maxlength="20" placeholder="Custom country name">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input class="inp" id="cuCode" maxlength="3" placeholder="ABC" style="width:80px;text-transform:uppercase"><input class="inp" id="cuFlag" maxlength="4" placeholder="🏳️" style="width:70px"><label class="note">Shirt <input type="color" id="cuJ" value="#7c3aed"></label><label class="note">Trim <input type="color" id="cuT" value="#facc15"></label></div>
+     </div>
+    </div>
+    <div class="sec"><h3>Division</h3><div class="seg" id="gSeg"><button data-v="BOY">♂ Men's team</button><button data-v="GIRL">♀ Women's team</button></div></div>
+    <div class="sec"><h3>Mode</h3><div class="seg" id="mSeg"><button data-v="CAREER">🏆 Career (100 levels)</button><button data-v="QUICK">⚡ Quick match</button></div></div>
+    <div class="sec" id="lvlSec"><h3>Career level <span id="lvlInfo" style="color:#fff;letter-spacing:0"></span></h3><div class="lgrid" id="lGrid"></div><p class="note" style="margin-top:6px">Win a level to unlock the next. Every 10th level is a Cup Final, where a draw goes to a decider.</p></div>
+    <div class="sec hidden" id="oppSec"><h3>Opponent</h3><select class="inp" id="oppSel"></select></div>
+   </div>
+   <div class="panel">
+    <div class="sec"><h3 id="lenLbl">Match length</h3><div class="seg" id="lenSeg"></div></div>
+    <div class="sec"><h3>Difficulty</h3><div class="seg" id="dSeg"><button data-v="easy">Easy</button><button data-v="medium">Medium</button><button data-v="hard">Hard</button></div></div>
+    <div class="sec"><h3 id="tossLbl">Toss call</h3><div class="seg" id="tSeg"><button data-v="H">🪙 Heads</button><button data-v="T">🪙 Tails</button></div></div>
+    <div class="sec"><h3>Team & upgrades</h3><div class="seg"><button class="btn" id="bLineup">👥 Lineup editor</button><button class="btn" id="bStore">🛒 Store</button><button class="btn" id="bHelp">❓ How to play</button></div><p class="note" id="rateNote" style="margin-top:8px"></p></div>
+    <div class="sec"><h3>Commentary</h3><div class="seg"><button class="btn" id="bVoice1">🎙️ MALE VOICE ON</button></div></div>
+    <button class="btn gold start" id="bStart">▶ START MATCH</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- PRE-MATCH SHOW -->
+<div id="pre" class="screen hidden"><div class="stage" id="preStage"></div></div>
+
+<!-- MATCH -->
+<div id="match" class="hidden">
+ <canvas id="cv"></canvas>
+ <div id="hudTop">
+  <div class="bug">
+   <div class="sb"><div class="logo2 emb"></div><div class="tm" id="sbA"></div><div class="sc" id="sbS">0 - 0</div><div class="tm" id="sbB" style="justify-content:flex-end"></div><div class="clk" id="sbC">0'</div></div>
+   <div class="sbsub" id="sbSub"></div>
+   <div id="winbox"><span id="wA">50%</span><div class="wb"><i id="wbA" style="width:50%"></i><i id="wbB" style="width:50%"></i></div><span id="wB">50%</span></div>
+  </div>
+  <div class="tools">
+   <button class="btn" id="tVoice" aria-pressed="true">🎙️ Voice</button>
+   <button class="btn" id="tMute">🔊</button>
+   <button class="btn" id="tStats">📊 Stats</button>
+   <button class="btn" id="tTac">🧠 Tactics</button>
+   <button class="btn" id="tTeam">👥</button>
+   <button class="btn red" id="tQuit">✖</button>
+  </div>
+ </div>
+ <div id="comm" class="panel"><h4><span>SPORTS TV • LIVE CALL</span><button class="btn" id="cHide" style="padding:2px 7px;font-size:10px">–</button></h4><div id="commL"></div></div>
+ <div id="big"></div>
+ <div id="ctrl" class="panel">
+  <div id="sit"><span id="sitT">Getting ready…</span><span class="role" id="sitR">LIVE</span></div>
+  <div id="acts"></div>
+  <div class="aimrow" id="aimRow"><span id="aimLbl">AIM</span><button data-a="-1">◀ Left</button><button data-a="0">● Centre</button><button data-a="1">Right ▶</button><span id="hint" class="note" style="margin-left:auto;letter-spacing:0;font-weight:700;color:#9fb0d4"></span></div>
+  <div id="meter"><i style="flex:18;background:#ef4444">EARLY</i><i style="flex:14;background:#facc15">GOOD</i><i id="mPerf" style="flex:10;background:#22c55e">PERFECT</i><i style="flex:14;background:#facc15">GOOD</i><i style="flex:18;background:#ef4444">LATE</i><div id="needle"></div></div>
+  <div class="mrow"><button class="btn gold" id="go">TAP • SPACE</button><button class="btn" id="bSim" title="Let your team play this moment">⏩ Sim</button><button class="btn" id="bAuto" aria-pressed="false">🤖 Auto</button></div>
+ </div>
+</div>
+
+<!-- SUMMARY -->
+<div id="summary" class="screen bgfx hidden"><div class="wrap"><div class="panel" id="sumBody"></div></div></div>
+
+<!-- MODALS -->
+<div id="modal" class="modal hidden"><div class="panel" id="modalBody"></div></div>
+<canvas id="fw"></canvas>
+<div id="toast"></div>

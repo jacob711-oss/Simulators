@@ -3,6 +3,8 @@
 set -e
 cd "$(dirname "$0")"
 python3 sims/publish.py
+# Sports is its own game now (it replaced the kit Sports simulator): copy it over the kit build
+mkdir -p /home/user/barycenter-site/sports/cricket && cp sports-game/index.html /home/user/barycenter-site/sports/index.html && cp sports-game/cricket/index.html /home/user/barycenter-site/sports/cricket/index.html
 python3 - <<'PY'
 import re
 p='barycenter.html';s=open(p).read();q=open('sims/kit/askq.js').read()
